@@ -447,12 +447,34 @@ def updateOpinion(jug,Accpet_NegR,Nbr_OF_R,Role):
         return 'denying'
     else:
         return 'supporting'
+
 def graphe_TO_json(g):
     
     data =  json_graph.node_link_data(g,{"link": "links", "source": "source", "target": "target","weight":"weight"})
-    data['nodes'] = [ {"id": i,"state":"non_infected","Protector":"false","opinion":"normal","beta":0,"omega":0,"delta":0,"jug":0,"Infetime":0,"AccpR":0,"SendR":0,"Accp_NegR":0,"value":0,"blocked":'false',"p0_drimux":random.random(),"BlockedTemporary":'false',"Blockingtime":0,"degree":g.degree[i],"neighbors":[n for n in g.neighbors(i)]} for i in range(len(data['nodes'])) ]
-    data['links'] = [ {"source":u,"target":v,"weight":(g.degree[u]+g.degree[v])/2} for u,v in g.edges ]
+    data['nodes'] = [ {"id": i,
+                       "state":"non_infected",
+                       "Protector":"false",
+                       "opinion":"normal",
+                       "beta":0,
+                       "omega":0,
+                       "delta":0,
+                       "jug":0,
+                       "Infetime":0,
+                       "AccpR":0,
+                       "SendR":0,
+                       "Accp_NegR":0,
+                       "value":0,
+                       "blocked":'false',
+                       "p0_drimux":random.random(),
+                       "BlockedTemporary":'false',
+                       "Blockingtime":0,
+                       "degree":g.degree[i],
+                       "neighbors":[n for n in g.neighbors(i)]} for i in range(len(data['nodes'])) ]
+    data['links'] = [ {"source":u,
+                       "target":v,
+                       "weight":(g.degree[u]+g.degree[v])/2} for u,v in g.edges ]
     return data
+
 def geneList_Infectede(Listinfected,Listopinion,N,percentage):
     #10% of Popularity is infected 
     Nbr_OF_ndodesI=int(N*percentage/100)
@@ -465,13 +487,14 @@ def geneList_Infectede(Listinfected,Listopinion,N,percentage):
            Listopinion.append('denying')
         else:
             Listopinion.append('supporting')
-            
+           
 def parameters(parameter,stepBeta=1,Beta=0.2,stepOmega=5.2,Omega=math.pi/3,stepDelta=0.65,Delta=math.pi/24,stepJug=0.6,Jug=0.1):
     Beta_max=Beta+stepBeta
     Omega_max=Omega +stepOmega
     Delta_max=Delta +stepDelta
     Jug_max=Jug+stepJug
     parameter.append({'beta_min':round(Beta,2),'beta_max':round(Beta_max,2),'omega_min':round(Omega,2),'omega_max':round(Omega_max,2),'delta_min':round(Delta,2),'delta_max':round(Delta_max,2),'Jug_min':round(Jug,2),'Jug_max':round(Jug_max,2)})
+
 def Start(i,Graph,parameter,Stat,percentage,K,Tdet,method):
     #print("The ", i+1, "th simulation")
     for each in range(len(Graph.nodes)):
@@ -540,6 +563,7 @@ def globalStat(S,Stat_Global,parameter,method):
 
     Stat_Global.append({'Infected':y1,'Spreaders':y2,'RumorPopularity':y3,'OpinionDenying':y4,'OpinionSupporting':y5,'parameter':parameter,'max':max,'method':method})       
     #Number of nodes
+
 def Display(Stat_Global,xx,title_fig,nb):
    #print(Stat_Global)
     #Title=['BNLSBetaD','BNLSBetaD_time','BNLSBetaD_time_mvc','BNLSBetaD_mvc','BNLSBeta_time_tolerance_mcv','TCSBetaD','myalgo2','NP']
@@ -715,6 +739,7 @@ def Simulation(index,graph,Stat_Global,percentage):
         #print("Parallel xx time=", end_time - start_time)
         globalStat(Stat,Stat_Global,parameter)
 #gene graph
+
 def Random_networks ( N=300 ,P=0.3):
     # Erdős-Rényi graph
     # number of nodes
@@ -1405,6 +1430,8 @@ def Protector(G):
         if(G.nodes[i]['Protector']=='True'):
             L.append(i)           
     return L
+
+
 if __name__ == '__main__':
        # use net.Graph() for undirected graph
 
