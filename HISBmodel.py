@@ -29,9 +29,7 @@ class HSIBmodel():
                                        'OpinionSupporting': self.OpinionSupporting,
                                        'RumorPopularity': RumorPopularity
                                        },index=[0])
-        
-          
-       
+
     def DisplyResults(self):
         fig, axe= plt.subplots(2,3)
         col=self.Statistical.columns
@@ -69,8 +67,6 @@ class HSIBmodel():
                 self.OpinionSupporting+=1
           
         return RumorPopularity
-  
-
 
     def updateOpinion(self,id,jugf,NegR,R): 
         opinion=jugf
@@ -92,7 +88,6 @@ class HSIBmodel():
         else:
             self.OpinionDenying+=1 
 
-
     def simulation(self):
         time=0.125
         
@@ -105,19 +100,21 @@ class HSIBmodel():
                 if (np.exp(-RelativeTime * self.Graph.nodes[id]['beta']) < 0.10) :
                     self.ListInfectedNodes.remove(id)
                     self.Graph.nodes[id]['state'] = "infected"
+
                 else:
                     #Node Attaction 
                     ActualAttraction = np.exp(-RelativeTime * self.Graph.nodes[id]['beta']) * np.abs(np.sin((RelativeTime * self.Graph.nodes[id]['omega'] )+ self.Graph.nodes[id]['delta']))
                     RumorPopularity += ActualAttraction * self.Graph.degree(id)
-                    #rumor spreading
-                    c=np.random.rand()
-
                     #Update node opinion
                     self.updateOpinion( id,
                                         self.Graph.nodes[id]['jug'],
                                         self.Graph.nodes[id]['Accp_NegR'],
                                         self.Graph.nodes[id]['AccpR'])
 
+                    #rumor spreading
+                    c=np.random.rand()
+
+                    
 
                     if (c<=ActualAttraction):
                         Nbr_Spreaders+=1
@@ -236,11 +233,9 @@ if __name__ == '__main__':
     print(seedNode,seedOpinion,len(seedNode),len(seedOpinion))
     print(g.nodes[0]['jug'])
     sim=HSIBmodel(g,seedNode,seedOpinion)
-    sim2=HSIBmodel(g,seedNode,seedOpinion)
     sim.simulation()
     sim.DisplyResults()
-    sim2.simulation()
-    sim2.DisplyResults()
+   
     
 
 
