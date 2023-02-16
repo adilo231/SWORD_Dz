@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import multiprocessing
 import time
-import GraphGenerator as gg
+import DataStorage.GraphGenerator as gg
 
 
 plt.style.use('ggplot')
@@ -179,10 +179,10 @@ class HSIBmodel():
                 send_end.send([self.Nbr_Infected,self.OpinionDenying,self.OpinionSupporting])
 
 
-def Simulations(NbrSim, g, seedNode=None, seedOpinion=None, typeOfSim=1):
+def Simulations(NbrSim, g,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1):
     jobs = []
     pipe_list = []
-    sim = HSIBmodel(g, seedNode, seedOpinion)
+    sim = HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize)
     for i in range(NbrSim):
         recv_end, send_end = multiprocessing.Pipe(False)
         p = multiprocessing.Process(
@@ -200,8 +200,7 @@ def Simulations(NbrSim, g, seedNode=None, seedOpinion=None, typeOfSim=1):
 
 
 # Crete Random graphe
-def CreateGraph(parameters, N=100, M=3):
-    g = nx.barabasi_albert_graph(N, M)
+def CreateGraph(g,parameters, N=100, M=3):
     InitParameters(g, parameters)
     return g
 
@@ -319,37 +318,38 @@ if __name__ == '__main__':
     # DisplyResults(dfs)
 
     # Run multiple and paralle simulations get final results
-    start_time = time.time()
-    parameters = {'omega_min': np.pi/24,
-                  'omega_max': np.pi*2,
-                  "delta_min": np.pi/24,
-                  "delta_max": np.pi/2,
-                  "jug_min": 0,
-                  "jug_max": 0,
-                  "beta_max": 1.2,
-                  "beta_min": 0.8}
-    SimulationResults= pd.DataFrame()
-    for beta in np.arange(0.1,1,0.1):
-        parameters['beta_min']=beta
-        parameters['beta_max']=beta+0.1
-        g = CreateGraph(parameters, n)
-        results = Simulations(10, g, typeOfSim= 2)
-        SimulationResults = CreateDataFrame(results,SimulationResults,sim=beta)
-    end_time = time.time()
-    print('Parallel time: ', end_time-start_time)
+    # start_time = time.time()
+    # parameters = {'omega_min': np.pi/24,
+    #               'omega_max': np.pi*2,
+    #               "delta_min": np.pi/24,
+    #               "delta_max": np.pi/2,
+    #               "jug_min": 0,
+    #               "jug_max": 0,
+    #               "beta_max": 1.2,
+    #               "beta_min": 0.8}
+    # SimulationResults= pd.DataFrame()
+    # for beta in np.arange(0.1,1,0.1):
+    #     parameters['beta_min']=beta
+    #     parameters['beta_max']=beta+0.1
+    #     g = CreateGraph(parameters, n)
+    #     results = Simulations(10, g, typeOfSim= 2)
+    #     SimulationResults = CreateDataFrame(results,SimulationResults,sim=beta)
+    # end_time = time.time()
+    # print('Parallel time: ', end_time-start_time)
     
-    fig, axes = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
-    for name, ax in zip(['Infected','Suporting','Denying'], axes):
-        sns.boxplot(data=SimulationResults, x='sim', y=name, ax=ax)
-        ax.set_ylabel('Number of individuals')
-        ax.set_title(name)
-    # Remove the automatic x-axis label from all but the bottom subplot
-    if ax != axes[-1]:
-        ax.set_xlabel('')
-    plt.show()
+    # fig, axes = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
+    # for name, ax in zip(['Infected','Suporting','Denying'], axes):
+    #     sns.boxplot(data=SimulationResults, x='sim', y=name, ax=ax)
+    #     ax.set_ylabel('Number of individuals')
+    #     ax.set_title(name)
+    # # Remove the automatic x-axis label from all but the bottom subplot
+    # if ax != axes[-1]:
+    #     ax.set_xlabel('')
+    # plt.show()
    
 
     # Get the DataFrame results from simulation
     # for x in pipe_list:
 
     #  print((x.recv().shape))
+    gg.printGraph()
