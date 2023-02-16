@@ -200,7 +200,8 @@ def Simulations(NbrSim, g,seedsSize=0.05, seedNode=None, seedOpinion=None, typeO
 
 
 # Crete Random graphe
-def CreateGraph(g,parameters, N=100, M=3):
+def CreateGraph(parameters, N=100, M=3):
+    g = nx.barabasi_albert_graph(N, M)
     InitParameters(g, parameters)
     return g
 

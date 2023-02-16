@@ -52,27 +52,26 @@ if __name__ == '__main__':
     # DisplyResults(dfs)
 
     #Run multiple and paralle simulations get final results
-    g = nx.barabasi_albert_graph(100, M)
     start_time = time.time()
     parameters = {'omega_min': np.pi/24,
                   'omega_max': np.pi*2,
                   "delta_min": np.pi/24,
                   "delta_max": np.pi/2,
-                  "jug_min"  : 0.7,
-                  "jug_max"  : 0.99,
-                  "beta_max" : 1.2,
-                  "beta_min" : 0.8}
+                  "jug_min": 0.7,
+                  "jug_max": 0.99,
+                  "beta_max": 1.2,
+                  "beta_min": 0.8}
     SimulationResults= pd.DataFrame()
-    for beta in np.arange(0.1,1,0.1):
+    for beta in np.arange(0.1,1,0.05):
         parameters['beta_min']=beta
         parameters['beta_max']=beta+0.1
-
-        g = m.CreateGraph(g, parameters, n)
+        g = m.CreateGraph(parameters, n)
         results = m.Simulations(5, g,seedsSize=0.05, typeOfSim= 2)
-        SimulationResults = m.CreateDataFrame(results,SimulationResults,sim=f'beta=[{round(beta,2)},{round(beta+0.1,2)}]')
-        print(SimulationResults)
+        SimulationResults = m.CreateDataFrame(results,SimulationResults,sim=f'beta=[{beta},{beta+0.1}]')
+        
     end_time = time.time()
     print('Parallel time: ', end_time-start_time)
+    
     fig, axes = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
     for name, ax in zip(['Infected','Suporting','Denying'], axes):
         sns.boxplot(data=SimulationResults, x='sim', y=name, ax=ax)
@@ -86,5 +85,6 @@ if __name__ == '__main__':
 
     # Get the DataFrame results from simulation
     # for x in pipe_list:
+
     #  print((x.recv().shape))
     gg.printGraph()
