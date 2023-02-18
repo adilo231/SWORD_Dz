@@ -199,51 +199,51 @@ def Simulations(NbrSim, g,seedsSize=0.05, seedNode=None, seedOpinion=None, typeO
     return pipe_list
 
 
-# Crete Random graphe
-def CreateGraph(parameters, N=100, M=3):
-    g = nx.barabasi_albert_graph(N, M)
-    InitParameters(g, parameters)
-    return g
+# # Crete Random graphe
+# def CreateGraph(parameters, N=100, M=3):
+#     g = nx.barabasi_albert_graph(N, M)
+#     InitParameters(g, parameters)
+#     return g
 
-# Init the model paramters
-
-
-def GetRandomValues(n, min, max):
-    return (np.random.rand(n)*(max - min)) + min
+# # Init the model paramters
 
 
-def InitParameters(g, parameters):
-    n = g.number_of_nodes()
+# def GetRandomValues(n, min, max):
+#     return (np.random.rand(n)*(max - min)) + min
 
-    # Set omega
 
-    values = dict(enumerate(GetRandomValues(
-        n, parameters['omega_min'], parameters['omega_max'])))
-    nx.set_node_attributes(g, values, 'omega')
-    # Set beta
-    values = dict(enumerate(GetRandomValues(
-        n, parameters['beta_min'], parameters['beta_max'])))
-    nx.set_node_attributes(g, values, 'beta')
-    # Set delta
-    values = dict(enumerate(GetRandomValues(
-        n, parameters['delta_min'], parameters['delta_max'])))
-    nx.set_node_attributes(g, values, 'delta')
+# def InitParameters(g, parameters):
+#     n = g.number_of_nodes()
 
-    # Set jug
-    values = dict(enumerate(GetRandomValues(
-        n, parameters['jug_min'], parameters['jug_max'])))
-    nx.set_node_attributes(g, values, 'jug')
+#     # Set omega
 
-    # Set other Attributes
-    attributes = ["Infetime", "AccpR", "SendR", "Accp_NegR"]
-    zeros = dict(enumerate(np.zeros(n)))
-    for atrrib in attributes:
-        nx.set_node_attributes(g, zeros, atrrib)
+#     values = dict(enumerate(GetRandomValues(
+#         n, parameters['omega_min'], parameters['omega_max'])))
+#     nx.set_node_attributes(g, values, 'omega')
+#     # Set beta
+#     values = dict(enumerate(GetRandomValues(
+#         n, parameters['beta_min'], parameters['beta_max'])))
+#     nx.set_node_attributes(g, values, 'beta')
+#     # Set delta
+#     values = dict(enumerate(GetRandomValues(
+#         n, parameters['delta_min'], parameters['delta_max'])))
+#     nx.set_node_attributes(g, values, 'delta')
 
-    nx.set_node_attributes(g, 'non_infected', "state")
+#     # Set jug
+#     values = dict(enumerate(GetRandomValues(
+#         n, parameters['jug_min'], parameters['jug_max'])))
+#     nx.set_node_attributes(g, values, 'jug')
 
-    # S, D, Q, T: supporting, Denying, Questioning, Neutral
-    nx.set_node_attributes(g, 'S', "opinion")
+#     # Set other Attributes
+#     attributes = ["Infetime", "AccpR", "SendR", "Accp_NegR"]
+#     zeros = dict(enumerate(np.zeros(n)))
+#     for atrrib in attributes:
+#         nx.set_node_attributes(g, zeros, atrrib)
+
+#     nx.set_node_attributes(g, 'non_infected', "state")
+
+#     # S, D, Q, T: supporting, Denying, Questioning, Neutral
+#     nx.set_node_attributes(g, 'S', "opinion")
 
 def DisplyResults(results,resultType=1):
     if resultType==1:
