@@ -65,7 +65,7 @@ if __name__ == '__main__':
     for beta in np.arange(0.1,1,0.05):
         parameters['beta_min']=beta
         parameters['beta_max']=beta+0.1
-        g = m.CreateGraph(parameters, n)
+        g = gg.CreateGraph(parameters, n)
         results = m.Simulations(5, g,seedsSize=0.05, typeOfSim= 2)
         SimulationResults = m.CreateDataFrame(results,SimulationResults,sim=f'beta=[{beta},{beta+0.1}]')
         
@@ -87,4 +87,4 @@ if __name__ == '__main__':
     # for x in pipe_list:
 
     #  print((x.recv().shape))
-    gg.printGraph()
+    
