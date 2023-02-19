@@ -277,6 +277,89 @@ def CreateDataFrame(results,df ,sim=1):
         df.loc[df.shape[0]]=l
     return df 
 
+def showNetworkMeasuresStatistics(g):
+    print ("showing network measures statistics")
+    #calculate network measures
+    deg_cent=nx.degree_centrality(g)
+    clos_cent=nx.closeness_centrality(g)
+    betw_cent=nx.betweenness_centrality(g)
+    #Katz_cent=nx.betweenness_centrality(g)
+    Katz_cent=nx.katz_centrality(g) #Katz can take an alpha value as parameter (by default=0.1) which must be less than 1/max(eigenvalues)
+    page_rank=nx.pagerank(g,alpha=0.8)
+    transitivity=nx.transitivity(g) #one value for the entire graph
+    
+    #prepare the data in the apropreate format
+    deg_cent_list=[]
+    for i in deg_cent:
+        deg_cent_list.append(float(i))
+
+    betw_cent_list=[]
+    for i in betw_cent:
+        betw_cent_list.append(float(i))
+
+    clos_cent_list=[]
+    for i in clos_cent:
+        clos_cent_list.append(float(i))
+
+    Katz_cent_list=[]
+    for i in Katz_cent:
+        Katz_cent_list.append(float(i))
+
+    page_rank_list=[]
+    for i in page_rank:
+        page_rank_list.append(float(i))
+    
+    # plot the statistics for the three attributes "AccpR","SendR" and "Accp_NegR"
+    for attr in ["AccpR","SendR","Accp_NegR"]:
+        li=[]
+        v=g.nodes[0][attr]
+        for i in v:
+            li.append(float(i))
+        
+        attr_description=""
+        if attr == "AccpR":
+            numfig="1"
+            attr_description="Acceptnece of Rumors"
+        if attr == "SendR":
+            numfig="2"
+            attr_description="Send of Rumors"
+        if attr == "Accp_NegR":
+            numfig="3"
+            attr_description="Accept Negatif Rumors"
+
+        plt.rcParams["figure.figsize"] = (15,8) 
+        fig = plt.figure("Figure "+numfig)
+
+        plt.subplot(2,3,1)
+        plt.xlabel('Degree Centrality')
+        plt.ylabel(attr_description)
+        plt.scatter(deg_cent_list,li,c='r')
+        plt.grid()
+
+        plt.subplot(2,3,2)
+        plt.xlabel('Closeness Centrality')
+        plt.ylabel(attr_description)
+        plt.scatter(clos_cent_list,li,c='g')
+        plt.grid()
+
+        plt.subplot(2,3,3)
+        plt.xlabel('Betweenness Centrality')
+        plt.ylabel(attr_description)
+        plt.scatter(betw_cent_list,li,c='b')
+        plt.grid()
+
+        plt.subplot(2,3,4)
+        plt.xlabel('Katz centrality')
+        plt.ylabel(attr_description)
+        plt.scatter(Katz_cent_list,li,c='y')
+        plt.grid()
+
+        plt.subplot(2,3,5)
+        plt.xlabel('Page rank')
+        plt.ylabel(attr_description)
+        plt.scatter(page_rank_list,li,c='black')
+        plt.grid()
+
 
 if __name__ == '__main__':
 
