@@ -276,6 +276,109 @@ def CreateDataFrame(results,df ,sim=1):
         l.append(sim)
         df.loc[df.shape[0]]=l
     return df 
+#---------------------
+def DisplyResultsT(Statistical):
+        fig, axe= plt.subplots(2,3)
+        col=Statistical.columns
+        for i, ax in enumerate(axe.flat):
+            ax.plot(Statistical.index,Statistical[col[i]])
+            ax.set_title(f'The evolution of {col[i]}')
+            ax.set_ylabel(f'Number of {col[i]}')
+            ax.set_xlabel(f'Time')
+    
+        #     plt.subplot(2,3,idx)
+        #     self.Statistical[idx].plot()
+        #     axe[:,idx].set_ylabel('YLabel', loc='top')
+        plt.show()
+
+#---------------------------------------
+def Create_Data_Globale(results ):
+    for i in range(len(results)):
+            results[i]=results[i].recv()
+    
+    Stat_Global=pd.DataFrame()
+    max=0
+    Stat=[]
+    print (type(results))
+    for each in results:
+        
+        L=len(each)
+        Stat.append(each)
+        if(L>max):
+            max=L
+    
+
+    for i in range(len(Stat)):
+        L=len(Stat[i])
+        
+        a=0.125*(L-1)
+        Nbr_nonInfected=Stat[i]['Non_Infected'][a]
+        Nbr_Infected=Stat[i]['Infected'][a]
+        Nbr_Spreaders=Stat[i]['Spreaders'][a]
+        OpinionDenying=Stat[i]['Opinion_Denying'][a]
+        OpinionSupporting=Stat[i]['Opinion_Supporting'][a]
+        RumorPopularity=Stat[i]['RumorPopularity'][a]
+        for j in range(L,max):
+            b=j*0.125
+            new =pd.DataFrame(data={'Non_Infected': Nbr_nonInfected,
+                                        'Infected': Nbr_Infected,
+                                        'Spreaders': Nbr_Spreaders,
+                                        'Opinion_Denying': OpinionDenying,
+                                        'Opinion_Supporting': OpinionSupporting,
+                                        'RumorPopularity': RumorPopularity
+                                        },index=[b])
+            Stat[i] =pd.concat([Stat[i], new])
+        #DisplyResultsT(Stat[i])
+    y1=[]
+    y2=[]
+    y3=[]
+    y4=[]
+    y5=[]
+    y0=[]  
+    Len=len(Stat)
+    for i in range(max):
+        a=i*0.125
+        
+        
+        No_Infected=0
+        Infected=0
+        Spreaders=0
+        RumorPopularity=0
+        OpinionDenying=0
+        OpinionSupporting=0
+        for each in Stat:
+            
+            No_Infected+=(each['Non_Infected'][a])           
+            Infected+=(each['Infected'][a])
+            Spreaders+=(each['Spreaders'][a])
+            RumorPopularity+=(each['RumorPopularity'][a])
+            OpinionDenying+=(each['Opinion_Denying'][a])
+            OpinionSupporting+=(each['Opinion_Supporting'][a])
+        #print("----")
+        y0.append(No_Infected/Len)
+        y1.append(Infected/Len)
+        y2.append(Spreaders/Len)
+        y3.append(RumorPopularity/Len)
+        y4.append(OpinionDenying/Len)
+        y5.append(OpinionSupporting/Len)
+    #print(y1)
+    for j in range(max):
+        
+            b=j*0.125
+            print(b)
+            new =pd.DataFrame(data={'Non_Infected': y0[j],
+                                        'Infected': y1[j],
+                                        'Spreaders': y2[j],
+                                        'Opinion_Denying': y4[j],
+                                        'Opinion_Supporting': y5[j],
+                                        'RumorPopularity': y3[j]
+                                        },index=[b])
+            Stat_Global =pd.concat([Stat_Global, new])
+
+    DisplyResultsT(Stat_Global)   
+    return Stat_Global    
+    #Number of nodes
+    
 
 def showNetworkMeasuresStatistics(g):
     print ("showing network measures statistics")
@@ -360,6 +463,7 @@ def showNetworkMeasuresStatistics(g):
         plt.scatter(page_rank_list,li,c='black')
         plt.grid()
 
+        
 
 if __name__ == '__main__':
 
