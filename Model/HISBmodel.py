@@ -460,6 +460,8 @@ def showNetworkMeasuresStatistics(g):
         plt.ylabel(attr_description)
         plt.scatter(page_rank_list,li,c='black')
         plt.grid()
+        
+        plt.show()
 
         
 
