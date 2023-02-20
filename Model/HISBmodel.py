@@ -10,8 +10,15 @@ plt.style.use('ggplot')
 
 
 class HSIBmodel():
-    def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=np.Infinity, method='none',verbose=False):
+    def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=np.Infinity,k=0, method='none',verbose=False):
         
+        if method != 'none':
+            self.method = method
+            self.k = k
+            self.Tdet=Tdet
+            pass
+
+
         self.setptime = setptime
         self.Graph = Graph
         self.time = 0.125
@@ -90,7 +97,13 @@ class HSIBmodel():
             self.OpinionSupporting += 1
         else:
             self.OpinionDenying += 1
+    def applyRIM(self):
 
+        if self.method == 'BLNS':
+            pass
+        if self.method == 'RBLNS':
+            pass
+        
     def runModel(self, i=0, typeOfSim=1, send_end=0):
         if self.verbose:
             print(f'Simulation number {i} is on run')
@@ -154,7 +167,7 @@ class HSIBmodel():
                                 elif (self.Graph.nodes[id]['opinion'] == "D"):
                                     self.Graph.nodes[each]['Accp_NegR'] += 1
 
-            
+            self.applyRIM()
         # save each step to send it to viewing later
             new = pd.DataFrame(data={'Non_Infected': self.Nbr_nonInfected,
                                      'Infected': self.Nbr_Infected,
