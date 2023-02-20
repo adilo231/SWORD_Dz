@@ -48,15 +48,15 @@ if __name__ == '__main__':
         end_time = time.time()
         print('Parallel time: ', end_time-start_time)
     
-    fig, axes = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
-    for name, ax in zip(['Infected','Suporting','Denying'], axes):
-        sns.boxplot(data=SimulationResults, x='sim', y=name, ax=ax)
-        ax.set_ylabel('Number of individuals')
-        ax.set_title(name)
-    # Remove the automatic x-axis label from all but the bottom subplot
-    if ax != axes[-1]:
-        ax.set_xlabel('')
-    plt.show()
+        fig, axes = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
+        for name, ax in zip(['Infected','Suporting','Denying'], axes):
+            sns.boxplot(data=SimulationResults, x='sim', y=name, ax=ax)
+            ax.set_ylabel('Number of individuals')
+            ax.set_title(name)
+        # Remove the automatic x-axis label from all but the bottom subplot
+        if ax != axes[-1]:
+            ax.set_xlabel('')
+        plt.show()
    
 
     # Get the DataFrame results from simulation
