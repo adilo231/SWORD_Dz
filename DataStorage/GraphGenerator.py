@@ -1,5 +1,6 @@
 import numpy as np
 import networkx as nx
+# need three class 1 mother and two daughters , one for suthetic graphs the other one to extract from the DB
 
 def GetRandomValues(n, min, max):
         return (np.random.rand(n)*(max - min)) + min

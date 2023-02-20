@@ -35,6 +35,7 @@ class RumorSimulator():
 
     def DisplyResults(self,results,resultType=1):
         if resultType==1:
+            #to compleeete this one
             fig, axe = plt.subplots(2, 3)
             for df_rep in results:
                 df = df_rep.recv()
