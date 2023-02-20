@@ -299,7 +299,6 @@ def Create_Data_Globale(results ):
     Stat_Global=pd.DataFrame()
     max=0
     Stat=[]
-    print (type(results))
     for each in results:
         
         L=len(each)
@@ -365,7 +364,6 @@ def Create_Data_Globale(results ):
     for j in range(max):
         
             b=j*0.125
-            print(b)
             new =pd.DataFrame(data={'Non_Infected': y0[j],
                                         'Infected': y1[j],
                                         'Spreaders': y2[j],
