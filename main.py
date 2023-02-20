@@ -1,15 +1,10 @@
-import Model.HISBmodel as m
 import DataStorage.GraphGenerator as gg
+import Model.Simulator as sim
 import numpy as np
-import networkx as nx
 import pandas as pd
-import seaborn as sns
-import random
-import matplotlib.pyplot as plt
-import matplotlib
-import multiprocessing
 import time
-import DataStorage.GraphGenerator as gg
+from tqdm import  tqdm
+
 
 if __name__ == '__main__':
 
@@ -38,53 +33,34 @@ if __name__ == '__main__':
     # print('simulation')
 
     # run simple simulation and display
-    # print(seedNode,seedOpinion,len(seedNode),len(seedOpinion))
-    # print(g.nodes[0]['jug'])
+
     # sim=HSIBmodel(g,seedNode,seedOpinion)
     # sim.runModel()
     # sim.DisplyResults()
-
-    # # Run multiple and paralle simulations than display
-    # start_time = time.time()
-    # dfs = Simulations(3, g, seedNode, seedOpinion, 1)
-    # end_time = time.time()
-    # print('Parallel time: ', end_time-start_time)
-    # DisplyResults(dfs)
-
-    #Run multiple and paralle simulations get final results
-    start_time = time.time()
     parameters = {'omega_min': np.pi/24,
                   'omega_max': np.pi*2,
                   "delta_min": np.pi/24,
                   "delta_max": np.pi/2,
                   "jug_min": 0.7,
                   "jug_max": 0.99,
-                  "beta_max": 1.2,
-                  "beta_min": 0.8}
-    SimulationResults= pd.DataFrame()
-    for beta in np.arange(0.1,1,0.05):
-        parameters['beta_min']=beta
-        parameters['beta_max']=beta+0.1
-        g = m.CreateGraph(parameters, n)
-        results = m.Simulations(5, g,seedsSize=0.05, typeOfSim= 2)
-        SimulationResults = m.CreateDataFrame(results,SimulationResults,sim=f'beta=[{beta},{beta+0.1}]')
-        
+                  "beta_max": 0.6,
+                  "beta_min": 0.1}
+    # # Run multiple and paralle simulations than display
+    Generator=gg.CreateSytheticGraph()
+    Simulator = sim.RumorSimulator()
+
+    g = Generator.CreateGraph(parameters,graphModel='AB',Graph_size=n)     
+    start_time = time.time()
+    df=pd.DataFrame()
+    for i in tqdm(range(0,5)):
+
+        Generator.InitParameters(g,parameters)
+        aux = Simulator.runSimulation(g, NbrSim=50 ,seedsSize=0.05, typeOfSim=2,simName=f'sim{i}')
+        df=pd.concat([df,aux])
+
     end_time = time.time()
     print('Parallel time: ', end_time-start_time)
-    
-    fig, axes = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
-    for name, ax in zip(['Infected','Suporting','Denying'], axes):
-        sns.boxplot(data=SimulationResults, x='sim', y=name, ax=ax)
-        ax.set_ylabel('Number of individuals')
-        ax.set_title(name)
-    # Remove the automatic x-axis label from all but the bottom subplot
-    if ax != axes[-1]:
-        ax.set_xlabel('')
-    plt.show()
-   
 
-    # Get the DataFrame results from simulation
-    # for x in pipe_list:
 
-    #  print((x.recv().shape))
-    gg.printGraph()
+    Simulator.DisplyResults( df,resultType=2)
+    print(df)
