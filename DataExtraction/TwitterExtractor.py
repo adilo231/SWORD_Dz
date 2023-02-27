@@ -110,7 +110,7 @@ class TweetExtractor():
 
                 with self.graphDB_Driver.driver.session() as session:
                     session.run(""" MATCH (u:User {id: $user_id})
-                            SET u.screen_name=$screen_name  
+                            SET u.screen_name=$screen_name,  
                                 u.id_str= $id_str,
                                 u.followers_count= $followers_count,
                                 u.location= $location,
@@ -118,7 +118,7 @@ class TweetExtractor():
                                 u.MongoCol= $mongo_col,
                                 u.Checked= $checked 
                             RETURN u""",
-                            screen_name=user['screen_name']
+                            screen_name=user['screen_name'],
                             user_id=str(user['id']),
                             id_str=user['id_str'],
                             followers_count=user['followers_count'],
