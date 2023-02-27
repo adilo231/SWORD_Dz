@@ -98,7 +98,7 @@ class HSIBmodel():
             self.OpinionSupporting += 1
         else:
             self.OpinionDenying += 1
-    def neighbor(self,Spreaders,g):
+    def neighbor(self,g):
         neighb=[]
         MaxD=[]
         Cente=[]
@@ -106,7 +106,7 @@ class HSIBmodel():
     
         Cent=((nx.degree_centrality(g)))
         
-        for i in Spreaders:
+        for i in self.ListInfectedNodes:
             n=g.neighbors(i)
             
             for j in n:
@@ -117,20 +117,10 @@ class HSIBmodel():
                         MaxD.append(g.degree[j])
                         beta.append(g.nodes[j]['beta'])
                       
-        return neighb,MaxD,Cente,beta
-    def search_spreaders(self,G,sp):
-        
-        l=len(G.nodes)
-        for i in range (l):
-            if ( G.nodes[i]['state']=='spreaders'):
-               sp.append(i)                
+        return neighb,MaxD,Cente,beta                
     def Beta_Blocking_nodes(self,G,k):
             
-        sp=[]
-    
-        self.search_spreaders(G,sp)
-    
-        nb,DNode,cen,Bet=self.neighbor(sp,G)
+        nb,DNode,cen,Bet=self.neighbor(G)
         
         print("aaa")
         for i in range(k):
@@ -138,12 +128,11 @@ class HSIBmodel():
                 ID = Bet.index(min(Bet))
                 G.nodes[nb[ID]]['blocked']='True'
                 Bet.pop(ID)
-                nb.pop(ID)    
-        print("ffff")            
+                nb.pop(ID)                
     def Random_Blocking_nodes(self,Graphe,k):
-        sp=[]
-        self.search_spreaders(Graphe,sp)
-        nb,d,cen,Bet=self.neighbor(sp,Graphe)
+       
+        
+        nb,d,cen,Bet=self.neighbor(Graphe)
         size=len(nb)
         if k>size:
           k=size-1
@@ -154,11 +143,8 @@ class HSIBmodel():
             size-=1
     def Degree_MAX_Blocking_nodes(self,G,k):
             
-        sp=[]
     
-        self.search_spreaders(G,sp)
-    
-        nb,DNode,cen,Bet=self.neighbor(sp,G)
+        nb,DNode,cen,Bet=self.neighbor(G)
         
 
         for i in range(k):
@@ -170,10 +156,7 @@ class HSIBmodel():
 
     def Centrality_Blocking_nodes(self,G,k):
             
-        sp=[]
-    
-        self.search_spreaders(G,sp)
-        nb,DNode,cen,Bet=self.neighbor(sp,G)
+        nb,DNode,cen,Bet=self.neighbor(G)
         for i in range(k):
                 
                 ID = cen.index(max(cen))
@@ -272,8 +255,8 @@ class HSIBmodel():
                                      'Spreaders': Nbr_Spreaders,
                                      'Opinion_Denying': self.OpinionDenying,
                                      'Opinion_Supporting': self.OpinionSupporting,
-                                     'RumorPopularity': RumorPopularity
-                                     }, index=[time])
+                                     'RumorPopularity': RumorPopularity,
+                                     'method':self.method                                     }, index=[time])
             self.Statistical = pd.concat([self.Statistical, new])
             time += self.setptime
         if self.verbose:
@@ -300,7 +283,7 @@ class HSIBmodel():
                 
                 Stat.append(self.Statistical)   
             elif typeOfSim == 2:          
-                Stat.append([self.Nbr_Infected,self.OpinionDenying,self.OpinionSupporting])
+                Stat.append([self.Nbr_Infected,self.OpinionDenying,self.OpinionSupporting,self.method])
                 
 
                 

@@ -31,11 +31,12 @@ class RumorSimulator():
                 
         
 
-    def DisplyResults(self,l,l1,resultType=1):
+    def DisplyResults(self,results,resultType=1):
+        color=['black','red','yellow','green','blue','purple','orange','oliver','cyan','maroon','lime','pink','silver','magenta']
         if resultType==0:
            # création de la grille de sous-graphiques
             fig, axs = plt.subplots(nrows=4, ncols=4, figsize=(12, 12))
-
+            
             # tracé de chaque variable en fonction de chaque variable de centralité
             axs[0, 0].scatter(results["deg_cent"], results["AccpR"])
             axs[0, 0].set_xlabel("Degree Centrality")
@@ -106,35 +107,44 @@ class RumorSimulator():
 
             # affichage du plot
             plt.show()
-        color=['black','red','yellow','green','blue']   
+           
         if resultType==1:
             fig, axe= plt.subplots(2,3)
-            # col=results.columns
-            # col2=result_without.columns
             for i, ax in enumerate(axe.flat):
-                # ax.plot(results.index, results[col[i]], color='blue', label=  method+' method ')
-                # ax.plot(result_without.index, result_without[col2[i]], color='orange', label='without RIM method')
-                for j in  range(len(l) ):
-                    col=l[j].columns
-                    ax.plot(l[j].index, l[j][col[i]], color=str(color[j]), label= str(l1[j])+'method ')
+                for j in  range(len(results) ):
+                    
+                    col=results[j].columns
+                    ax.plot(results[j].index, results[j][col[i]], color=str(color[j]), label=results[j]['method'][0]+' method ')
                     ax.set_title(f'The evolution of {col[i]}')
                     ax.set_ylabel(f'Number of {col[i]}')
                     ax.set_xlabel(f'Time')
                     ax.legend()
             plt.show()
-        elif resultType==2:
+        elif resultType == 2:
+        # Concatenate all results into a single dataframe
+            all_results = pd.concat(results)
+            print(all_results)
+            
+            # Create a figure with a subplot for each measure
             fig, axes = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
-            for name, ax in zip(['Infected','Suporting','Denying'], axes):
-                sns.boxplot(data=results, x='sim', y=name, ax=ax)
-                ax.set_ylabel('Number of individuals')
-                ax.set_title(name)
+            
+            # Loop over each measure and create a boxplot for each simulation method
+            for i, name in enumerate(['Infected', 'Suporting', 'Denying']):
+                sns.boxplot(data=all_results, x='method', y=name, ax=axes[i])
+                axes[i].set_ylabel('Number of individuals')
+                axes[i].set_title(name)
+                
             # Remove the automatic x-axis label from all but the bottom subplot
-            if ax != axes[-1]:
-                ax.set_xlabel('')
-        
+            if axes[0] != axes[-1]:
+                for ax in axes[:-1]:
+                    ax.set_xlabel('')
+            
             plt.show()
 
-    def CreateSimulationsDF(self,results,df ,simName=1):
+
+
+
+    def CreateSimulationsDF(self,results,df ,simName=1,timeStemp=0.125):
       
        if(simName==0):
            Stat_Global=pd.DataFrame()
@@ -181,21 +191,23 @@ class RumorSimulator():
            for i in range(len(Stat)):
                 L=len(Stat[i])
                 
-                a=0.125*(L-1)
+                a=timeStemp*(L-1)
                 Nbr_nonInfected=Stat[i]['Non_Infected'][a]
                 Nbr_Infected=Stat[i]['Infected'][a]
                 Nbr_Spreaders=Stat[i]['Spreaders'][a]
                 OpinionDenying=Stat[i]['Opinion_Denying'][a]
                 OpinionSupporting=Stat[i]['Opinion_Supporting'][a]
                 RumorPopularity=Stat[i]['RumorPopularity'][a]
+                method=Stat[i]['method'][a]
                 for j in range(L,max):
-                    b=j*0.125
+                    b=j*timeStemp
                     new =pd.DataFrame(data={'Non_Infected': Nbr_nonInfected,
                                                 'Infected': Nbr_Infected,
                                                 'Spreaders': Nbr_Spreaders,
                                                 'Opinion_Denying': OpinionDenying,
                                                 'Opinion_Supporting': OpinionSupporting,
-                                                'RumorPopularity': RumorPopularity
+                                                'RumorPopularity': RumorPopularity,
+                                                'method':method
                                                 },index=[b])
                     Stat[i] =pd.concat([Stat[i], new])
                 #self.DisplyResults(Stat[i],1)
@@ -208,7 +220,7 @@ class RumorSimulator():
              
            Len=len(Stat)
            for i in range(max):
-                a=i*0.125
+                a=i*timeStemp
                 
                 
                 No_Infected=0
@@ -217,6 +229,7 @@ class RumorSimulator():
                 RumorPopularity=0
                 OpinionDenying=0
                 OpinionSupporting=0
+                method=''
                 for each in Stat:
                     
                     No_Infected+=(each['Non_Infected'][a])           
@@ -225,6 +238,7 @@ class RumorSimulator():
                     RumorPopularity+=(each['RumorPopularity'][a])
                     OpinionDenying+=(each['Opinion_Denying'][a])
                     OpinionSupporting+=(each['Opinion_Supporting'][a])
+                    method=each['method'][a]
                 #print("----")
                 y0.append(No_Infected/Len)
                 y1.append(Infected/Len)
@@ -235,13 +249,14 @@ class RumorSimulator():
             #print(y1)
            for j in range(max):
                 
-                    b=j*0.125
+                    b=j*timeStemp
                     new =pd.DataFrame(data={'Non_Infected': y0[j],
                                                 'Infected': y1[j],
                                                 'Spreaders': y2[j],
                                                 'Opinion_Denying': y4[j],
                                                 'Opinion_Supporting': y5[j],
-                                                'RumorPopularity': y3[j]
+                                                'RumorPopularity': y3[j],
+                                                'method':method
                                                 },index=[b])
                     Stat_Global =pd.concat([Stat_Global, new])
 
@@ -255,6 +270,7 @@ class RumorSimulator():
             df= pd.DataFrame(data={'Infected':l[0],
                                 'Suporting':l[1],
                                 'Denying':l[2],
+                                'method':l[3],
                                 'sim':simName},index=[0])
             start=1
         
