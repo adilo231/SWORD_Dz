@@ -7,3 +7,11 @@ __pycache__/
 main.py
 .DS*
 /DataExtraction
+
+/APP_Init
+/conf
+/data
+/import
+/logs
+/plugins
+/all-rnr-annotated-threads

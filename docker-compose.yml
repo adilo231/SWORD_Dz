@@ -1,0 +1,25 @@
+
+neo4j:
+  image: neo4j:3.5
+  restart: unless-stopped
+  container_name: graphDB
+  ports:
+    - 7474:7474
+    - 7687:7687
+  volumes:
+    - ./conf:/conf
+    - ./Data/neo4j:/data
+    - ./import:/import
+    - ./logs:/logs
+    - ./plugins:/plugins
+
+mongo:
+  image: 'mongo:latest'
+  restart: unless-stopped
+  container_name: DocDB
+  ports: 
+    - "27017:27017"
+
+  volumes:
+    - ./Data/mongo/:/data/db
+
