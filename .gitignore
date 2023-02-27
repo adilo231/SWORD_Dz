@@ -5,10 +5,8 @@ __pycache__/
 /Data
 /OldCodes
 
-.DS*
-neo4j.ipynb
 
-
+/font
 /APP_Init
 /conf
 /data
@@ -16,3 +14,7 @@ neo4j.ipynb
 /logs
 /plugins
 /all-rnr-annotated-threads
+
+main.py
+.DS*
+neo4j.ipynb
