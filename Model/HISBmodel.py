@@ -167,7 +167,7 @@ class HSIBmodel():
                                 elif (self.Graph.nodes[id]['opinion'] == "D"):
                                     self.Graph.nodes[each]['Accp_NegR'] += 1
 
-            self.applyRIM()
+            #self.applyRIM()
         # save each step to send it to viewing later
             new = pd.DataFrame(data={'Non_Infected': self.Nbr_nonInfected,
                                      'Infected': self.Nbr_Infected,
