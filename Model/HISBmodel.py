@@ -12,7 +12,9 @@ plt.style.use('ggplot')
 
 class HSIBmodel():
     def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=np.Infinity,k=0, method='none',verbose=False):
+        '''
         
+        '''
         if method != 'none':
             self.method = method
             self.k = k
@@ -98,26 +100,24 @@ class HSIBmodel():
             self.OpinionSupporting += 1
         else:
             self.OpinionDenying += 1
+    
     def neighbor(self,Spreaders,g):
+
         neighb=[]
         MaxD=[]
         Cente=[]
         beta=[]
-    
         Cent=((nx.degree_centrality(g)))
-        
-        for i in Spreaders:
-            n=g.neighbors(i)
-            
-            for j in n:
-                if j not in self.ListInfectedNodes :
-                    if j not in neighb :
-                        neighb.append(j)
-                        Cente.append(Cent[j])
-                        MaxD.append(g.degree[j])
-                        beta.append(g.nodes[j]['beta'])
-                      
+        for spreader in self.ListInfectedNodes:
+            for neighbord in g.neighbors(spreader):
+                if neighbord not in self.ListInfectedNodes :
+                    if neighbord not in neighb :
+                        neighb.append(neighbord)
+                        Cente.append(Cent[neighbord])
+                        MaxD.append(g.degree[neighbord])
+                        beta.append(g.nodes[neighbord]['beta'])      
         return neighb,MaxD,Cente,beta
+    
     def search_spreaders(self,G,sp):
         
         l=len(G.nodes)
@@ -125,21 +125,20 @@ class HSIBmodel():
             if ( G.nodes[i]['state']=='spreaders'):
                sp.append(i)                
     def Beta_Blocking_nodes(self,G,k):
-            
-        sp=[]
-    
-        self.search_spreaders(G,sp)
-    
-        nb,DNode,cen,Bet=self.neighbor(sp,G)
-        
-        print("aaa")
-        for i in range(k):
-                
-                ID = Bet.index(min(Bet))
-                G.nodes[nb[ID]]['blocked']='True'
-                Bet.pop(ID)
-                nb.pop(ID)    
-        print("ffff")            
+          # find bette way  
+        # sp=[]
+        # self.search_spreaders(G,sp)
+        # nb,_,_,Bet=self.neighbor(sp,G)
+        # IDs = Bet.sorted()[:k]
+
+
+        # for i in range(k):
+        #         ID = Bet.index(min(Bet))
+        #         G.nodes[nb[ID]]['blocked']='True'
+        #         Bet.pop(ID)
+        #         nb.pop(ID)    
+        pass
+                   
     def Random_Blocking_nodes(self,Graphe,k):
         sp=[]
         self.search_spreaders(Graphe,sp)
@@ -152,15 +151,10 @@ class HSIBmodel():
             Graphe.nodes[nb[s]]['blocked']='true'
             nb.pop(s)
             size-=1
-    def Degree_MAX_Blocking_nodes(self,G,k):
-            
+    def Degree_MAX_Blocking_nodes(self,G,k):   
         sp=[]
-    
         self.search_spreaders(G,sp)
-    
         nb,DNode,cen,Bet=self.neighbor(sp,G)
-        
-
         for i in range(k):
                 
                 ID = DNode.index(max(DNode))

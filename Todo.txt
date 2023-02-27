@@ -8,3 +8,10 @@
         - max degree
         - max beta
         - max centrality
+
+
+7- Add and option ToSave_results
+8- Generate for each Sythetic (AB,Free-scale,Random) graphe method 3 graphs (small n=100, medium n=1000 and large n=5000)
+9- Take in consederation the k value blocked node
+10-find better solution to block nodes 
+11- Think about the framework architecture

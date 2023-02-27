@@ -10,12 +10,13 @@ from multiprocessing import Manager
 class RumorSimulator():
 
     def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='non',k=0):
-        
-        sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose,method=method,k=k)
+        ''' This fonction will allow to run a severl instance of a simulation wityh multiprocessing'''
+        sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose,method=method,k=k,DetT=Det)
         if verbose:
-            print('simulations started')
+            print(f'simulations started for {method}, noberof k = {k}, DetT= {1},')
         with Manager() as manager:
             Stat=manager.list()
+            print('Stat')
             #start_time = time.time()  
             processes=[multiprocessing.Process(target=sim.runModel,args=(i,typeOfSim,Stat))for i in range(NbrSim)] 
             [process.start() for process in processes]
