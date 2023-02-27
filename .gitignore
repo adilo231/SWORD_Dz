@@ -6,3 +6,13 @@ __pycache__/
 /OldCodes
 main.py
 .DS*
+neo4j.ipynb
+
+
+/APP_Init
+/conf
+/data
+/import
+/logs
+/plugins
+/all-rnr-annotated-threads
