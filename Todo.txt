@@ -1,9 +1,9 @@
-1- To be as a class for generic files 
-2- Need three class 1 mother and two daughters , one for suthetic graphs the other one to extract from the DB
-3- To complete displat for type 1 simulation
+1- //////// To be as a class for generic files 
+2- //////// Need three class 1 mother and two daughters , one for suthetic graphs the other one to extract from the DB
+3- //////// To complete displat for type 1 simulation
 4- To have statistical analysis nodes metrics and rumor impact
 5- Add nodes metrics to the DB
-6- To implement RIM strategy
+6- ///// To implement RIM strategy
         - Randon blocking node
         - max degree
         - max beta
