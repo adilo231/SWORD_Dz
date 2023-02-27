@@ -6,7 +6,8 @@ __pycache__/
 /OldCodes
 main.py
 .DS*
-/DataExtraction
+neo4j.ipynb
+
 
 /APP_Init
 /conf
