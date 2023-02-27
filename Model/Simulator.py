@@ -1,47 +1,126 @@
 import pandas as pd
 import Model.HISBmodel as m
+import networkx as nx
 import seaborn as sns
 import matplotlib.pyplot as plt
 import multiprocessing
+from multiprocessing import Manager
 
 
 class RumorSimulator():
 
-    def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False):
-        jobs = []
-        pipe_list = []
-        sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose)
+    def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='non',k=0):
+        
+        sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose,method=method,k=k)
         if verbose:
             print('simulations started')
-        for i in range(NbrSim):
-            recv_end, send_end = multiprocessing.Pipe(False)
-            p = multiprocessing.Process(
-                target=sim.runModel, args=(i, typeOfSim, send_end))
-            jobs.append(p)
-            pipe_list.append(recv_end)
+        with Manager() as manager:
+            Stat=manager.list()
+            #start_time = time.time()  
+            processes=[multiprocessing.Process(target=sim.runModel,args=(i,typeOfSim,Stat))for i in range(NbrSim)] 
+            [process.start() for process in processes]
+            [process.join() for process in processes]
+            df= pd.DataFrame()
+            if typeOfSim==0:
+                df=self.CreateSimulationsDF(results= Stat,df= df ,simName= typeOfSim)
+                result=self.showNetworkMeasuresStatistics(g,df)
+                return result
+            else:
+                df=self.CreateSimulationsDF(results= Stat,df= df ,simName= typeOfSim)
+                return df
+                
+        
 
-        for proc in jobs:
-            proc.start()
-        for proc in jobs:
-            proc.join()
-        if verbose:
-            print('simulations started finished')
-        df= pd.DataFrame()
-        df=self.CreateSimulationsDF(pipe_list, df ,typeOfSim)
-        return df
+    def DisplyResults(self,l,l1,resultType=1):
+        if resultType==0:
+           # création de la grille de sous-graphiques
+            fig, axs = plt.subplots(nrows=4, ncols=4, figsize=(12, 12))
+
+            # tracé de chaque variable en fonction de chaque variable de centralité
+            axs[0, 0].scatter(results["deg_cent"], results["AccpR"])
+            axs[0, 0].set_xlabel("Degree Centrality")
+            axs[0, 0].set_ylabel("AccpR")
+
+            axs[0, 1].scatter(results["clos_cent"], results["AccpR"])
+            axs[0, 1].set_xlabel("Closeness Centrality")
+            axs[0, 1].set_ylabel("AccpR")
+
+            axs[0, 2].scatter(results["betw_cent"], results["AccpR"])
+            axs[0, 2].set_xlabel("Betweenness Centrality")
+            axs[0, 2].set_ylabel("AccpR")
+
+            axs[0, 3].scatter(results["page_rank"], results["AccpR"])
+            axs[0, 3].set_xlabel("Page Rank")
+            axs[0, 3].set_ylabel("AccpR")
+
+            axs[1, 0].scatter(results["deg_cent"], results["SendR"])
+            axs[1, 0].set_xlabel("Degree Centrality")
+            axs[1, 0].set_ylabel("SendR")
+
+            axs[1, 1].scatter(results["clos_cent"], results["SendR"])
+            axs[1, 1].set_xlabel("Closeness Centrality")
+            axs[1, 1].set_ylabel("SendR")
+
+            axs[1, 2].scatter(results["betw_cent"], results["SendR"])
+            axs[1, 2].set_xlabel("Betweenness Centrality")
+            axs[1, 2].set_ylabel("SendR")
+
+            axs[1, 3].scatter(results["page_rank"], results["SendR"])
+            axs[1, 3].set_xlabel("Page Rank")
+            axs[1, 3].set_ylabel("SendR")
+
+            axs[2, 0].scatter(results["deg_cent"], results["Accp_NegR"])
+            axs[2, 0].set_xlabel("Degree Centrality")
+            axs[2, 0].set_ylabel("Accp_NegR")
+
+            axs[2, 1].scatter(results["clos_cent"], results["Accp_NegR"])
+            axs[2, 1].set_xlabel("Closeness Centrality")
+            axs[2, 1].set_ylabel("Accp_NegR")
+
+            axs[2, 2].scatter(results["betw_cent"], results["Accp_NegR"])
+            axs[2, 2].set_xlabel("Betweenness Centrality")
+            axs[2, 2].set_ylabel("Accp_NegR")
+
+            axs[2, 3].scatter(results["page_rank"], results["Accp_NegR"])
+            axs[2, 3].set_xlabel("Page Rank")
+            axs[2, 3].set_ylabel("Accp_NegR")
+            axs[3, 0].scatter(results["deg_cent"], results["Nb_Accpted_Rm"])
+            axs[3, 0].set_xlabel("Degree Centrality")
+            axs[3, 0].set_ylabel("Nb_Accpted_Rm")
+
+            axs[3, 1].scatter(results["clos_cent"], results["Nb_Accpted_Rm"])
+            axs[3, 1].set_xlabel("Closeness Centrality")
+            axs[3, 1].set_ylabel("Nb_Accpted_Rm")
+
+            axs[3, 2].scatter(results["betw_cent"], results["Nb_Accpted_Rm"])
+            axs[3, 2].set_xlabel("Betweenness Centrality")
+            axs[3, 2].set_ylabel("Nb_Accpted_Rm")
+
+            axs[3, 3].scatter(results["page_rank"], results ["Nb_Accpted_Rm"])
+            axs[3, 3].set_xlabel("Page Rank")
+            axs[3, 3].set_ylabel("Nb_Accpted_Rm")
 
 
-    # Crete Random graphe
+            # ajustement des espaces entre les subplots
+            plt.tight_layout()
 
-    def DisplyResults(self,results,resultType=1):
+            # affichage du plot
+            plt.show()
+        color=['black','red','yellow','green','blue']   
         if resultType==1:
             fig, axe= plt.subplots(2,3)
-            col=results.columns
+            # col=results.columns
+            # col2=result_without.columns
             for i, ax in enumerate(axe.flat):
-                ax.plot(results.index,results[col[i]])
-                ax.set_title(f'The evolution of {col[i]}')
-                ax.set_ylabel(f'Number of {col[i]}')
-                ax.set_xlabel(f'Time')
+                # ax.plot(results.index, results[col[i]], color='blue', label=  method+' method ')
+                # ax.plot(result_without.index, result_without[col2[i]], color='orange', label='without RIM method')
+                for j in  range(len(l) ):
+                    col=l[j].columns
+                    ax.plot(l[j].index, l[j][col[i]], color=str(color[j]), label= str(l1[j])+'method ')
+                    ax.set_title(f'The evolution of {col[i]}')
+                    ax.set_ylabel(f'Number of {col[i]}')
+                    ax.set_xlabel(f'Time')
+                    ax.legend()
             plt.show()
         elif resultType==2:
             fig, axes = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
@@ -56,10 +135,38 @@ class RumorSimulator():
             plt.show()
 
     def CreateSimulationsDF(self,results,df ,simName=1):
+      
+       if(simName==0):
+           Stat_Global=pd.DataFrame()
+           
+           L=len(results[0])
+           for i in range(L):
+               AccpR=0
+               SendR=0
+               Accp_NegR=0
+               Nb_Accpted_Rm=0
+               for stat in results:
+                   AccpR+=stat['AccpR'][i]
+                   SendR+=stat['SendR'][i]
+                   Accp_NegR+=stat['Accp_NegR'][i]
+                   Nb_Accpted_Rm+=stat['Nb_Accpted_Rm'][i]
+               AccpR=int(AccpR/len(results))
+               SendR=int(SendR/len(results))
+               Accp_NegR=int(Accp_NegR/len(results))
+               Nb_Accpted_Rm=int(Nb_Accpted_Rm/len(results))
+               new =pd.DataFrame(data={'AccpR': AccpR,
+                                                'SendR':SendR,
+                                                'Accp_NegR': Accp_NegR,
+                                                'Nb_Accpted_Rm': Nb_Accpted_Rm,
+                                                
+                                                },index=[i])
+               Stat_Global =pd.concat([Stat_Global, new])
+           #print(Stat_Global)   
+           return Stat_Global       
+                       
+                       
        if(simName==1):
-           for i in range(len(results)):
-                results[i]=results[i].recv()
-            
+               
            Stat_Global=pd.DataFrame()
            max=0
            Stat=[]
@@ -91,7 +198,7 @@ class RumorSimulator():
                                                 'RumorPopularity': RumorPopularity
                                                 },index=[b])
                     Stat[i] =pd.concat([Stat[i], new])
-                #DisplyResultsT(Stat[i])
+                #self.DisplyResults(Stat[i],1)
            y0=[]
            y1=[]
            y2=[]
@@ -138,21 +245,93 @@ class RumorSimulator():
                                                 },index=[b])
                     Stat_Global =pd.concat([Stat_Global, new])
 
-              
+           print(Stat_Global)   
            return Stat_Global      
        
        elif(simName==2):
         start=0
         if df.empty:
-            l=results[0].recv()
+            l=results[0]
             df= pd.DataFrame(data={'Infected':l[0],
                                 'Suporting':l[1],
                                 'Denying':l[2],
                                 'sim':simName},index=[0])
             start=1
+        
         for i in range(start,len(results)):
-            l=results[i].recv()
+            l=results[i]
             l.append(simName)
             df.loc[df.shape[0]]=l
         print(df)
+       
         return df 
+   
+    def showNetworkMeasuresStatistics(self,Graph,data_global):
+        print ("showing network measures statistics")
+        #calculate network measures
+        deg_cent=nx.degree_centrality(Graph)
+        clos_cent=nx.closeness_centrality(Graph)
+        betw_cent=nx.betweenness_centrality(Graph)
+        page_rank=nx.pagerank(Graph,alpha=0.8)
+
+
+        #prepare the data in the apropreate format
+        for i in range(len(data_global)):
+            data_global.loc[i, 'deg_cent'] = float(deg_cent[i])
+            data_global.loc[i, 'clos_cent'] = float(clos_cent[i])
+            data_global.loc[i, 'betw_cent'] = float(betw_cent[i])
+            data_global.loc[i, 'page_rank'] = float(page_rank[i])
+        print(data_global)
+        return data_global
+
+        #plot the statistics for the three attributes "AccpR", "SendR", "Accp_NegR" and "Nb_Accpted_Rm"
+        # for attr in ['AccpR','SendR','Accp_NegR','Nb_Accpted_Rm']:
+        #     li=[]
+           
+        #     attr_description=""
+        #     if attr == 'AccpR':
+        #         li=list_AccpR
+        #         numfig="1"
+        #         attr_description="Acceptnece of Rumors"
+        #     if attr == 'SendR':
+        #         li=list_SendR
+        #         numfig="2"
+        #         attr_description="Send of Rumors"
+        #     if attr == 'Accp_NegR':
+        #         li=list_Accp_NegR
+        #         numfig="3"
+        #         attr_description="Accept Negatif Rumors"
+        #     if attr == 'Nb_Accpted_Rm':
+        #         li=list_Nb_Accpted_Rm
+        #         numfig="4"
+        #         attr_description="Number of sent and accepted rumors"
+        #     # print("li: ",li)
+        #     # print("deg_cent_list : ",deg_cent_list)
+        #     plt.rcParams["figure.figsize"] = (15,8) 
+        #     fig = plt.figure("Figure "+numfig)
+
+        #     plt.subplot(2,2,1)
+        #     plt.xlabel('Degree Centrality')
+        #     plt.ylabel(attr_description)
+        #     plt.scatter(deg_cent_list,li,c='r')
+        #     plt.grid()
+
+        #     plt.subplot(2,2,2)
+        #     plt.xlabel('Closeness Centrality')
+        #     plt.ylabel(attr_description)
+        #     plt.scatter(clos_cent_list,li,c='g')
+        #     plt.grid()
+
+        #     plt.subplot(2,2,3)
+        #     plt.xlabel('Betweenness Centrality')
+        #     plt.ylabel(attr_description)
+        #     plt.scatter(betw_cent_list,li,c='b')
+        #     plt.grid()
+
+        #     plt.subplot(2,2,4)
+        #     plt.xlabel('Page rank')
+        #     plt.ylabel(attr_description)
+        #     plt.scatter(page_rank_list,li,c='black')
+        #     plt.grid()
+
+        #     plt.show()

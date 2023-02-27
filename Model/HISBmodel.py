@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import random
 import matplotlib.pyplot as plt
+import networkx as nx 
 
 
 
@@ -97,14 +98,106 @@ class HSIBmodel():
             self.OpinionSupporting += 1
         else:
             self.OpinionDenying += 1
+    def neighbor(self,Spreaders,g):
+        neighb=[]
+        MaxD=[]
+        Cente=[]
+        beta=[]
+    
+        Cent=((nx.degree_centrality(g)))
+        
+        for i in Spreaders:
+            n=g.neighbors(i)
+            
+            for j in n:
+                if j not in self.ListInfectedNodes :
+                    if j not in neighb :
+                        neighb.append(j)
+                        Cente.append(Cent[j])
+                        MaxD.append(g.degree[j])
+                        beta.append(g.nodes[j]['beta'])
+                      
+        return neighb,MaxD,Cente,beta
+    def search_spreaders(self,G,sp):
+        
+        l=len(G.nodes)
+        for i in range (l):
+            if ( G.nodes[i]['state']=='spreaders'):
+               sp.append(i)                
+    def Beta_Blocking_nodes(self,G,k):
+            
+        sp=[]
+    
+        self.search_spreaders(G,sp)
+    
+        nb,DNode,cen,Bet=self.neighbor(sp,G)
+        
+        print("aaa")
+        for i in range(k):
+                
+                ID = Bet.index(min(Bet))
+                G.nodes[nb[ID]]['blocked']='True'
+                Bet.pop(ID)
+                nb.pop(ID)    
+        print("ffff")            
+    def Random_Blocking_nodes(self,Graphe,k):
+        sp=[]
+        self.search_spreaders(Graphe,sp)
+        nb,d,cen,Bet=self.neighbor(sp,Graphe)
+        size=len(nb)
+        if k>size:
+          k=size-1
+        for i in range(k):
+            s=random.randint(0, size-1)
+            Graphe.nodes[nb[s]]['blocked']='true'
+            nb.pop(s)
+            size-=1
+    def Degree_MAX_Blocking_nodes(self,G,k):
+            
+        sp=[]
+    
+        self.search_spreaders(G,sp)
+    
+        nb,DNode,cen,Bet=self.neighbor(sp,G)
+        
+
+        for i in range(k):
+                
+                ID = DNode.index(max(DNode))
+                G.nodes[nb[ID]]['blocked']='True'
+                DNode.pop(ID)
+                nb.pop(ID)  
+
+    def Centrality_Blocking_nodes(self,G,k):
+            
+        sp=[]
+    
+        self.search_spreaders(G,sp)
+        nb,DNode,cen,Bet=self.neighbor(sp,G)
+        for i in range(k):
+                
+                ID = cen.index(max(cen))
+                G.nodes[nb[ID]]['blocked']='True'
+                cen.pop(ID)
+                nb.pop(ID) 
+       
     def applyRIM(self):
 
-        if self.method == 'BLNS':
-            pass
-        if self.method == 'RBLNS':
-            pass
+        if self.method == 'RBN' and self.k != 0:
+            self.Random_Blocking_nodes(self.Graph,self.k)
+            self.k=0
+        if self.method == 'BBN' and self.k != 0:
+            self.Beta_Blocking_nodes(self.Graph,self.k)
+            self.k=0
+        if self.method == 'DMBN' and self.k != 0:
+            self.Degree_MAX_Blocking_nodes(self.Graph,self.k)
+            self.k=0
+        if self.method == 'BCN' and self.k != 0:
+            self.Centrality_Blocking_nodes(self.Graph,self.k)
+            self.k=0
+            
         
-    def runModel(self, i=0, typeOfSim=1, send_end=0):
+    def runModel(self, i=0, typeOfSim=1, Stat=0):
         if self.verbose:
             print(f'Simulation number {i} is on run')
         time = 0.125
@@ -136,7 +229,7 @@ class HSIBmodel():
                     if (c <= ActualAttraction):
                         Nbr_Spreaders += 1
                         self.Graph.nodes[id]['state'] = 'spreaders'
-                        neighbours = list(self.Graph.neighbors(id))
+                        neighbours = list(self.Graph.neighbors(id)) 
                         # Calculating if any nodes of those neighbours can be activated, if yes add them to new_ones.
                         success = np.random.uniform(
                             0, 1, len(neighbours)) < self.Probability  # choic alpha nodes
@@ -148,26 +241,31 @@ class HSIBmodel():
                         for each in new_ones:
                             # Acceptance of the Rumor Probability
                             ProbToAccRumor = self.Graph.degree(id) / (self.Graph.degree(id) + self.Graph.degree(each))*self.baisAccepte
-                            if(np.random.rand() <= ProbToAccRumor):
+                            if (self.Graph.nodes[each]['blocked'] =='false'):
+                                if(np.random.rand() <= ProbToAccRumor ):
 
-                                self.Graph.nodes[each]['AccpR'] += 1
-
-                                if (self.Graph.nodes[each]['Infetime'] == 0):
-                                    self.Nbr_Infected += 1
-                                    self.Nbr_nonInfected -= 1
-                                    self.Graph.nodes[each]['Infetime'] = time
-                                    self.Graph.nodes[each]['opinion'] = self.Graph.nodes[id]['opinion']
-                                    self.ListInfectedNodes.append(each)
-                                    if (self.Graph.nodes[each]['opinion'] == "D"):
-                                        # negativ opinion
+                                    self.Graph.nodes[each]['AccpR'] += 1
+                                    self.Graph.nodes[id]['Nb_Accpted_Rm'] += 1
+                                    
+                                    if (self.Graph.nodes[each]['Infetime'] == 0):
+                                        self.Nbr_Infected += 1
+                                        self.Nbr_nonInfected -= 1
+                                        self.Graph.nodes[each]['Infetime'] = time
+                                        self.Graph.nodes[each]['opinion'] = self.Graph.nodes[id]['opinion']
+                                        self.ListInfectedNodes.append(each)
+                                        if (self.Graph.nodes[each]['opinion'] == "D"):
+                                            # negativ opinion
+                                            self.Graph.nodes[each]['Accp_NegR'] += 1
+                                            self.OpinionDenying += 1
+                                        else:
+                                            self.OpinionSupporting += 1
+                                    elif (self.Graph.nodes[id]['opinion'] == "D"):
                                         self.Graph.nodes[each]['Accp_NegR'] += 1
-                                        self.OpinionDenying += 1
-                                    else:
-                                        self.OpinionSupporting += 1
-                                elif (self.Graph.nodes[id]['opinion'] == "D"):
-                                    self.Graph.nodes[each]['Accp_NegR'] += 1
-
-            #self.applyRIM()
+                            else:
+                                pass
+                               #print('le noeud',each,'is blocked')
+                
+                self.applyRIM()
         # save each step to send it to viewing later
             new = pd.DataFrame(data={'Non_Infected': self.Nbr_nonInfected,
                                      'Infected': self.Nbr_Infected,
@@ -180,8 +278,30 @@ class HSIBmodel():
             time += self.setptime
         if self.verbose:
          print(f'Simulation number {i} has finnied')
-        if send_end != 0:
-            if typeOfSim == 1:
-                send_end.send(self.Statistical)
-            elif typeOfSim == 2:
-                send_end.send([self.Nbr_Infected,self.OpinionDenying,self.OpinionSupporting])
+
+    
+        if Stat != 0:
+            if typeOfSim == 0:
+                Stat_Global=pd.DataFrame()
+                
+                for i in range(self.Graph.number_of_nodes()):
+                     new =pd.DataFrame(data={'AccpR': self.Graph.nodes[i]['AccpR'],
+                                                'SendR': self.Graph.nodes[i]['SendR'],
+                                                'Accp_NegR': self.Graph.nodes[i]['Accp_NegR'],
+                                                'Nb_Accpted_Rm': self.Graph.nodes[i]['Nb_Accpted_Rm'],
+                                                
+                                                },index=[i])
+                     Stat_Global =pd.concat([Stat_Global, new])
+                print(len(Stat_Global))
+                Stat.append(Stat_Global)
+                
+
+            elif typeOfSim == 1:
+                
+                Stat.append(self.Statistical)   
+            elif typeOfSim == 2:          
+                Stat.append([self.Nbr_Infected,self.OpinionDenying,self.OpinionSupporting])
+                
+
+                
+               
