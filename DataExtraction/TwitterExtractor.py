@@ -3,6 +3,15 @@ from pymongo import MongoClient
 import time
 from DataExtraction.DBHandlers import  GraphDBHandler,DocDBHandler
 from neo4j import GraphDatabase
+import random
+
+def Algerian_location(location):
+    Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','dz','bladi']
+    if location in Locations:
+        return True
+    for loc in Locations:
+        if loc in location: return True
+    return False
 
 class TweetExtractor():
     def __init__(self,connectionStringDocDB,neo_uri,userGDB,passwordGDB,API_credentials):
@@ -94,8 +103,8 @@ class TweetExtractor():
         
         result = self.graphDB_Driver.session.run(query)
         user_ids = [record["id"] for record in result]
-        print("Number f users to be checked: ",len(user_ids))
-       
+        print("Number of users to be checked: ",len(user_ids))
+        random.shuffle(user_ids)
         # Iterate over user IDs
         for user_id in user_ids:
             
@@ -109,9 +118,9 @@ class TweetExtractor():
                     user_collection.insert_one(user)
                 else:
                     print('Already Added',user['screen_name'],user['id'])
-                if (user['location'] in Locations): Algerian=True
-                else: Algerian=False
-                print(f"get folower of user', {user['screen_name']},{user['id']} location {user['location']} : {Algerian} : {user['followers_count']< 2000}")
+                Algerian =Algerian_location(user['location']) 
+                
+                print(f"get folower of user', {user['screen_name']},{user['id']} location {user['location']} : {Algerian} : {user['followers_count']< 4000}")
                 with self.graphDB_Driver.driver.session() as session:
                     session.run(""" MATCH (u:User {id: $user_id})
                             SET u.screen_name=$screen_name,  
@@ -137,7 +146,8 @@ class TweetExtractor():
                 
                 if (Algerian and user['followers_count']< 2000 ):
                     # Get Friends IDs
-                    print(f"getting friend and follower user {user_id} of a location {user['location']} follower {user['followers_count']} friend {user['friends_count']}")
+                    print(f"\t getting friend and follower user {user_id} of a location {user['location']} ")
+                    print(f"\t\t getting friend: {user['friends_count']}")
                     for friend_id in tweepy.Cursor(self.api.friends_ids, user_id=user_id).items():
                         try:
                             friend_id = str(friend_id)
@@ -151,9 +161,9 @@ class TweetExtractor():
                             if "Rate limit exceeded" in str(e):
                                 print("Waiting for rate limit to reset...")
                                 time.sleep(60 * 15) # wait for 15 minutes
-                                
+                    print(f"\t\t getting friend end")           
 
-
+                    print(f"\t\t getting followers: {user['followers_count']}")
                     # Get Followers IDs
                     for follower_id in tweepy.Cursor(self.api.followers_ids, user_id=user_id).items():
                         try:
@@ -168,6 +178,7 @@ class TweetExtractor():
                             if "429" in str(e):
                                 print("Waiting for rate limit to reset...")
                                 time.sleep(60 * 15) # wait for 15 minutes
+                    print(f"\t\t getting followers end")
             except tweepy.TweepError as e:
                         print(f"Error fetching friends/followers of user {user_id}: {str(e)}")
                         if "429" in str(e):
