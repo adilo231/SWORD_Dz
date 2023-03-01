@@ -44,7 +44,7 @@ if __name__ == '__main__':
     # Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user_collection)
 
 
-    Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','Alger - Algérie','Algiers, Algeria']
+    Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','Alger-Algérie','Algiers, Algeria']
     mongo_db = "twitter_db"
     mongo_user = "AlgeriaTwitterGraph"
     Extractor.Graph_Extraction(mongo_db,mongo_user,Locations)
