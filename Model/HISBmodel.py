@@ -13,7 +13,7 @@ plt.style.use('ggplot')
 class HSIBmodel():
     def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=0.125,k=0, method='none',verbose=False):
         
-        '''
+        
         if method != 'none':
             self.method = method
             self.k = k
