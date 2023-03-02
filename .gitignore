@@ -18,3 +18,8 @@ neo4j.ipynb
 /logs
 /plugins
 /all-rnr-annotated-threads
+/SimulationResults
+
+main.py
+.DS*
+neo4j.ipynb

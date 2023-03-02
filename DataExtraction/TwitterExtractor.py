@@ -3,6 +3,15 @@ from pymongo import MongoClient
 import time
 from DataExtraction.DBHandlers import  GraphDBHandler,DocDBHandler
 from neo4j import GraphDatabase
+import random
+
+def Algerian_location(location):
+    Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','dz','bladi']
+    if location in Locations:
+        return True
+    for loc in Locations:
+        if loc in location: return True
+    return False
 
 class TweetExtractor():
     def __init__(self,connectionStringDocDB,neo_uri,userGDB,passwordGDB,API_credentials):
@@ -94,43 +103,51 @@ class TweetExtractor():
         
         result = self.graphDB_Driver.session.run(query)
         user_ids = [record["id"] for record in result]
-        print(len(user_ids))
-        user_ids=user_ids[:5]
-        print((user_ids))
+        print("Number of users to be checked: ",len(user_ids))
+        random.shuffle(user_ids)
         # Iterate over user IDs
         for user_id in user_ids:
-            print(f'get folower of user {user_id}')
+            
             try:
                 # Retrieve user's  from Twitter API
                 user = self.api.get_user(user_id)._json
+                
                 if not user_collection.find_one({"id_str": user['id_str']}):
                     user['_id'] = user['id']
                     user['mongoCol'] = mongo_user_collection
                     user_collection.insert_one(user)
-
+                else:
+                    print('Already Added',user['screen_name'],user['id'])
+                Algerian =Algerian_location(user['location']) 
+                
+                print(f"get folower of user', {user['screen_name']},{user['id']} location {user['location']} : {Algerian} : {user['followers_count']< 4000}")
                 with self.graphDB_Driver.driver.session() as session:
                     session.run(""" MATCH (u:User {id: $user_id})
-                            SET u.screen_name=$screen_name  
+                            SET u.screen_name=$screen_name,  
                                 u.id_str= $id_str,
                                 u.followers_count= $followers_count,
                                 u.location= $location,
                                 u.friends_count= $friends_count,
                                 u.MongoCol= $mongo_col,
-                                u.Checked= $checked 
+                                u.Checked= $checked,
+                                u.LocationChecked=$LocationChecked 
                             RETURN u""",
-                            screen_name=user['screen_name']
+                            
                             user_id=str(user['id']),
+                            screen_name=user['screen_name'],
                             id_str=user['id_str'],
                             followers_count=user['followers_count'],
                             location=user['location'],
                             friends_count=user['friends_count'],
                             mongo_col=mongo_user_collection,
-                            checked=True
+                            checked=True,
+                            LocationChecked=Algerian
                             )
-                print(f" location {user['location']} {(user['location'] in Locations)} {user['followers_count']< 2000}")
-                if ((user['location'] in Locations) and user['followers_count']< 2000 ):
+                
+                if (Algerian and user['followers_count']< 2000 ):
                     # Get Friends IDs
-                    print(f"getting friend and follower user {user_id} of a location {user['location']} follower {user['followers_count']} friend {user['friends_count']}")
+                    print(f"\t getting friend and follower user {user_id} of a location {user['location']} ")
+                    print(f"\t\t getting friend: {user['friends_count']}")
                     for friend_id in tweepy.Cursor(self.api.friends_ids, user_id=user_id).items():
                         try:
                             friend_id = str(friend_id)
@@ -138,15 +155,15 @@ class TweetExtractor():
                                 result = session.run("MERGE (a:User {id: $user_id}) "
                                     "MERGE (b:User {id: $friend_id ,MongoCol: $mongo_col, Checked: $checked}) "
                                     "MERGE (a)-[:FOLLOWS]->(b)", 
-                                    user_id=user_id, friend_id=friend_id,mongo_col=mongo_user_collection,checked=False)
+                                    user_id=str(user_id), friend_id=str(friend_id),mongo_col=mongo_user_collection,checked=False)
                         except tweepy.TweepError as e:
                             print(f"Error fetching friends/followers of user {user_id}: {str(e)}")
                             if "Rate limit exceeded" in str(e):
                                 print("Waiting for rate limit to reset...")
                                 time.sleep(60 * 15) # wait for 15 minutes
-                                
+                    print(f"\t\t getting friend end")           
 
-
+                    print(f"\t\t getting followers: {user['followers_count']}")
                     # Get Followers IDs
                     for follower_id in tweepy.Cursor(self.api.followers_ids, user_id=user_id).items():
                         try:
@@ -155,12 +172,13 @@ class TweetExtractor():
                                 result = session.run("MERGE (a:User {id: $user_id}) "
                                                     "MERGE (b:User {id: $follower_id,MongoCol: $mongo_col, Checked: $checked}) "
                                                     "MERGE (b)-[:FOLLOWS]->(a)", 
-                                                    user_id=user_id, follower_id=follower_id,mongo_col=mongo_user_collection,checked=False)
+                                                    user_id=str(user_id), follower_id=str(follower_id),mongo_col=mongo_user_collection,checked=False)
                         except tweepy.TweepError as e:
                             print(f"Error fetching friends/followers of user {user_id}: {str(e)}")
                             if "429" in str(e):
                                 print("Waiting for rate limit to reset...")
                                 time.sleep(60 * 15) # wait for 15 minutes
+                    print(f"\t\t getting followers end")
             except tweepy.TweepError as e:
                         print(f"Error fetching friends/followers of user {user_id}: {str(e)}")
                         if "429" in str(e):
