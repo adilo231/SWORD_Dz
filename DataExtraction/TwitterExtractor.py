@@ -6,7 +6,7 @@ from neo4j import GraphDatabase
 import random
 
 def Algerian_location(location):
-    Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','dz','bladi']
+    Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','dz','bladi','setif']
     if location in Locations:
         return True
     for loc in Locations:
