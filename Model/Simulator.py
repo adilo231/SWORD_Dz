@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import Model.HISBmodel as m
 import networkx as nx
 import seaborn as sns
@@ -9,9 +10,9 @@ from multiprocessing import Manager
 
 class RumorSimulator():
 
-    def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='non',k=0):
-        ''' This fonction will allow to run a severl instance of a simulation wityh multiprocessing'''
-        sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose,method=method,k=k,DetT=Det)
+    def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='non',k=0,setptime=0.125):
+        
+        sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose,method=method,k=k,setptime=setptime)
         if verbose:
             print(f'simulations started for {method}, noberof k = {k}, DetT= {1},')
         with Manager() as manager:
@@ -23,20 +24,21 @@ class RumorSimulator():
             [process.join() for process in processes]
             df= pd.DataFrame()
             if typeOfSim==0:
-                df=self.CreateSimulationsDF(results= Stat,df= df ,simName= typeOfSim)
+                df=self.CreateSimulationsDF(Stat,df ,typeOfSim,setptime)
                 result=self.showNetworkMeasuresStatistics(g,df)
                 return result
             else:
-                df=self.CreateSimulationsDF(results= Stat,df= df ,simName= typeOfSim)
+                df=self.CreateSimulationsDF(Stat,df ,typeOfSim,setptime)
                 return df
                 
         
 
-    def DisplyResults(self,l,l1,resultType=1):
+    def DisplyResults(self,results,resultType=1):
+        color=['black','red','yellow','green','blue','purple','orange','oliver','cyan','maroon','lime','pink','silver','magenta']
         if resultType==0:
            # création de la grille de sous-graphiques
             fig, axs = plt.subplots(nrows=4, ncols=4, figsize=(12, 12))
-
+            fig.set_size_inches(16, 10)
             # tracé de chaque variable en fonction de chaque variable de centralité
             axs[0, 0].scatter(results["deg_cent"], results["AccpR"])
             axs[0, 0].set_xlabel("Degree Centrality")
@@ -103,39 +105,59 @@ class RumorSimulator():
 
 
             # ajustement des espaces entre les subplots
+            file_list = os.listdir("SimType0")
+            number_of_files = len(file_list)
+            fig.savefig('SimType0/image_'+str(number_of_files+1)+'.png', dpi=300 )
             plt.tight_layout()
 
             # affichage du plot
             plt.show()
-        color=['black','red','yellow','green','blue']   
+           
         if resultType==1:
             fig, axe= plt.subplots(2,3)
-            # col=results.columns
-            # col2=result_without.columns
+            fig.set_size_inches(16, 10)
             for i, ax in enumerate(axe.flat):
-                # ax.plot(results.index, results[col[i]], color='blue', label=  method+' method ')
-                # ax.plot(result_without.index, result_without[col2[i]], color='orange', label='without RIM method')
-                for j in  range(len(l) ):
-                    col=l[j].columns
-                    ax.plot(l[j].index, l[j][col[i]], color=str(color[j]), label= str(l1[j])+'method ')
+                for j in  range(len(results) ):
+                    
+                    col=results[j].columns
+                    ax.plot(results[j].index, results[j][col[i]], color=str(color[j]), label=results[j]['method'][0]+' method ')
                     ax.set_title(f'The evolution of {col[i]}')
                     ax.set_ylabel(f'Number of {col[i]}')
                     ax.set_xlabel(f'Time')
                     ax.legend()
+            
+            file_list = os.listdir("SimType1")
+            number_of_files = len(file_list)
+            fig.savefig('SimType1/image_'+str(number_of_files+1)+'.png', dpi=300 )
             plt.show()
-        elif resultType==2:
+        elif resultType == 2:
+        # Concatenate all results into a single dataframe
+            all_results = pd.concat(results)
+            print(all_results)
+            
+            # Create a figure with a subplot for each measure
             fig, axes = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
-            for name, ax in zip(['Infected','Suporting','Denying'], axes):
-                sns.boxplot(data=results, x='sim', y=name, ax=ax)
-                ax.set_ylabel('Number of individuals')
-                ax.set_title(name)
+            fig.set_size_inches(16, 10)
+            # Loop over each measure and create a boxplot for each simulation method
+            for i, name in enumerate(['Infected', 'Suporting', 'Denying']):
+                sns.boxplot(data=all_results, x='method', y=name, ax=axes[i])
+                axes[i].set_ylabel('Number of individuals')
+                axes[i].set_title(name)
+                
             # Remove the automatic x-axis label from all but the bottom subplot
-            if ax != axes[-1]:
-                ax.set_xlabel('')
-        
+            if axes[0] != axes[-1]:
+                for ax in axes[:-1]:
+                    ax.set_xlabel('')
+
+            file_list = os.listdir("SimType2")
+            number_of_files = len(file_list)
+            fig.savefig('SimType2/image_'+str(number_of_files+1)+'.png', dpi=300 ) 
             plt.show()
 
-    def CreateSimulationsDF(self,results,df ,simName=1):
+
+
+
+    def CreateSimulationsDF(self,results,df ,simName=1,setptime=0.125):
       
        if(simName==0):
            Stat_Global=pd.DataFrame()
@@ -164,8 +186,7 @@ class RumorSimulator():
                Stat_Global =pd.concat([Stat_Global, new])
            #print(Stat_Global)   
            return Stat_Global       
-                       
-                       
+                                            
        if(simName==1):
                
            Stat_Global=pd.DataFrame()
@@ -182,21 +203,23 @@ class RumorSimulator():
            for i in range(len(Stat)):
                 L=len(Stat[i])
                 
-                a=0.125*(L-1)
+                a=setptime*(L-1)
                 Nbr_nonInfected=Stat[i]['Non_Infected'][a]
                 Nbr_Infected=Stat[i]['Infected'][a]
                 Nbr_Spreaders=Stat[i]['Spreaders'][a]
                 OpinionDenying=Stat[i]['Opinion_Denying'][a]
                 OpinionSupporting=Stat[i]['Opinion_Supporting'][a]
                 RumorPopularity=Stat[i]['RumorPopularity'][a]
+                method=Stat[i]['method'][a]
                 for j in range(L,max):
-                    b=j*0.125
+                    b=j*setptime
                     new =pd.DataFrame(data={'Non_Infected': Nbr_nonInfected,
                                                 'Infected': Nbr_Infected,
                                                 'Spreaders': Nbr_Spreaders,
                                                 'Opinion_Denying': OpinionDenying,
                                                 'Opinion_Supporting': OpinionSupporting,
-                                                'RumorPopularity': RumorPopularity
+                                                'RumorPopularity': RumorPopularity,
+                                                'method':method
                                                 },index=[b])
                     Stat[i] =pd.concat([Stat[i], new])
                 #self.DisplyResults(Stat[i],1)
@@ -209,7 +232,7 @@ class RumorSimulator():
              
            Len=len(Stat)
            for i in range(max):
-                a=i*0.125
+                a=i*setptime
                 
                 
                 No_Infected=0
@@ -218,6 +241,7 @@ class RumorSimulator():
                 RumorPopularity=0
                 OpinionDenying=0
                 OpinionSupporting=0
+                method=''
                 for each in Stat:
                     
                     No_Infected+=(each['Non_Infected'][a])           
@@ -226,6 +250,7 @@ class RumorSimulator():
                     RumorPopularity+=(each['RumorPopularity'][a])
                     OpinionDenying+=(each['Opinion_Denying'][a])
                     OpinionSupporting+=(each['Opinion_Supporting'][a])
+                    method=each['method'][a]
                 #print("----")
                 y0.append(No_Infected/Len)
                 y1.append(Infected/Len)
@@ -236,13 +261,14 @@ class RumorSimulator():
             #print(y1)
            for j in range(max):
                 
-                    b=j*0.125
+                    b=j*setptime
                     new =pd.DataFrame(data={'Non_Infected': y0[j],
                                                 'Infected': y1[j],
                                                 'Spreaders': y2[j],
                                                 'Opinion_Denying': y4[j],
                                                 'Opinion_Supporting': y5[j],
-                                                'RumorPopularity': y3[j]
+                                                'RumorPopularity': y3[j],
+                                                'method':method
                                                 },index=[b])
                     Stat_Global =pd.concat([Stat_Global, new])
 
@@ -256,6 +282,7 @@ class RumorSimulator():
             df= pd.DataFrame(data={'Infected':l[0],
                                 'Suporting':l[1],
                                 'Denying':l[2],
+                                'method':l[3],
                                 'sim':simName},index=[0])
             start=1
         
@@ -285,54 +312,4 @@ class RumorSimulator():
         print(data_global)
         return data_global
 
-        #plot the statistics for the three attributes "AccpR", "SendR", "Accp_NegR" and "Nb_Accpted_Rm"
-        # for attr in ['AccpR','SendR','Accp_NegR','Nb_Accpted_Rm']:
-        #     li=[]
-           
-        #     attr_description=""
-        #     if attr == 'AccpR':
-        #         li=list_AccpR
-        #         numfig="1"
-        #         attr_description="Acceptnece of Rumors"
-        #     if attr == 'SendR':
-        #         li=list_SendR
-        #         numfig="2"
-        #         attr_description="Send of Rumors"
-        #     if attr == 'Accp_NegR':
-        #         li=list_Accp_NegR
-        #         numfig="3"
-        #         attr_description="Accept Negatif Rumors"
-        #     if attr == 'Nb_Accpted_Rm':
-        #         li=list_Nb_Accpted_Rm
-        #         numfig="4"
-        #         attr_description="Number of sent and accepted rumors"
-        #     # print("li: ",li)
-        #     # print("deg_cent_list : ",deg_cent_list)
-        #     plt.rcParams["figure.figsize"] = (15,8) 
-        #     fig = plt.figure("Figure "+numfig)
-
-        #     plt.subplot(2,2,1)
-        #     plt.xlabel('Degree Centrality')
-        #     plt.ylabel(attr_description)
-        #     plt.scatter(deg_cent_list,li,c='r')
-        #     plt.grid()
-
-        #     plt.subplot(2,2,2)
-        #     plt.xlabel('Closeness Centrality')
-        #     plt.ylabel(attr_description)
-        #     plt.scatter(clos_cent_list,li,c='g')
-        #     plt.grid()
-
-        #     plt.subplot(2,2,3)
-        #     plt.xlabel('Betweenness Centrality')
-        #     plt.ylabel(attr_description)
-        #     plt.scatter(betw_cent_list,li,c='b')
-        #     plt.grid()
-
-        #     plt.subplot(2,2,4)
-        #     plt.xlabel('Page rank')
-        #     plt.ylabel(attr_description)
-        #     plt.scatter(page_rank_list,li,c='black')
-        #     plt.grid()
-
-        #     plt.show()
+ 

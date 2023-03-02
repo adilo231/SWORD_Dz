@@ -11,17 +11,17 @@ plt.style.use('ggplot')
 
 
 class HSIBmodel():
-    def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=np.Infinity,k=0, method='none',verbose=False):
-        '''
+    def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=0.125,k=0, method='none',verbose=False):
         
-        '''
+        
         if method != 'none':
             self.method = method
             self.k = k
             self.Tdet=Tdet
             pass
 
-
+        self.blocked_nodes = 0
+        self.used_nodes_in_TCS=0
         self.setptime = setptime
         self.Graph = Graph
         self.time = 0.125
@@ -100,95 +100,111 @@ class HSIBmodel():
             self.OpinionSupporting += 1
         else:
             self.OpinionDenying += 1
-    
-    def neighbor(self,Spreaders,g):
-
+    def neighbor(self,g):
         neighb=[]
         MaxD=[]
         Cente=[]
         beta=[]
         Cent=((nx.degree_centrality(g)))
-        for spreader in self.ListInfectedNodes:
-            for neighbord in g.neighbors(spreader):
-                if neighbord not in self.ListInfectedNodes :
-                    if neighbord not in neighb :
-                        neighb.append(neighbord)
-                        Cente.append(Cent[neighbord])
-                        MaxD.append(g.degree[neighbord])
-                        beta.append(g.nodes[neighbord]['beta'])      
-        return neighb,MaxD,Cente,beta
-    
-    def search_spreaders(self,G,sp):
         
-        l=len(G.nodes)
-        for i in range (l):
-            if ( G.nodes[i]['state']=='spreaders'):
-               sp.append(i)                
+        for i in self.ListInfectedNodes:
+            n=g.neighbors(i)
+            
+            for j in n:
+                if j not in self.ListInfectedNodes :
+                    if j not in neighb :
+                        neighb.append(j)
+                        Cente.append(Cent[j])
+                        MaxD.append(g.degree[j])
+                        beta.append(g.nodes[j]['beta'])
+                      
+        return neighb,MaxD,Cente,beta       
+             
     def Beta_Blocking_nodes(self,G,k):
-          # find bette way  
-        # sp=[]
-        # self.search_spreaders(G,sp)
-        # nb,_,_,Bet=self.neighbor(sp,G)
-        # IDs = Bet.sorted()[:k]
-
-
-        # for i in range(k):
-        #         ID = Bet.index(min(Bet))
-        #         G.nodes[nb[ID]]['blocked']='True'
-        #         Bet.pop(ID)
-        #         nb.pop(ID)    
-        pass
-                   
+        # select neighbors from the list of Spreaders    
+        neighbors,_,_,Beta=self.neighbor(G)
+        
+        for i in range(k):
+            ID = Beta.index(min(Beta))
+            G.nodes[neighbors[ID]]['blocked']='True'
+            self.blocked_nodes+=1
+            Beta.pop(ID)
+            neighbors.pop(ID) 
     def Random_Blocking_nodes(self,Graphe,k):
-        sp=[]
-        self.search_spreaders(Graphe,sp)
-        nb,d,cen,Bet=self.neighbor(sp,Graphe)
-        size=len(nb)
+       
+        neighbors,_,_,_=self.neighbor(Graphe)
+        size=len(neighbors)
         if k>size:
           k=size-1
         for i in range(k):
-            s=random.randint(0, size-1)
-            Graphe.nodes[nb[s]]['blocked']='true'
-            nb.pop(s)
+            node_to_block=random.randint(0, size-1)
+            Graphe.nodes[neighbors[node_to_block]]['blocked']='true'
+            self.blocked_nodes+=1
+            neighbors.pop(node_to_block)
             size-=1
-    def Degree_MAX_Blocking_nodes(self,G,k):   
-        sp=[]
-        self.search_spreaders(G,sp)
-        nb,DNode,cen,Bet=self.neighbor(sp,G)
-        for i in range(k):
-                
-                ID = DNode.index(max(DNode))
-                G.nodes[nb[ID]]['blocked']='True'
-                DNode.pop(ID)
-                nb.pop(ID)  
-
-    def Centrality_Blocking_nodes(self,G,k):
-            
-        sp=[]
-    
-        self.search_spreaders(G,sp)
-        nb,DNode,cen,Bet=self.neighbor(sp,G)
-        for i in range(k):
-                
-                ID = cen.index(max(cen))
-                G.nodes[nb[ID]]['blocked']='True'
-                cen.pop(ID)
-                nb.pop(ID) 
+    def Degree_MAX_Blocking_nodes(self,G,k):
+        neighbors,nodes_degree,_,_=self.neighbor(G)
+        for i in range(k):   
+                node_to_block = nodes_degree.index(max(nodes_degree))
+                G.nodes[neighbors[node_to_block]]['blocked']='True'
+                self.blocked_nodes+=1
+                nodes_degree.pop(node_to_block)
+                neighbors.pop(node_to_block)  
+    def Centrality_Blocking_nodes(self,G,k):      
+        neighbors,_,centrality,_=self.neighbor(G)
+        for i in range(k):  
+            node_to_block = centrality.index(max(centrality))
+            G.nodes[neighbors[node_to_block]]['blocked']='True'
+            self.blocked_nodes+=1
+            centrality.pop(node_to_block)
+            neighbors.pop(node_to_block) 
        
+    def Random_Truth_Comp(self,Graph,k):
+        neighbors,_,_,_=self.neighbor(Graph)
+        size=len(neighbors)
+        if k > size :
+            k=size-1
+        for i in range(k):
+            node_to_use=random.randint(0, size-1)
+            Graph.nodes[neighbors[node_to_use]]['jug']=1
+            Graph.nodes[neighbors[node_to_use]]['state']='infected'
+            self.used_nodes_in_TCS+=1
+            neighbors.pop(node_to_use)
+            size-=1
+    def MaxDegree_Truth_Comp(self,Graph,K):
+        neighbors,degree,_,_=self.neighbor(Graph)
+        size=len(neighbors)
+        k=K
+        if k > size :
+           k=size-1
+        for i in range(k):
+            node_to_use = degree.index(max(degree))
+            Graph.nodes[neighbors[node_to_use]]['jug']=1
+            Graph.nodes[neighbors[node_to_use]]['state']='infected'
+            neighbors.pop(node_to_use)
+            degree.pop(node_to_use)
+
     def applyRIM(self):
 
-        if self.method == 'RBN' and self.k != 0:
-            self.Random_Blocking_nodes(self.Graph,self.k)
-            self.k=0
-        if self.method == 'BBN' and self.k != 0:
-            self.Beta_Blocking_nodes(self.Graph,self.k)
-            self.k=0
-        if self.method == 'DMBN' and self.k != 0:
-            self.Degree_MAX_Blocking_nodes(self.Graph,self.k)
-            self.k=0
-        if self.method == 'BCN' and self.k != 0:
-            self.Centrality_Blocking_nodes(self.Graph,self.k)
-            self.k=0
+        if self.time>=self.Tdet :
+            if self.method == 'RBN' :
+                self.Random_Blocking_nodes(self.Graph,self.k)
+                
+            if self.method == 'BBN' :
+                self.Beta_Blocking_nodes(self.Graph,self.k)
+                
+            if self.method == 'DMBN' :
+                self.Degree_MAX_Blocking_nodes(self.Graph,self.k)
+            
+            if self.method == 'BCN' :
+                self.Centrality_Blocking_nodes(self.Graph,self.k)
+            
+            if self.method == 'RTCS' :
+                self.Random_Truth_Comp(self.Graph,self.k)
+                
+            if self.method == 'MDTCS' :
+                self.MaxDegree_Truth_Comp(self.Graph,self.k)
+            
             
         
     def runModel(self, i=0, typeOfSim=1, Stat=0):
@@ -258,16 +274,18 @@ class HSIBmodel():
                             else:
                                 pass
                                #print('le noeud',each,'is blocked')
-                
-                self.applyRIM()
+                self.k-=self.blocked_nodes
+                self.k-=self.used_nodes_in_TCS
+                if self.k>0:
+                    self.applyRIM()
         # save each step to send it to viewing later
             new = pd.DataFrame(data={'Non_Infected': self.Nbr_nonInfected,
                                      'Infected': self.Nbr_Infected,
                                      'Spreaders': Nbr_Spreaders,
                                      'Opinion_Denying': self.OpinionDenying,
                                      'Opinion_Supporting': self.OpinionSupporting,
-                                     'RumorPopularity': RumorPopularity
-                                     }, index=[time])
+                                     'RumorPopularity': RumorPopularity,
+                                     'method':self.method                                     }, index=[time])
             self.Statistical = pd.concat([self.Statistical, new])
             time += self.setptime
         if self.verbose:
@@ -277,7 +295,6 @@ class HSIBmodel():
         if Stat != 0:
             if typeOfSim == 0:
                 Stat_Global=pd.DataFrame()
-                
                 for i in range(self.Graph.number_of_nodes()):
                      new =pd.DataFrame(data={'AccpR': self.Graph.nodes[i]['AccpR'],
                                                 'SendR': self.Graph.nodes[i]['SendR'],
@@ -289,12 +306,11 @@ class HSIBmodel():
                 print(len(Stat_Global))
                 Stat.append(Stat_Global)
                 
-
             elif typeOfSim == 1:
-                
-                Stat.append(self.Statistical)   
+                Stat.append(self.Statistical) 
+                  
             elif typeOfSim == 2:          
-                Stat.append([self.Nbr_Infected,self.OpinionDenying,self.OpinionSupporting])
+                Stat.append([self.Nbr_Infected,self.OpinionDenying,self.OpinionSupporting,self.method])
                 
 
                 

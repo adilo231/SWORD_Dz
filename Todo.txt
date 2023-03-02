@@ -1,17 +1,16 @@
 1- //////// To be as a class for generic files 
 2- //////// Need three class 1 mother and two daughters , one for suthetic graphs the other one to extract from the DB
 3- //////// To complete displat for type 1 simulation
-4- To have statistical analysis nodes metrics and rumor impact
+4- /////// To have statistical analysis nodes metrics and rumor impact
 5- Add nodes metrics to the DB
 6- ///// To implement RIM strategy
         - Randon blocking node
         - max degree
         - max beta
         - max centrality
-
-
-7- Add and option ToSave_results
-8- Generate for each Sythetic (AB,Free-scale,Random) graphe method 3 graphs (small n=100, medium n=1000 and large n=5000)
-9- Take in consederation the k value blocked node
-10-find better solution to block nodes 
+        
+7- ////// Add and option ToSave_results
+8- ///// Generate for each Sythetic (AB,Free-scale,Random) graphe method 3 graphs (small n=100, medium n=1000 and large n=5000)
+9- ////// Take in consederation the k value blocked node
+10-/////// find better solution to block nodes 
 11- Think about the framework architecture
