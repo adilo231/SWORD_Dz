@@ -54,7 +54,7 @@ if __name__ == '__main__':
     K = 100
     M = 20
     nbb = 0
-    NbrSim = 5
+    NbrSim = 2
 
     # parameters = {'omega_min': np.pi/24,
     #               'omega_max': np.pi*2,
@@ -103,26 +103,28 @@ if __name__ == '__main__':
     
     i=0
     l=[]
-    l2=[]
-    typeOfSim=1
-    Generator.InitParameters(g,parameters)
-    aux1 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='RBN',k=50)
-    Generator.InitParameters(g,parameters)
-    aux2 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='BBN',k=50)
-    Generator.InitParameters(g,parameters)
-    aux3 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='DMBN',k=50)
-    Generator.InitParameters(g,parameters)
-    aux4 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='BCN',k=50)
-    Generator.InitParameters(g,parameters)
-    aux_0 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='non',k=50)
-    print(aux1)   
-    l=[aux_0,aux1,aux2,aux3,aux4]
-
     
+    typeOfSim=1
+
+    aux1 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='RTCS',k=30)
+    # Generator.InitParameters(g,parameters)
+    # aux2 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='BBN',k=50)
+    # Generator.InitParameters(g,parameters)
+    # aux3 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='DMBN',k=50)
+    # Generator.InitParameters(g,parameters)
+    # aux4 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='BCN',k=50)
+    Generator.InitParameters(g,parameters)
+    aux_0 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='non',k=30)
+      
+    l=[aux_0,aux1]#,aux2,aux3,aux4]
+
+    #l=aux_0
 
     # end_time = time.time()
     # print('Parallel time: ', end_time-start_time)
-
+    # if typeOfSim==0 or typeOfSim==2:
+    #     l=aux_0
+    
     Simulator.DisplyResults( l,resultType=typeOfSim)
   
     print(df)

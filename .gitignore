@@ -7,8 +7,10 @@ __pycache__/
 main.py
 .DS*
 neo4j.ipynb
-
-
+/main.py
+/SimType0
+/SimType1
+/SimType2
 /APP_Init
 /conf
 /data
