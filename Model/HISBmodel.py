@@ -12,7 +12,37 @@ plt.style.use('ggplot')
 
 class HSIBmodel():
     def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=0.125,k=0, method='none',verbose=False):
-        
+        """This is a class for the HISBmodel, which is a rumor propagation model based on human and social behavior.
+
+        Parameters:
+        ----------
+        Graph : networkx graph
+            Graph of the network to run simulation on.
+        Seed_Set : list, optional
+            Set seeds of the infected nodes. Default is None.
+        opinion_set : list, optional
+            The opinion of the set seeds of the infected nodes. Default is None.
+        seedsSize : float, optional
+            The size of the set seeds if the set seeds are not given it will be generated automatically. Default is 0.05.
+        baisAccepte : float, optional
+            A probability parameter to calibrate the model in the acceptance probability. Default is 0.3.
+        setptime : float, optional
+            Step time of the simulation. Default is 0.125.
+        Probability : float, optional
+            A probability parameter to calibrate the model in the acceptance probability. Default is 0.3.
+        Tdet : float, optional
+            Detection time of a rumor. Default is 0.125.
+        k : int, optional
+            Number of nodes to be employed in the rumor influence minimization strategy. Default is 0.
+        method : str, optional
+            The selected rumor influence minimization strategy. Default is 'none'.
+        verbose : bool, optional
+            If True, print information about the tweets being extracted. Default is False.
+
+        Returns:
+        -------
+        None.
+        """
         
         if method != 'none':
             self.method = method
@@ -20,18 +50,23 @@ class HSIBmodel():
             self.Tdet=Tdet
             pass
 
+        # Initialize variables
         self.blocked_nodes = 0
         self.used_nodes_in_TCS=0
-        self.setptime = setptime
-        self.Graph = Graph
         self.time = 0.125
         self.Probability = 0.3
+        self.setptime = setptime
+        self.Graph = Graph
+        self.baisAccepte = baisAccepte
         self.verbose=verbose
+
+        # Generate seed set automatically if not provided
         if Seed_Set==None:
                 Seed_Set,opinion_set=self.GenerateSeedsSet(seedsSize)
         self.ListInfectedNodes = Seed_Set
         RumorPopularity = self.SetParameters(opinion_set)
-        self.baisAccepte = baisAccepte
+        
+        # Create a statistical data frame
         self.Statistical = pd.DataFrame(data={'Non_Infected': self.Nbr_nonInfected,
                                               'Infected': self.Nbr_Infected,
                                               'Spreaders': self.Nbr_Infected,
@@ -39,6 +74,65 @@ class HSIBmodel():
                                               'Opinion_Supporting': self.OpinionSupporting,
                                               'RumorPopularity': RumorPopularity
                                               }, index=[0])
+    def SetParameters(self, opinion_set):
+        """Set the parameters for infected nodes
+        
+        Parameters:
+        ----------
+        opinion_set : list
+            The opinion of the set seeds of the infected nodes.
+
+        Returns:
+        -------
+        RumorPopularity : int
+            Total degree of the infected nodes.
+        """
+        self.Nbr_Infected = len(self.ListInfectedNodes)
+
+        self.Nbr_nonInfected = self.Graph.number_of_nodes()-self.Nbr_Infected
+        self.OpinionDenying = 0
+        self.OpinionSupporting = 0
+        RumorPopularity = 0
+        # Set the parameters for each node in the seed set
+        for i, each in enumerate(self.ListInfectedNodes):
+            self.Graph.nodes[each]['Infetime'] = 0.125
+            self.Graph.nodes[each]['state'] = 'spreaders'
+            self.Graph.nodes[each]['AccpR'] += 1
+            RumorPopularity += self.Graph.degree(each)
+            # Set the opinion of the node based on the opinion_set
+            if (opinion_set[i] == 'D'):
+
+                self.Graph.nodes[each]['opinion'] = 'D'
+                self.Graph.nodes[each]['Accp_NegR'] += 1
+                self.OpinionDenying += 1
+            else:
+                self.Graph.nodes[each]['opinion'] = 'S'
+                self.OpinionSupporting += 1
+
+        return RumorPopularity
+    def GenerateSeedsSet(self,size=0.05):
+        """
+            Generate a random seed set if one is not provided.
+
+            Parameters:
+            -----------
+            size: float
+                The proportion of the total number of nodes to include in the seed set.
+
+            Returns:
+            --------
+            seedNode: list of int
+                The list of node IDs in the seed set.
+            seedOpinion: list of str
+                The opinions of the nodes in the seed set, either 'D' for denying or 'S' for supporting.
+        """
+        seed = int(size*self.Graph.number_of_nodes())
+        l = ['D', 'S']
+        seedNode = random.sample(range(0, self.Graph.number_of_nodes()), seed)
+        seedOpinion = random.choices(l, k=seed)
+        return seedNode,seedOpinion
+    
+    
     def DisplyResults(self):
         fig, axe = plt.subplots(2, 3)
         col = self.Statistical.columns
@@ -52,54 +146,42 @@ class HSIBmodel():
         #     self.Statistical[idx].plot()
         #     axe[:,idx].set_ylabel('YLabel', loc='top')
         plt.show()
-    def SetParameters(self, opinion_set):
-        self.Nbr_Infected = len(self.ListInfectedNodes)
-
-        self.Nbr_nonInfected = self.Graph.number_of_nodes()-self.Nbr_Infected
-        self.OpinionDenying = 0
-        self.OpinionSupporting = 0
-        RumorPopularity = 0
-        for i, each in enumerate(self.ListInfectedNodes):
-            self.Graph.nodes[each]['Infetime'] = 0.125
-            self.Graph.nodes[each]['state'] = 'spreaders'
-            self.Graph.nodes[each]['AccpR'] += 1
-            RumorPopularity += self.Graph.degree(each)
-
-            if (opinion_set[i] == 'D'):
-
-                self.Graph.nodes[each]['opinion'] = 'D'
-                self.Graph.nodes[each]['Accp_NegR'] += 1
-                self.OpinionDenying += 1
-            else:
-                self.Graph.nodes[each]['opinion'] = 'S'
-                self.OpinionSupporting += 1
-
-        return RumorPopularity
-    def GenerateSeedsSet(self,size=0.05):
-        seed = int(size*self.Graph.number_of_nodes())
-        l = ['D', 'S']
-        seedNode = random.sample(range(0, self.Graph.number_of_nodes()), seed)
-        seedOpinion = random.choices(l, k=seed)
-        return seedNode,seedOpinion
     def UpdateOpinion(self, id, jugf, NegR, R):
-        opinion = jugf
-        assert R > 0
-        if NegR != 0:
-            opinion *= float(NegR / R)
-        if (self.Graph.nodes[id]['opinion'] == "S"):
-            self.OpinionSupporting -= 1
-        else:
-            self.OpinionDenying -= 1
+        """Updates the opinion of a node based on the received rumors.
 
+            Args:
+                id (int): The ID of the node to update.
+                jugf (float): The subjective judgment parameter of the node.
+                NegR (int): The number of negative rumors received by the node.
+                R (int): The total number of rumors received by the node.
+
+            Returns:
+                None.
+
+            
+        """
+        opinion = jugf
+        assert R > 0  # Ensure R is greater than zero to avoid division by zero later.
+        if NegR != 0:
+            opinion *= float(NegR / R)  # Update the opinion based on the ratio of negative rumors.
+        if (self.Graph.nodes[id]['opinion'] == "S"):
+            self.OpinionSupporting -= 1  # Decrement the supporting opinion count if the node previously supported.
+        else:
+            self.OpinionDenying -= 1  # Decrement the denying opinion count if the node previously denied.
+
+        # Update the opinion of the node with a probability proportional to the updated opinion.
         if(np.random.random_sample() <= opinion):
             self.Graph.nodes[id]['opinion'] = "D"
         else:
             self.Graph.nodes[id]['opinion'] = "S"
 
+        # Update the supporting/denying opinion count based on the updated opinion.
         if (self.Graph.nodes[id]['opinion'] == "S"):
             self.OpinionSupporting += 1
         else:
             self.OpinionDenying += 1
+        
+
     def neighbor(self,g):
         neighb=[]
         MaxD=[]
@@ -208,34 +290,46 @@ class HSIBmodel():
             
         
     def runModel(self, i=0, typeOfSim=1, Stat=0):
+        """
+            Simulates the rumor spreading process in the network using the model parameters specified in the object instance.
+
+            Parameters:
+                i (int): Index of the simulation, used for tracking and bookkeeping. Default is 0.
+                typeOfSim (int): Type of simulation to run. 0 for per-node statistics, 1 for global statistics, and 2 for basic statistics. Default is 1.
+                Stat (list): List to store the statistical results of the simulation. Default is 0.
+
+            Returns:
+                None.
+        """
         if self.verbose:
             print(f'Simulation number {i} is on run')
         time = 0.125
 
         while self.ListInfectedNodes:
+            # Initialize counters for tracking the rumor spreading process
             RumorPopularity = 0
             Nbr_Spreaders = 0
             for index, id in reversed(list(enumerate(self.ListInfectedNodes))):
+                # Calculate the relative time of the node since infection 
                 RelativeTime = time - self.Graph.nodes[id]['Infetime']
-
+                # Remove the node from the infection list if its attraction to the rumor is too low
                 if (np.exp(-RelativeTime * self.Graph.nodes[id]['beta']) < 0.10):
                     self.ListInfectedNodes.remove(id)
                     self.Graph.nodes[id]['state'] = "infected"
 
                 else:
-                    # Node Attaction
+                     # Calculate the node's attraction to the rumor
                     ActualAttraction = np.exp(-RelativeTime * self.Graph.nodes[id]['beta']) * np.abs(
                         np.sin((RelativeTime * self.Graph.nodes[id]['omega']) + self.Graph.nodes[id]['delta']))
                     RumorPopularity += ActualAttraction * self.Graph.degree(id)
-                    # Update node opinion
+                     # Update the node's opinion based on the model parameters
                     self.UpdateOpinion(id,
                                        self.Graph.nodes[id]['jug'],
                                        self.Graph.nodes[id]['Accp_NegR'],
                                        self.Graph.nodes[id]['AccpR'])
 
-                    # rumor spreading
+                    # Check if the node will spread the rumor to its neighbors
                     c = np.random.rand()
-
                     if (c <= ActualAttraction):
                         Nbr_Spreaders += 1
                         self.Graph.nodes[id]['state'] = 'spreaders'

@@ -31,6 +31,31 @@ class TweetExtractor():
         print('Init Extractore End')
 
     def Topic_Tweet_Extraction(self,query,mongo_db,mongo_tweet_collection,mongo_user_collection,verbose=False):
+        """
+            Extract tweets from Twitter's API that contain a given query string and store them in a MongoDB database.
+            
+            Parameters:
+            -----------
+            query: dict
+                A dictionary that specifies the search query. The dictionary must have a 'query' key that maps to a
+                string representing the query to be searched.
+            mongo_db: str
+                The name of the MongoDB database where the tweets and users will be stored.
+            mongo_tweet_collection: str
+                The name of the MongoDB collection where the tweets will be stored.
+            mongo_user_collection: str
+                The name of the MongoDB collection where the users will be stored.
+            verbose: bool, optional
+                If True, print information about the tweets being extracted. Default is False.
+            
+            Returns:
+            --------
+            None
+                This function does not return anything, but it stores the extracted tweets and users in the MongoDB
+                database.
+        """
+        
+        
         # Set Mong DB and collection
         db = self.DocGB_Driver.myclient[mongo_db]
         tweet_collection = db[mongo_tweet_collection]
@@ -44,6 +69,13 @@ class TweetExtractor():
             try:
                 Tweet = tweet._json
                 user = Tweet['user']
+                if verbose:
+                    try:
+                        print(Tweet['text'])
+                    except :
+                        print(Tweet['full_text'])
+
+                    
                 Tweet['user'] = user['id_str']
                 # check if the tweet already exists in MongoDB
                 if not tweet_collection.find_one({"id_str": Tweet['id_str']}):
@@ -54,6 +86,12 @@ class TweetExtractor():
                     if not user_collection.find_one({"id_str": user['id_str']}):
                         # insert the user into MongoDB
                         user_collection.insert_one(user)
+                    else:
+                        if verbose:
+                            print('Tweet Already added....')
+                else:
+                    if verbose:
+                        print('Tweet Already added....')
                     
 
                 # if the tweet is a retweet, create a relationship between the retweet and the source tweet in Neo4j
@@ -91,36 +129,39 @@ class TweetExtractor():
                     print("An error occurred:", e)
                     continue
 
-    def Graph_Extraction(self,mongo_db,mongo_user_collection,Locations):
-         # Set Mong DB and collection
+    def Graph_Extraction(self,mongo_db,mongo_user_collection,verbose=False):
+       
+        # Set Mong DB and collection
         db = self.DocGB_Driver.myclient[mongo_db]
         user_collection = db[mongo_user_collection]
 
                 
         query = "MATCH (u:User {Checked: false}) RETURN u.id AS id"
 
-        # Retrieve user IDs from Neo4j
-        
+        # Retrieve user IDs from Neo4j that hasn't been checked
         result = self.graphDB_Driver.session.run(query)
         user_ids = [record["id"] for record in result]
-        print("Number of users to be checked: ",len(user_ids))
+        if verbose:
+            print("Number of users to be checked: ",len(user_ids))
         random.shuffle(user_ids)
+
         # Iterate over user IDs
         for user_id in user_ids:
             
             try:
                 # Retrieve user's  from Twitter API
                 user = self.api.get_user(user_id)._json
-                
                 if not user_collection.find_one({"id_str": user['id_str']}):
                     user['_id'] = user['id']
                     user['mongoCol'] = mongo_user_collection
                     user_collection.insert_one(user)
                 else:
-                    print('Already Added',user['screen_name'],user['id'])
+                    if verbose:
+                        print('Already Added',user['screen_name'],user['id'])
                 Algerian =Algerian_location(user['location']) 
                 
-                print(f"get folower of user', {user['screen_name']},{user['id']} location {user['location']} : {Algerian} : {user['followers_count']< 4000}")
+                if verbose:
+                    print(f"get folower of user', {user['screen_name']},{user['id']} location {user['location']} : {Algerian} : {user['followers_count']< 4000}")
                 with self.graphDB_Driver.driver.session() as session:
                     session.run(""" MATCH (u:User {id: $user_id})
                             SET u.screen_name=$screen_name,  
@@ -146,8 +187,9 @@ class TweetExtractor():
                 
                 if (Algerian and user['followers_count']< 2000 ):
                     # Get Friends IDs
-                    print(f"\t getting friend and follower user {user_id} of a location {user['location']} ")
-                    print(f"\t\t getting friend: {user['friends_count']}")
+                    if verbose:
+                        print(f"\t getting friend and follower user {user_id} of a location {user['location']} ")
+                        print(f"\t\t getting friend: {user['friends_count']}")
                     for friend_id in tweepy.Cursor(self.api.friends_ids, user_id=user_id).items():
                         try:
                             friend_id = str(friend_id)
@@ -161,9 +203,10 @@ class TweetExtractor():
                             if "Rate limit exceeded" in str(e):
                                 print("Waiting for rate limit to reset...")
                                 time.sleep(60 * 15) # wait for 15 minutes
-                    print(f"\t\t getting friend end")           
+                    if verbose:
+                                print(f"\t\t getting friend end")           
 
-                    print(f"\t\t getting followers: {user['followers_count']}")
+                                print(f"\t\t getting followers: {user['followers_count']}")
                     # Get Followers IDs
                     for follower_id in tweepy.Cursor(self.api.followers_ids, user_id=user_id).items():
                         try:
@@ -178,7 +221,9 @@ class TweetExtractor():
                             if "429" in str(e):
                                 print("Waiting for rate limit to reset...")
                                 time.sleep(60 * 15) # wait for 15 minutes
-                    print(f"\t\t getting followers end")
+                    
+                    if verbose:            
+                                print(f"\t\t getting followers end")
             except tweepy.TweepError as e:
                         print(f"Error fetching friends/followers of user {user_id}: {str(e)}")
                         if "429" in str(e):

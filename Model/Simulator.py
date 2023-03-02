@@ -11,23 +11,76 @@ from multiprocessing import Manager
 class RumorSimulator():
 
     def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='non',k=0,setptime=0.125):
-        
+        """
+        Runs a simulation of the HSIB model on a given network.
+
+        Parameters:
+        -----------
+        g : networkx graph
+            Graph of the network to run simulation on.
+
+        NbrSim : int, optional
+            Number of simulations to run. Default is 1.
+
+        seedsSize : float, optional
+            The size of the seed set if seedNode is not provided. Default is 0.05.
+
+        seedNode : list of ints, optional
+            List of infected nodes to begin simulation with. If not provided, seed set will be generated randomly.
+
+        seedOpinion : list of strings, optional
+            List of opinions of the seed set nodes. Default is None.
+
+        typeOfSim : int, optional
+            Type of simulation to run. 1 for the main simulation, 0 for control simulations. Default is 1.
+
+        simName : int, optional
+            Name of the simulation. Default is 1.
+
+        verbose : bool, optional
+            If True, print information about the simulation. Default is False.
+
+        method : string, optional
+            The selected rumor influence minimization strategy. Default is 'non'.
+
+        k : int, optional
+            Number of nodes to be employed in the rumor influence minimization strategy. Default is 0.
+
+        setptime : float, optional
+            Step time of the simulation. Default is 0.125.
+
+        Returns:
+        --------
+        result : pandas DataFrame or None
+            If typeOfSim is 0, returns a DataFrame with network measures statistics. Otherwise, returns None.
+        """
+        # Create an instance of the HSIBmodel class with the given parameters
         sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose,method=method,k=k,setptime=setptime)
+        
         if verbose:
             print(f'simulations started for {method}, noberof k = {k}, DetT= {1},')
+        
+        # Use a multiprocessing Manager to store simulation statistics in a shared list
         with Manager() as manager:
             Stat=manager.list()
             print('Stat')
-            #start_time = time.time()  
+            #start_time = time.time()
+            # Create a list of processes for running the simulation in parallel  
             processes=[multiprocessing.Process(target=sim.runModel,args=(i,typeOfSim,Stat))for i in range(NbrSim)] 
+            # Start all the processes
             [process.start() for process in processes]
+            # Wait for all the processes to finish
             [process.join() for process in processes]
+            
             df= pd.DataFrame()
+            # If the type of simulation is 0 (steady-state simulation), create a DataFrame of simulation results and 
+            # calculate network measures statistics, then return the results
             if typeOfSim==0:
                 df=self.CreateSimulationsDF(Stat,df ,typeOfSim,setptime)
                 result=self.showNetworkMeasuresStatistics(g,df)
                 return result
             else:
+                # If the type of simulation is 1 (dynamic simulation), create a DataFrame of simulation results and return it
                 df=self.CreateSimulationsDF(Stat,df ,typeOfSim,setptime)
                 return df
                 

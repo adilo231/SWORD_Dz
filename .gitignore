@@ -5,6 +5,7 @@ __pycache__/
 /Data
 /OldCodes
 main.py
+main2.py
 .DS*
 neo4j.ipynb
 /main.py
@@ -20,6 +21,7 @@ neo4j.ipynb
 /all-rnr-annotated-threads
 /SimulationResults
 /font
+/lib
 main.py
 .DS*
 neo4j.ipynb
