@@ -30,7 +30,7 @@ neo_password = "admin"
 # define rate limit handler function
 if __name__ == '__main__':
 
-    keywords = ['Algeria','Algérie','Alger','Algiers','الجزائر']
+    keywords = ['ukraine war','guerre ukraine','حرب أوكرانيا','ukraine','أوكرانيا','war','guerre','حرب']
 
     # Define the search query
     query = " OR ".join(keywords)
@@ -42,9 +42,10 @@ if __name__ == '__main__':
     }
     
 
+
     mongo_db = "twitter_db"
-    mongo_tweet_collection = keywords[0]
-    mongo_user_collection = f"{keywords[0]}_users"
+    mongo_tweet_collection = "Ukraine"
+    mongo_user_collection = f"Ukraine_users"
     Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user_collection)
 
 # cloud =CloudOfWord(mongo_uri,mongo_db,mongo_user,lang='french')
