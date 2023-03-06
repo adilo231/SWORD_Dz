@@ -9,9 +9,9 @@ main2.py
 .DS*
 neo4j.ipynb
 /main.py
-/SimType0
-/SimType1
-/SimType2
+/SimType*
+
+DataStorage/SimType*
 /APP_Init
 /conf
 /data
