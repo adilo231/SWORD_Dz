@@ -14,4 +14,9 @@
 9- ////// Take in consederation the k value blocked node
 10-/////// find better solution to block nodes 
 11- Think about the framework architecture
-12-scatter
+
+
+13- Neo4j Les doublant
+14- multi processing
+15- prepa
+16- all Simulation results should be plot in simulation results 

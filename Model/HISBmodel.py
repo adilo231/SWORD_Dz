@@ -11,7 +11,7 @@ plt.style.use('ggplot')
 
 
 class HSIBmodel():
-    def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=0.125,k=0, method='none',verbose=False):
+    def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.2, Tdet=0.125,k=0, method='none',verbose=False):
         """This is a class for the HISBmodel, which is a rumor propagation model based on human and social behavior.
 
         Parameters:
@@ -405,7 +405,7 @@ class HSIBmodel():
 
                     # Check if the node will spread the rumor to its neighbors
                     c = np.random.rand()
-                    if (c <= ActualAttraction):
+                    if (c <= ActualAttraction*0.5):
                         Nbr_Spreaders += 1
                         self.Graph.nodes[id]['state'] = 'spreaders'
                         neighbours = list(self.Graph.neighbors(id)) 

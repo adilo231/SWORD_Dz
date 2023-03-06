@@ -33,12 +33,14 @@ if __name__ == '__main__':
 
     Generator=gg.CreateGraphFrmDB()
     Simulator = sim.RumorSimulator()
-    g = Generator.CreateGraph(parameters,graphModel='FB')  
+    # fpp=fp.FileUploader()
+    # fpp.uploadGraphToDB(graphModel='ABM')
+    g = Generator.CreateGraph(parameters,graphModel='ABM')  
    
     print("--------------------------------------------------------------------------------------------------------------------")
     start_time = time.time()
     
-    typeOfSim=0
+    typeOfSim=1
     k=int(0.1*g.number_of_nodes())
     i=0
     # aux1 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='B_RBN',k=k)
@@ -49,9 +51,9 @@ if __name__ == '__main__':
     
     # aux4 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='T_MRIBHBTCS',k=k)
     
-    aux_0 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='None',k=k)
+    aux_0 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.01, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='None',k=k)
       
-    l=aux_0
+    l=[aux_0]
 
 
     end_time = time.time()
