@@ -29,24 +29,25 @@ neo_password = "admin"
 
 # define rate limit handler function
 if __name__ == '__main__':
-
-    keywords = ['ukraine war','guerre ukraine','حرب أوكرانيا','ukraine','أوكرانيا','war','guerre','حرب']
-
-    # Define the search query
-    query = " OR ".join(keywords)
+    keywordslist=[]
+    keywordslist.append(["covid", "vaccines", "covid"])
+    
     Extractor =TweetExtractor(mongo_uri,neo_uri,neo_user,neo_password,API_credentials)
-    Query={
-        'query' : query,
 
-
-    }
+    for keywords in keywordslist:
+    # Define the search query
+        query = " AND  ".join(keywords)
+        
+        Query={
+            'query' : query,
+        }
     
 
 
-    mongo_db = "twitter_db"
-    mongo_tweet_collection = "Ukraine"
-    mongo_user_collection = f"Ukraine_users"
-    Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user_collection)
+        mongo_db = "twitter_db"
+        mongo_tweet_collection = keywords[0]
+        mongo_user_collection = f"CovidTweets_users"
+        Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user_collection)
 
 # cloud =CloudOfWord(mongo_uri,mongo_db,mongo_user,lang='french')
 # cloud.print_Could()

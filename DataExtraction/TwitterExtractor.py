@@ -71,9 +71,11 @@ class TweetExtractor():
                     user = Tweet['user']
                     
                     try:
-                        print(f"\tAdding tweet {Nbr_tweets} ",Tweet['text'][:20])
+                         if verbose:
+                            print(f"\tAdding tweet {Nbr_tweets} ",Tweet['text'][:20])
                     except :
-                        print(f"\tAdding tweet {Nbr_tweets} ",Tweet['full_text'][:20])
+                         if verbose:
+                            print(f"\tAdding tweet {Nbr_tweets} ",Tweet['full_text'][:20])
 
                         
                     Tweet['user'] = user['id_str']
@@ -97,31 +99,31 @@ class TweetExtractor():
                     if verbose:
                             print(f"\tAdd to neo4j")
                     # if the tweet is a retweet, create a relationship between the retweet and the source tweet in Neo4j
-                    if hasattr(tweet, "retweeted_status"):
-                        with self.graphDB_Driver.session as session:
-                            session.run(
-                                "MERGE (t1:Tweet {id: $tweet_id_str,id_str: $tweet_id_str, MongoColTweet:$mongoDB})"
-                                "MERGE (t2:Tweet {id: $source_id_str,id_str: $source_id_str, MongoColTweet:$mongoDB})"
-                                "MERGE (t1)-[:retweeted_from]->(t2)",
-                                tweet_id_str=tweet.id_str, source_id_str=tweet.retweeted_status.id_str,mongoDB=mongo_tweet_collection
-                            )
-                        # create a relationship between the user and the tweet in Neo4j Retweet
-                        with self.graphDB_Driver.session as session:
-                            session.run(
-                                "MERGE (u:User {id: $user_id_str,id_str: $user_id_str, MongoColTweet:$mongoDB})"
-                                "MERGE (t:Tweet {id: $tweet_id_str,id_str: $tweet_id_str, MongoColTweet:$mongoDB})"
-                                "MERGE (u)-[:retweeted]->(t)",
-                                user_id_str=user['id_str'], tweet_id_str=Tweet['id_str'],mongoDB=mongo_tweet_collection
-                            )
-                    else:
-                        # create a relationship between the user and the tweet in Neo4j
-                        with self.graphDB_Driver.session as session:
-                            session.run(
-                                "MERGE (u:User {id: $user_id_str,id_str: $user_id_str, MongoColTweet:$mongoDB})"
-                                "MERGE (t:Tweet {id: $tweet_id_str,id_str: $tweet_id_str, MongoColTweet:$mongoDB})"
-                                "MERGE (u)-[:tweeted]->(t)",
-                                user_id_str=user['id_str'], tweet_id_str=Tweet['id_str'],mongoDB=mongo_tweet_collection
-                            )
+                    # if hasattr(tweet, "retweeted_status"):
+                    #     with self.graphDB_Driver.session as session:
+                    #         session.run(
+                    #             "MERGE (t1:Tweet {id: $tweet_id_str,id_str: $tweet_id_str, MongoColTweet:$mongoDB})"
+                    #             "MERGE (t2:Tweet {id: $source_id_str,id_str: $source_id_str, MongoColTweet:$mongoDB})"
+                    #             "MERGE (t1)-[:retweeted_from]->(t2)",
+                    #             tweet_id_str=tweet.id_str, source_id_str=tweet.retweeted_status.id_str,mongoDB=mongo_tweet_collection
+                    #         )
+                    #     # create a relationship between the user and the tweet in Neo4j Retweet
+                    #     with self.graphDB_Driver.session as session:
+                    #         session.run(
+                    #             "MERGE (u:User {id: $user_id_str,id_str: $user_id_str, MongoColTweet:$mongoDB})"
+                    #             "MERGE (t:Tweet {id: $tweet_id_str,id_str: $tweet_id_str, MongoColTweet:$mongoDB})"
+                    #             "MERGE (u)-[:retweeted]->(t)",
+                    #             user_id_str=user['id_str'], tweet_id_str=Tweet['id_str'],mongoDB=mongo_tweet_collection
+                    #         )
+                    # else:
+                    #     # create a relationship between the user and the tweet in Neo4j
+                    #     with self.graphDB_Driver.session as session:
+                    #         session.run(
+                    #             "MERGE (u:User {id: $user_id_str,id_str: $user_id_str, MongoColTweet:$mongoDB})"
+                    #             "MERGE (t:Tweet {id: $tweet_id_str,id_str: $tweet_id_str, MongoColTweet:$mongoDB})"
+                    #             "MERGE (u)-[:tweeted]->(t)",
+                    #             user_id_str=user['id_str'], tweet_id_str=Tweet['id_str'],mongoDB=mongo_tweet_collection
+                    #         )
                     if verbose:
                             print(f"\tAdded to neo4j...")
         except tweepy.TweepError as e:
@@ -152,8 +154,8 @@ class TweetExtractor():
                     with self.graphDB_Driver.driver.session() as session:
                         for friend_id in tqdm(ids):
                                 friend_id = str(friend_id)
-                                result = session.run("MERGE (a:User {id: $user_id}) "
-                                        "MERGE (b:User {id: $friend_id ,MongoCol: $mongo_col, Checked: $checked}) "
+                                result = session.run("MERGE (a:User {id_str: $user_id}) "
+                                        "MERGE (b:User {id_str: $friend_id ,MongoCol: $mongo_col, Checked: $checked}) "
                                         "MERGE (a)-[:FOLLOWS]->(b)", 
                                         user_id=str(user_id), friend_id=str(friend_id),mongo_col=mongo_user_collection,checked=False)
 
@@ -161,8 +163,8 @@ class TweetExtractor():
                     with self.graphDB_Driver.driver.session() as session:
                         for follower_id in tqdm(ids):
                             follower_id = str(follower_id)
-                            result = session.run("MERGE (a:User {id: $user_id}) "
-                                                "MERGE (b:User {id: $follower_id,MongoCol: $mongo_col, Checked: $checked}) "
+                            result = session.run("MATCH (a:User {id_str: $user_id}) "
+                                                "MERGE (b:User {id_str: $follower_id,MongoCol: $mongo_col, Checked: $checked}) "
                                                 "MERGE (b)-[:FOLLOWS]->(a)", 
                                                 user_id=str(user_id), follower_id=str(follower_id),mongo_col=mongo_user_collection,checked=False)
             print("all Ids has been uploaded in the file: ",f'{root}/{file}', 'file remove it')
@@ -175,7 +177,7 @@ class TweetExtractor():
         user_collection = db[mongo_user_collection]
 
                 
-        query = "MATCH (u:User {Checked: True, LocationChecked:true}) RETURN u.id AS id"
+        query = "MATCH (u:User {Checked: True, LocationChecked:true}) RETURN u.id_str AS id"
 
         # Retrieve user IDs from Neo4j that hasn't been checked
         result = self.graphDB_Driver.session.run(query)
@@ -183,8 +185,11 @@ class TweetExtractor():
         if verbose:
             print("Number of users to be checked: ",len(user_ids))
         random.shuffle(user_ids)
-        ids_added=['916563468882530305','714213541646102529','11714622']
-        user_ids=['2515500817']
+        print(len(user_ids))
+        ids_added=["2515500817","2912608949","4867041051","916563468882530305","714213541646102529","11714622", "1308128283331121154","1109777841682608129","224788463"]
+        user_ids = [user_id for user_id in user_ids if user_id not in ids_added]
+        print(len(user_ids),len(ids_added))
+        # user_ids=['2515500817']
         # Iterate over user IDs
         for user_id in user_ids:
             
@@ -196,6 +201,7 @@ class TweetExtractor():
                     user['mongoCol'] = mongo_user_collection
                     user_collection.insert_one(user)
                 else:
+                    
                     if verbose:
                         print('Already Added',user['screen_name'],user['id'])
                 
@@ -204,7 +210,7 @@ class TweetExtractor():
                 if verbose:
                     print(f"get folower of user', {user['screen_name']},{user['id']} location {user['location']} : {Algerian} : {user['followers_count']> 2000}")
                 with self.graphDB_Driver.driver.session() as session:
-                    session.run(""" MATCH (u:User {id: $user_id})
+                    session.run(""" MATCH (u:User {id_str: $user_id})
                             SET u.screen_name=$screen_name,  
                                 u.id_str= $id_str,
                                 u.followers_count= $followers_count,
