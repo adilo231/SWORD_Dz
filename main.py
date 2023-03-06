@@ -30,24 +30,48 @@ neo_password = "admin"
 
 # define rate limit handler function
 if __name__ == '__main__':
-    Extractor =TweetExtractor(mongo_uri,neo_uri,neo_user,neo_password,API_credentials)
-    Query={
-        'query' : "تبون",
-        'lang': "en"
 
+    keywordslist=[]
+    keywordslist.append(["fertility", "vaccines", "covid"])
+    keywordslist.append(["CDC", "deaths", "covid"])
+    Extractor =TweetExtractor(mongo_uri,neo_uri,neo_user,neo_password,API_credentials)
+
+    keywords=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','جزائر','dz','DZ']
+    # Define the search query
+    query = " OR  ".join(keywords)
+    
+    Query={
+        'query' : query,
     }
+
+
+
+    mongo_db = "twitter_db"
+    mongo_tweet_collection = "Algeria"
+    mongo_user_collection = f"Algeria_users"
+    Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user_collection,verbose=False)
+    # Extractor =TweetExtractor(mongo_uri,neo_uri,neo_user,neo_password,API_credentials)
+    # Query={
+    #     'query' : "تبون",
+    #     'lang': "en"
+
+    # }
     
 
-    mongo_db = "twitter_db"
-    mongo_tweet_collection = "Teboune"
-    mongo_user_collection = "Teboune_users"
-    # Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user_collection)
+    # mongo_db = "twitter_db"
+    # mongo_tweet_collection = "Teboune"
+    # mongo_user_collection = "Teboune_users"
+    # # Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user_collection)
 
 
-    Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','Alger-Algérie','Algiers, Algeria']
-    mongo_db = "twitter_db"
-    mongo_user = "AlgeriaTwitterGraph"
-    Extractor.Graph_Extraction(mongo_db,mongo_user,Locations)
+    # Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','Alger-Algérie','Algiers, Algeria']
+    # mongo_db = "twitter_db"
+    # mongo_user = "AlgeriaTwitterGraph"
+    # Extractor.Graph_Extraction(mongo_db,mongo_user,Locations)
+    
+
+
+
 
     #Graph's Parametres
     n = 300
