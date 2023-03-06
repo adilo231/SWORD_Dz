@@ -138,37 +138,41 @@ class TweetExtractor():
         root="Data/cache"
         
         files=os.listdir(root)
-        while len(files)>0:
+        while True:
             files=os.listdir(root)
-            random.shuffle(files)
-            file=files[0]
-            if not file.startswith('.'):
-                print(file)
-                
-                user_id=file.split('_')[0]
-                type=file.split('_')[1]
-                with open(f'{root}/{file}', 'rb') as f:
-                    ids = pickle.load(f)
-                print(user_id,type)
-                if type=="friend":
-                    with self.graphDB_Driver.driver.session() as session:
-                        for friend_id in tqdm(ids):
-                                friend_id = str(friend_id)
-                                result = session.run("MERGE (a:User {id_str: $user_id}) "
-                                        "MERGE (b:User {id_str: $friend_id ,MongoCol: $mongo_col, Checked: $checked}) "
-                                        "MERGE (a)-[:FOLLOWS]->(b)", 
-                                        user_id=str(user_id), friend_id=str(friend_id),mongo_col=mongo_user_collection,checked=False)
+            if len((files))>0:
+                random.shuffle(files)
+                file=files[0]
+                if not file.startswith('.'):
+                    print(file)
+                    
+                    user_id=file.split('_')[0]
+                    type=file.split('_')[1]
+                    with open(f'{root}/{file}', 'rb') as f:
+                        ids = pickle.load(f)
+                    print(user_id,type)
+                    if type=="friend":
+                        with self.graphDB_Driver.driver.session() as session:
+                            for friend_id in tqdm(ids):
+                                    friend_id = str(friend_id)
+                                    result = session.run("MERGE (a:User {id_str: $user_id}) "
+                                            "MERGE (b:User {id_str: $friend_id ,MongoCol: $mongo_col, Checked: $checked}) "
+                                            "MERGE (a)-[:FOLLOWS]->(b)", 
+                                            user_id=str(user_id), friend_id=str(friend_id),mongo_col=mongo_user_collection,checked=False)
 
-                elif type=="follower":
-                    with self.graphDB_Driver.driver.session() as session:
-                        for follower_id in tqdm(ids):
-                            follower_id = str(follower_id)
-                            result = session.run("MATCH (a:User {id_str: $user_id}) "
-                                                "MERGE (b:User {id_str: $follower_id,MongoCol: $mongo_col, Checked: $checked}) "
-                                                "MERGE (b)-[:FOLLOWS]->(a)", 
-                                                user_id=str(user_id), follower_id=str(follower_id),mongo_col=mongo_user_collection,checked=False)
-            print("all Ids has been uploaded in the file: ",f'{root}/{file}', 'file remove it')
-            os.remove(f'{root}/{file}')                
+                    elif type=="follower":
+                        with self.graphDB_Driver.driver.session() as session:
+                            for follower_id in tqdm(ids):
+                                follower_id = str(follower_id)
+                                result = session.run("MATCH (a:User {id_str: $user_id}) "
+                                                    "MERGE (b:User {id_str: $follower_id,MongoCol: $mongo_col, Checked: $checked}) "
+                                                    "MERGE (b)-[:FOLLOWS]->(a)", 
+                                                    user_id=str(user_id), follower_id=str(follower_id),mongo_col=mongo_user_collection,checked=False)
+                print("all Ids has been uploaded in the file: ",f'{root}/{file}', 'file remove it')
+                os.remove(f'{root}/{file}') 
+            else:
+                 print("No data to be Uploaded sleeping for 1 min")
+                 time.sleep(60)               
 
     def Graph_Extraction(self,mongo_db,mongo_user_collection,verbose=False):
        
@@ -177,7 +181,7 @@ class TweetExtractor():
         user_collection = db[mongo_user_collection]
 
                 
-        query = "MATCH (u:User {Checked: True, LocationChecked:true}) RETURN u.id_str AS id"
+        query = "MATCH (u:User {Checked: True,LocationChecked:True}) where u.followers_count>50000 RETURN u.id_str AS id,u.screen_name as name"
 
         # Retrieve user IDs from Neo4j that hasn't been checked
         result = self.graphDB_Driver.session.run(query)
@@ -266,11 +270,11 @@ class TweetExtractor():
                     if verbose:
                                 print(f"\t\t Extracting friend Ids end")           
                                 print(f"\t\t Extracting followers Ids: {user['followers_count']}")
-                    butch_number=0
+                    butch_number=1
                     # Get Followers IDs
                     for follower_ids in tweepy.Cursor(self.api.followers_ids, user_id=user_id,count=500).pages():
                         if verbose:
-                            print(f"\t\t\t {butch_number} ->  {len(follower_ids)} ID extracted ready to load to DB")
+                            print(f"\t\t\t {butch_number}/{round(user['followers_count']/500)} ->  {len(follower_ids)} ID extracted ready to load to DB")
                         with open(f"Data/cache/{user_id}_follower_{butch_number}.pkl", 'wb') as f:
                                 pickle.dump(follower_ids, f)
                         butch_number+=1

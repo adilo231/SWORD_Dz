@@ -47,9 +47,9 @@ if __name__ == '__main__':
     
     # aux2 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='B_DMBN',k=k)
     
-    # aux3 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='T_MDTCS',k=k)
+    aux3 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='T_MDTCS',k=k)
     
-    # aux4 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='T_MRIBHBTCS',k=k)
+    aux4 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.03, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='T_MRIBHBTCS',k=k)
     
     aux_0 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.01, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='None',k=k)
       
