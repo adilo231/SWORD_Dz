@@ -1,10 +1,5 @@
-import DataStorage.GraphGenerator as gg
+
 from DataExtraction.TwitterExtractor import  TweetExtractor
-import Model.Simulator as sim
-import numpy as np
-import pandas as pd
-import time
-from tqdm import  tqdm
 # Twitter API credentials
 API_credentials={
 'consumer_key' : "NlCb4KrL6LlB8HVB3RGYLy0lU",
@@ -29,25 +24,30 @@ neo_password = "admin"
 
 # define rate limit handler function
 if __name__ == '__main__':
-    keywordslist=[]
-    keywordslist.append(["covid", "vaccines", "covid"])
-    
+    Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','Alger-Algérie','Algiers, Algeria']
+    mongo_db = "twitter_db"
+    mongo_user = "AlgeriaTwitterGraph"
     Extractor =TweetExtractor(mongo_uri,neo_uri,neo_user,neo_password,API_credentials)
+    Extractor.Graph_Extraction(mongo_db,mongo_user,Locations)
+    # keywordslist=[]
+    # keywordslist.append(["covid", "vaccines", "covid"])
+    
+    # Extractor =TweetExtractor(mongo_uri,neo_uri,neo_user,neo_password,API_credentials)
 
-    for keywords in keywordslist:
-    # Define the search query
-        query = " AND  ".join(keywords)
+    # for keywords in keywordslist:
+    # # Define the search query
+    #     query = " AND  ".join(keywords)
         
-        Query={
-            'query' : query,
-        }
+    #     Query={
+    #         'query' : query,
+    #     }
     
 
 
-        mongo_db = "twitter_db"
-        mongo_tweet_collection = keywords[0]
-        mongo_user_collection = f"CovidTweets_users"
-        Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user_collection)
+    #     mongo_db = "twitter_db"
+    #     mongo_tweet_collection = keywords[0]
+    #     mongo_user_collection = f"CovidTweets_users"
+    #     Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user_collection)
 
 # cloud =CloudOfWord(mongo_uri,mongo_db,mongo_user,lang='french')
 # cloud.print_Could()
