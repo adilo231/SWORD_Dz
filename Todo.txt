@@ -14,3 +14,4 @@
 9- ////// Take in consederation the k value blocked node
 10-/////// find better solution to block nodes 
 11- Think about the framework architecture
+12-scatter

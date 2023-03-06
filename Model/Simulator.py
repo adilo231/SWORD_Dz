@@ -10,7 +10,7 @@ from multiprocessing import Manager
 
 class RumorSimulator():
 
-    def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='non',k=0,setptime=0.125):
+    def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='none',k=0,setptime=0.125):
         """
         Runs a simulation of the HSIB model on a given network.
 
@@ -84,83 +84,99 @@ class RumorSimulator():
                 df=self.CreateSimulationsDF(Stat,df ,typeOfSim,setptime)
                 return df
                 
-        
-
-    def DisplyResults(self,results,resultType=1):
-        color=['black','red','yellow','green','blue','purple','orange','oliver','cyan','maroon','lime','pink','silver','magenta']
+    def DisplyResults(self,results,resultType=1,save=False):
+        color=['black','red','green','blue','purple','pink','silver','yellow','orange','oliver','cyan','maroon','lime','magenta']
         if resultType==0:
            # création de la grille de sous-graphiques
-            fig, axs = plt.subplots(nrows=4, ncols=4, figsize=(12, 12))
+            fig, axs = plt.subplots(nrows=4, ncols=5, figsize=(12, 12))
             fig.set_size_inches(16, 10)
             # tracé de chaque variable en fonction de chaque variable de centralité
-            axs[0, 0].scatter(results["deg_cent"], results["AccpR"])
+            axs[0, 0].scatter(results["deg_cent"], results["AccpR"],linewidths=0,alpha=1,color=color[0])
             axs[0, 0].set_xlabel("Degree Centrality")
             axs[0, 0].set_ylabel("AccpR")
 
-            axs[0, 1].scatter(results["clos_cent"], results["AccpR"])
+            axs[0, 1].scatter(results["clos_cent"], results["AccpR"],linewidths=0,alpha=1,color=color[0])
             axs[0, 1].set_xlabel("Closeness Centrality")
             axs[0, 1].set_ylabel("AccpR")
 
-            axs[0, 2].scatter(results["betw_cent"], results["AccpR"])
+            axs[0, 2].scatter(results["betw_cent"], results["AccpR"],linewidths=0,alpha=1,color=color[0])
             axs[0, 2].set_xlabel("Betweenness Centrality")
             axs[0, 2].set_ylabel("AccpR")
 
-            axs[0, 3].scatter(results["page_rank"], results["AccpR"])
+            axs[0, 3].scatter(results["page_rank"], results["AccpR"],linewidths=0,alpha=1,color=color[0])
             axs[0, 3].set_xlabel("Page Rank")
             axs[0, 3].set_ylabel("AccpR")
 
-            axs[1, 0].scatter(results["deg_cent"], results["SendR"])
+            axs[0, 4].scatter(results["degree"], results["AccpR"],linewidths=0,alpha=1,color=color[0])
+            axs[0, 4].set_xlabel("Degree")
+            axs[0, 4].set_ylabel("AccpR")
+
+            axs[1, 0].scatter(results["deg_cent"], results["SendR"],linewidths=0,alpha=1,color=color[1])
             axs[1, 0].set_xlabel("Degree Centrality")
             axs[1, 0].set_ylabel("SendR")
 
-            axs[1, 1].scatter(results["clos_cent"], results["SendR"])
+            axs[1, 1].scatter(results["clos_cent"], results["SendR"],linewidths=0,alpha=1,color=color[1])
             axs[1, 1].set_xlabel("Closeness Centrality")
             axs[1, 1].set_ylabel("SendR")
 
-            axs[1, 2].scatter(results["betw_cent"], results["SendR"])
+            axs[1, 2].scatter(results["betw_cent"], results["SendR"],linewidths=0,alpha=1,color=color[1])
             axs[1, 2].set_xlabel("Betweenness Centrality")
             axs[1, 2].set_ylabel("SendR")
 
-            axs[1, 3].scatter(results["page_rank"], results["SendR"])
+            axs[1, 3].scatter(results["page_rank"], results["SendR"],linewidths=0,alpha=1,color=color[1])
             axs[1, 3].set_xlabel("Page Rank")
             axs[1, 3].set_ylabel("SendR")
 
-            axs[2, 0].scatter(results["deg_cent"], results["Accp_NegR"])
+            axs[1, 4].scatter(results["degree"], results["SendR"],linewidths=0,alpha=1,color=color[1])
+            axs[1, 4].set_xlabel("Degree")
+            axs[1, 4].set_ylabel("SendR")
+
+            axs[2, 0].scatter(results["deg_cent"], results["Accp_NegR"],linewidths=0,alpha=1,color=color[2])
             axs[2, 0].set_xlabel("Degree Centrality")
             axs[2, 0].set_ylabel("Accp_NegR")
 
-            axs[2, 1].scatter(results["clos_cent"], results["Accp_NegR"])
+            axs[2, 1].scatter(results["clos_cent"], results["Accp_NegR"],linewidths=0,alpha=1,color=color[2])
             axs[2, 1].set_xlabel("Closeness Centrality")
             axs[2, 1].set_ylabel("Accp_NegR")
 
-            axs[2, 2].scatter(results["betw_cent"], results["Accp_NegR"])
+            axs[2, 2].scatter(results["betw_cent"], results["Accp_NegR"],linewidths=0,alpha=1,color=color[2])
             axs[2, 2].set_xlabel("Betweenness Centrality")
             axs[2, 2].set_ylabel("Accp_NegR")
 
-            axs[2, 3].scatter(results["page_rank"], results["Accp_NegR"])
+            axs[2, 3].scatter(results["page_rank"], results["Accp_NegR"],linewidths=0,alpha=1,color=color[2])
             axs[2, 3].set_xlabel("Page Rank")
             axs[2, 3].set_ylabel("Accp_NegR")
-            axs[3, 0].scatter(results["deg_cent"], results["Nb_Accpted_Rm"])
+
+            axs[2, 4].scatter(results["degree"], results["Accp_NegR"],linewidths=0,alpha=1,color=color[2])
+            axs[2, 4].set_xlabel("Degree")
+            axs[2, 4].set_ylabel("Accp_NegR")
+
+            axs[3, 0].scatter(results["deg_cent"], results["Nb_Accpted_Rm"],linewidths=0,alpha=1,color=color[3])
             axs[3, 0].set_xlabel("Degree Centrality")
             axs[3, 0].set_ylabel("Nb_Accpted_Rm")
 
-            axs[3, 1].scatter(results["clos_cent"], results["Nb_Accpted_Rm"])
+            axs[3, 1].scatter(results["clos_cent"], results["Nb_Accpted_Rm"],linewidths=0,alpha=1,color=color[3])
             axs[3, 1].set_xlabel("Closeness Centrality")
             axs[3, 1].set_ylabel("Nb_Accpted_Rm")
 
-            axs[3, 2].scatter(results["betw_cent"], results["Nb_Accpted_Rm"])
+            axs[3, 2].scatter(results["betw_cent"], results["Nb_Accpted_Rm"],linewidths=0,alpha=1,color=color[3])
             axs[3, 2].set_xlabel("Betweenness Centrality")
             axs[3, 2].set_ylabel("Nb_Accpted_Rm")
 
-            axs[3, 3].scatter(results["page_rank"], results ["Nb_Accpted_Rm"])
+            axs[3, 3].scatter(results["page_rank"], results ["Nb_Accpted_Rm"],linewidths=0,alpha=1,color=color[3])
             axs[3, 3].set_xlabel("Page Rank")
             axs[3, 3].set_ylabel("Nb_Accpted_Rm")
 
+            axs[3, 4].scatter(results["degree"], results ["Nb_Accpted_Rm"],linewidths=0,alpha=1,color=color[3])
+            axs[3, 4].set_xlabel("Degree")
+            axs[3, 4].set_ylabel("Nb_Accpted_Rm")
+
 
             # ajustement des espaces entre les subplots
-            file_list = os.listdir("SimType0")
-            number_of_files = len(file_list)
-            fig.savefig('SimType0/image_'+str(number_of_files+1)+'.png', dpi=300 )
+            if save:
+                file_list = os.listdir("DataStorage/SimType0")
+                number_of_files = len(file_list)
+                fig.savefig('DataStorage/SimType0/image_'+str(number_of_files+1)+'.png', dpi=300 )
             plt.tight_layout()
 
             # affichage du plot
@@ -178,10 +194,10 @@ class RumorSimulator():
                     ax.set_ylabel(f'Number of {col[i]}')
                     ax.set_xlabel(f'Time')
                     ax.legend()
-            
-            file_list = os.listdir("SimType1")
-            number_of_files = len(file_list)
-            fig.savefig('SimType1/image_'+str(number_of_files+1)+'.png', dpi=300 )
+            if save:
+                file_list = os.listdir("DataStorage/SimType1")
+                number_of_files = len(file_list)
+                fig.savefig('DataStorage/SimType1/image_'+str(number_of_files+1)+'.png', dpi=300 )
             plt.show()
         elif resultType == 2:
         # Concatenate all results into a single dataframe
@@ -202,13 +218,11 @@ class RumorSimulator():
                 for ax in axes[:-1]:
                     ax.set_xlabel('')
 
-            file_list = os.listdir("SimType2")
-            number_of_files = len(file_list)
-            fig.savefig('SimType2/image_'+str(number_of_files+1)+'.png', dpi=300 ) 
+            if save:
+                file_list = os.listdir("DataStorage/SimType2")
+                number_of_files = len(file_list)
+                fig.savefig('DataStorage/SimType2/image_'+str(number_of_files+1)+'.png', dpi=300 ) 
             plt.show()
-
-
-
 
     def CreateSimulationsDF(self,results,df ,simName=1,setptime=0.125):
       
@@ -350,18 +364,27 @@ class RumorSimulator():
     def showNetworkMeasuresStatistics(self,Graph,data_global):
         print ("showing network measures statistics")
         #calculate network measures
-        deg_cent=nx.degree_centrality(Graph)
-        clos_cent=nx.closeness_centrality(Graph)
-        betw_cent=nx.betweenness_centrality(Graph)
-        page_rank=nx.pagerank(Graph,alpha=0.8)
+        deg_cent=[]
+        clos_cent=[]
+        betw_cent=[]
+        page_rank=[]
+        Degree=[]
+        for i in range(Graph.number_of_nodes()):
+            deg_cent.append(Graph.nodes[i]['degree_centrality'])
+            clos_cent.append(Graph.nodes[i]['closeness_centrality'] )
+            betw_cent.append(Graph.nodes[i]['between_centrality'] )
+            page_rank.append(Graph.nodes[i]['page_rank'])
+            Degree.append(Graph.nodes[i]['degree'] ) 
 
-
+       
         #prepare the data in the apropreate format
         for i in range(len(data_global)):
-            data_global.loc[i, 'deg_cent'] = float(deg_cent[i])
-            data_global.loc[i, 'clos_cent'] = float(clos_cent[i])
-            data_global.loc[i, 'betw_cent'] = float(betw_cent[i])
-            data_global.loc[i, 'page_rank'] = float(page_rank[i])
+            data_global.loc[i, 'deg_cent'] = deg_cent[i]
+            data_global.loc[i, 'clos_cent'] = clos_cent[i]
+            data_global.loc[i, 'betw_cent'] = betw_cent[i]
+            data_global.loc[i, 'page_rank'] = page_rank[i]
+            data_global.loc[i, 'degree'] = Degree[i]
+        
         print(data_global)
         return data_global
 

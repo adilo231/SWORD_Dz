@@ -5,7 +5,7 @@ import networkx as nx
 
 class FileUploader():
     
-    def __init__(self, filename="facebook.txt",uri = "bolt://localhost:7687",username="neo4j",password="Graid4154"):
+    def __init__(self, filename="facebook.txt",uri = "bolt://localhost:7687",username="neo4j",password="1151999aymana"):
         self.filename = filename
         self.uri = uri
         self.username = username

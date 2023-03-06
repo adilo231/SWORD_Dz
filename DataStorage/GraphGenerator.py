@@ -14,6 +14,7 @@ class Graph():
         self.page_rank=[]
         self.between_centrality=[]
         self.closeness_centrality=[]
+       
 
     def GetRandomValues(self,n, min, max):
         return (np.random.rand(n)*(max - min)) + min
@@ -55,7 +56,33 @@ class Graph():
         # S, D, Q, T: supporting, Denying, Questioning, Neutral
         nx.set_node_attributes(g, 'S', "opinion")
 
-    def CreateGraph(self,parameters,graphModel,Graph_size):
+        init=0
+        nx.set_node_attributes(g, init, 'clustring_coef')
+        for i in range(g.number_of_nodes()):
+            g.nodes[i]['clustring_coef']=self.clustring_coef[i]
+ 
+        nx.set_node_attributes(g, init, 'degree')
+        for i in range(g.number_of_nodes()):
+            g.nodes[i]['degree']=self.degree[i]
+
+        nx.set_node_attributes(g, init, 'degree_centrality')
+        for i in range(g.number_of_nodes()):
+            g.nodes[i]['degree_centrality']=self.degree_centrality[i]
+
+        nx.set_node_attributes(g, init, 'page_rank')
+        for i in range(g.number_of_nodes()):
+            g.nodes[i]['page_rank']=self.page_rank[i]
+
+        nx.set_node_attributes(g, init, 'between_centrality')
+        for i in range(g.number_of_nodes()):
+            g.nodes[i]['between_centrality']=self.between_centrality[i]
+
+        nx.set_node_attributes(g, init, 'closeness_centrality')
+        for i in range(g.number_of_nodes()):
+            g.nodes[i]['closeness_centrality']=self.closeness_centrality[i]
+
+        
+    def CreateGraph(self,parameters,graphModel):
         pass
 
 
@@ -79,7 +106,7 @@ class CreateGraphFrmDB(Graph):
         self.InitParameters(g, parameters)
         return g
 
-    def getConnection(self,uri="bolt://localhost:7687",username="neo4j",password="Graid4154"):
+    def getConnection(self,uri="bolt://localhost:7687",username="neo4j",password="1151999aymana"):
         driver = GraphDatabase.driver(uri =uri, auth=basic_auth(username, password))
         session=driver.session()
         print("Seccessfully connected to Database: "+uri)
@@ -88,7 +115,7 @@ class CreateGraphFrmDB(Graph):
     def loadGraph(self,graphModel):
         uri="bolt://localhost:7687"
         username="neo4j"
-        password="1151999aymana"
+        password="Graid4154"
         session=self.getConnection(uri,username,password)
         query=""
         if graphModel== 'FB' :
@@ -101,11 +128,11 @@ class CreateGraphFrmDB(Graph):
         if graphModel== 'ABL' :
             query ="MATCH (u1:user_large_random)-[r:friend_in_ABL]->(u2:user_large_random) return distinct u1.id_user,u2.id_user"
         
-        extrat_query1 ="u1.degree,u1.degree_centrality,u1.closness_centrality,u1.between_centrality,u1.page_rank,u1.clustering"
-        extrat_query2 ="u2.degree,u2.degree_centrality,u2.closness_centrality,u2.between_centrality,u2.page_rank,u2.clustering"
+        extrat_query1 =",u1.degree,u1.degree_centrality,u1.closness_centrality,u1.between_centrality,u1.page_rank,u1.clustering"
+        extrat_query2 =",u2.degree,u2.degree_centrality,u2.closness_centrality,u2.between_centrality,u2.page_rank,u2.clustering"
         if query !="":
             query=query+extrat_query1+extrat_query2
-
+            print(query)
             dtf_data = pd.DataFrame([dict(_) for _ in session.run(query)])
             l=dtf_data.values.tolist()
         else:
@@ -118,8 +145,8 @@ class CreateGraphFrmDB(Graph):
             g.add_nodes_from([u1,u2])
             g.add_edge(u1,u2)
             
-            node1=[line[0],line[2],line[3],line[4],line[5],line[6],line[7]]
-            node2=[line[1],line[8],line[9],line[10],line[11],line[12],line[13]]
+            node1=[int(line[0]),int(line[2]),float(line[3]),float(line[4]),float(line[5]),float(line[6]),float(line[7])]
+            node2=[int(line[1]),int(line[8]),float(line[9]),float(line[10]),float(line[11]),float(line[12]),float(line[13])]
             nodes.append(node1)
             nodes.append(node2)
         
@@ -140,6 +167,8 @@ class CreateGraphFrmDB(Graph):
             self.page_rank[i]=node[5]
             self.clustring_coef[i]=node[6]  
         self.graph=g
+       
+    
         return g 
     
     
