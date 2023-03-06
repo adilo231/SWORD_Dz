@@ -54,6 +54,7 @@ if __name__ == '__main__':
     aux_0 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.01, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='None',k=k)
       
     l=[aux_0]
+    l=[aux_0]
 
 
     end_time = time.time()
