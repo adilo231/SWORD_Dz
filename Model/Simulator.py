@@ -100,7 +100,7 @@ class RumorSimulator():
                 df=self.CreateSimulationsDF(Stat,df ,typeOfSim,setptime)
                 return df
                 
-    def DisplyResults(self,results,resultType=1,save=False):
+    def DisplyResults(self,results,resultType=1,save=False,filename=""):
         color=['black','red','green','blue','purple','pink','silver','yellow','orange','oliver','cyan','maroon','lime','magenta']
         if resultType==0:
            # création de la grille de sous-graphiques
@@ -189,10 +189,10 @@ class RumorSimulator():
 
 
             # ajustement des espaces entre les subplots
-            if save:
-                file_list = os.listdir("DataStorage/SimType0")
-                number_of_files = len(file_list)
-                fig.savefig('SimulationResults/SimType0/image_'+str(number_of_files+1)+'.png', dpi=300 )
+            # if save:
+            #     file_list = os.listdir("DataStorage/SimType0")
+            #     number_of_files = len(file_list)
+            #     fig.savefig('SimulationResults/SimType0/image_'+str(number_of_files+1)+'.png', dpi=300 )
             plt.tight_layout()
 
             # affichage du plot
@@ -210,10 +210,10 @@ class RumorSimulator():
                     ax.set_ylabel(f'Number of {col[i]}')
                     ax.set_xlabel(f'Time')
                     ax.legend()
-            if save:
-                file_list = os.listdir("SimulationResults/SimType1")
-                number_of_files = len(file_list)
-                fig.savefig('SimulationResults/SimType1/image_'+str(number_of_files+1)+'.png', dpi=300 )
+            # if save:
+            #     file_list = os.listdir("SimulationResults/SimType1")
+            #     number_of_files = len(file_list)
+            #     fig.savefig('SimulationResults/SimType1/image_'+str(number_of_files+1)+'.png', dpi=300 )
             plt.show()
         elif resultType == 2:
         # Concatenate all results into a single dataframe
@@ -234,12 +234,14 @@ class RumorSimulator():
                 for ax in axes[:-1]:
                     ax.set_xlabel('')
 
-            if save:
-                file_list = os.listdir("DataStorage/SimType2")
-                number_of_files = len(file_list)
-                fig.savefig('DataStorage/SimType2/image_'+str(number_of_files+1)+'.png', dpi=300 ) 
+            # if save:
+            #     file_list = os.listdir("DataStorage/SimType2")
+            #     number_of_files = len(file_list)
+            #     fig.savefig('DataStorage/SimType2/image_'+str(number_of_files+1)+'.png', dpi=300 ) 
             plt.show()
-
+        if save:
+            path=self.saveResult(filename,resultType)
+            fig.savefig(path, dpi=300 )
     def CreateSimulationsDF(self,results,df ,simName=1,setptime=0.125):
       
        if(simName==0):
@@ -404,4 +406,30 @@ class RumorSimulator():
         print(data_global)
         return data_global
 
- 
+    def saveResult(self,filename,type): 
+        dirPath = "DataStorage/SimulationResults/SimType"+str(type)+"/"
+        if filename !="":
+            filename=os.path.splitext(filename)[0]+".png"
+
+            while os.path.exists(dirPath+filename):
+                name_without_extension = os.path.splitext(filename)[0]
+                m=name_without_extension.split('_')
+                if len(m)>1:
+                    name_without_extension=m[0]+"_"+str(int(m[1])+1)
+                else:
+                    name_without_extension+="_"+str(1)
+                
+                filename=name_without_extension+".png"
+        else :
+            filename="image.png"
+            while os.path.exists(dirPath+filename):
+                name_without_extension = os.path.splitext(filename)[0]
+                m=name_without_extension.split('_')
+                if len(m)>1:
+                    name_without_extension=m[0]+"_"+str(int(m[1])+1)
+                else:
+                    name_without_extension+="_"+str(1)
+                
+                filename=name_without_extension+".png"
+        dirPath+=filename      
+        return dirPath

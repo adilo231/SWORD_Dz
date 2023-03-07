@@ -50,17 +50,17 @@ if __name__ == '__main__':
     
     aux4 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.03, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='T_MRIBHBTCS',k=k)
     
-    #aux_0 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.02, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='None',k=k)
+    aux_0 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.02, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='None',k=k)
       
 
-    l=[aux4]
-    #l=aux_0
+    l=[aux_0,aux4]
+    #l=aux4
 
     end_time = time.time()
     print('Parallel time: ', end_time-start_time)
    
     
-    Simulator.DisplyResults( l,resultType=typeOfSim,save=False)
+    Simulator.DisplyResults( l,resultType=typeOfSim,save=True,filename="")
   
     
 
