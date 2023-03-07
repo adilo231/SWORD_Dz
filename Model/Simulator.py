@@ -63,7 +63,6 @@ class RumorSimulator():
         # Use a multiprocessing Manager to store simulation statistics in a shared list
         with Manager() as manager:
             Stat=manager.list()
-            print('Stat')
             #start_time = time.time()
             # Create a list of processes for running the simulation in parallel  
             #the number of similation depend the number of cores in your laptob
@@ -80,7 +79,6 @@ class RumorSimulator():
                 #es to finish
                 [process.join() for process in processes]
                 
-            print("aaa")
             processes=[multiprocessing.Process(target=sim.runModel,args=(i,typeOfSim,Stat))for i in range(num_process_rest)] 
                 # Start all the processes
             [process.start() for process in processes]
