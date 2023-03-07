@@ -11,7 +11,7 @@ plt.style.use('ggplot')
 
 
 class HSIBmodel():
-    def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=0.125,k=0, method='none',verbose=False):
+    def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.2, setptime=0.125, Probability=0.2, Tdet=0.125,k=0, method='none',verbose=False):
         """This is a class for the HISBmodel, which is a rumor propagation model based on human and social behavior.
 
         Parameters:
@@ -54,7 +54,7 @@ class HSIBmodel():
         self.blocked_nodes = 0
         self.used_nodes_in_TCS=0
         self.time = 0.125
-        self.Probability = 0.3
+        self.Probability = Probability
         self.setptime = setptime
         self.Graph = Graph
         self.baisAccepte = baisAccepte
@@ -72,7 +72,8 @@ class HSIBmodel():
                                               'Spreaders': self.Nbr_Infected,
                                               'Opinion_Denying': self.OpinionDenying,
                                               'Opinion_Supporting': self.OpinionSupporting,
-                                              'RumorPopularity': RumorPopularity
+                                              'RumorPopularity': RumorPopularity,
+                                              'method':self.method
                                               }, index=[0])
     def SetParameters(self, opinion_set):
         """Set the parameters for infected nodes
@@ -188,6 +189,8 @@ class HSIBmodel():
         MaxD=[]
         Cente=[]
         beta=[]
+        betaD=[]
+        betaDJ=[]
         #Cent=((nx.degree_centrality(g)))
         
         Cent=[]
@@ -204,8 +207,10 @@ class HSIBmodel():
                         Cente.append(Cent[j])
                         MaxD.append(self.Graph.degree[j])
                         beta.append(self.Graph.nodes[j]['beta'])
+                        betaD.append(self.Graph.degree[j]/self.Graph.nodes[j]['beta'])
+                        betaDJ.append(self.Graph.degree[j]/(self.Graph.nodes[j]['beta']*self.Graph.nodes[j]['jug']))
                       
-        return neighb,MaxD,Cente,beta       
+        return neighb,MaxD,Cente,beta,betaD,betaDJ      
     def judgements(self,nodes):
         jug =[]
         for i in nodes:
@@ -251,7 +256,7 @@ class HSIBmodel():
             self.blocked_nodes+=1
             neighbors.pop(node_to_block) 
     
-    def blocking_methods(self,k,nodes_degree,centrality,Beta,method):
+    def blocking_methods(self,k,nodes_degree,centrality,Beta,betaD,betaDJ,method):
        
         if method == 'RBN' : #Random_Blocking_nodes
             node_to_block=random.randint(0,k)
@@ -269,26 +274,29 @@ class HSIBmodel():
         if method == 'BCN' : #Centrality_Blocking_nodes
             node_to_block = centrality.index(max(centrality))
             centrality.pop(node_to_block)
-
+        if method == 'BMDB' : #maximen degree/beta
+            node_to_block = betaD.index(max(betaD))
+            betaD.pop(node_to_block)
+        if method == 'BMDBj' : #maximent(degree/(beta*jug))
+            node_to_block = betaDJ.index(max(betaDJ))
+            betaDJ.pop(node_to_block)
         return node_to_block
             
     def Block_nodes(self,k,method):
-        neighbors,nodes_degree,centrality,Beta=self.neighbor()
+        neighbors,nodes_degree,centrality,Beta,betaD,betaDJ=self.neighbor()
         size=len(neighbors)
         if k>size:
           k=size-1
        
         for i in range(k):   
-                node_to_block = self.blocking_methods(k-i,nodes_degree,centrality,Beta,method)
-                print(neighbors)
-                print(node_to_block)
+                node_to_block = self.blocking_methods(k-i,nodes_degree,centrality,Beta,betaD,betaDJ,method)
                 self.Graph.nodes[neighbors[node_to_block]]['blocked']='True'
                 self.blocked_nodes+=1
                 neighbors.pop(node_to_block)
                 
                   
     
-    def TCS_methods(self,k,degree,centrality,Beta,judgement,method):
+    def TCS_methods(self,k,degree,centrality,Beta,betaD,betaDJ,judgement,method):
         if method == 'RTCS' :
             node_to_use=random.randint(0, k)
         if method == 'MDTCS' :
@@ -297,16 +305,22 @@ class HSIBmodel():
         if method == 'MRIBHBTCS':
             node_to_use = judgement.index(min(judgement))
             judgement.pop(node_to_use)
+        if method == 'MDBTCS' :
+            node_to_use = betaD.index(max(betaD))
+            betaD.pop(node_to_use)
+        if method == 'MDBJTCS' :
+            node_to_use = betaDJ.index(max(betaDJ))
+            betaDJ.pop(node_to_use)
         return node_to_use
     
     def Truth_campaign_strategy(self,k,method):
-        neighbors,degree,centrality,Beta=self.neighbor()
+        neighbors,degree,centrality,Beta,betaD,betaDJ=self.neighbor()
         judgement=self.judgements(neighbors)
         size=len(neighbors)
         if k > size :
             k=size-1
         for i in range(k):
-            node_to_use=self.TCS_methods(k,degree,centrality,Beta,judgement,method)
+            node_to_use=self.TCS_methods(k-i,degree,centrality,Beta,betaD,betaDJ,judgement,method)
             self.Graph.nodes[neighbors[node_to_use]]['jug']=1
             self.Graph.nodes[neighbors[node_to_use]]['state']='infected'
             self.used_nodes_in_TCS+=1
@@ -405,7 +419,7 @@ class HSIBmodel():
 
                     # Check if the node will spread the rumor to its neighbors
                     c = np.random.rand()
-                    if (c <= ActualAttraction):
+                    if (c <= ActualAttraction*0.5):
                         Nbr_Spreaders += 1
                         self.Graph.nodes[id]['state'] = 'spreaders'
                         neighbours = list(self.Graph.neighbors(id)) 

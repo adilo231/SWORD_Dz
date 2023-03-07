@@ -6,7 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import multiprocessing
 from multiprocessing import Manager
-
+import multiprocessing
 
 class RumorSimulator():
 
@@ -66,10 +66,26 @@ class RumorSimulator():
             print('Stat')
             #start_time = time.time()
             # Create a list of processes for running the simulation in parallel  
-            processes=[multiprocessing.Process(target=sim.runModel,args=(i,typeOfSim,Stat))for i in range(NbrSim)] 
-            # Start all the processes
+            #the number of similation depend the number of cores in your laptob
+            num_cores = multiprocessing.cpu_count()
+            nub_group= NbrSim/num_cores
+            num_lots=int(nub_group)
+            num_process_rest= NbrSim - num_lots*num_cores
+            for i in range(num_lots):
+                print(i)
+                processes=[multiprocessing.Process(target=sim.runModel,args=(i,typeOfSim,Stat))for i in range(num_cores)] 
+                # Start all the processes
+                [process.start() for process in processes]
+                # Wait for all the process
+                #es to finish
+                [process.join() for process in processes]
+                
+            print("aaa")
+            processes=[multiprocessing.Process(target=sim.runModel,args=(i,typeOfSim,Stat))for i in range(num_process_rest)] 
+                # Start all the processes
             [process.start() for process in processes]
-            # Wait for all the processes to finish
+                # Wait for all the process
+                #es to finish
             [process.join() for process in processes]
             
             df= pd.DataFrame()

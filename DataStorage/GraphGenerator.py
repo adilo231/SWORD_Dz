@@ -115,7 +115,7 @@ class CreateGraphFrmDB(Graph):
     def loadGraph(self,graphModel):
         uri="bolt://localhost:7687"
         username="neo4j"
-        password="Graid4154"
+        password="1151999aymana"
         session=self.getConnection(uri,username,password)
         query=""
         if graphModel== 'FB' :
