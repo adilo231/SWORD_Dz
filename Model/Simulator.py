@@ -192,7 +192,7 @@ class RumorSimulator():
             if save:
                 file_list = os.listdir("DataStorage/SimType0")
                 number_of_files = len(file_list)
-                fig.savefig('DataStorage/SimType0/image_'+str(number_of_files+1)+'.png', dpi=300 )
+                fig.savefig('SimulationResults/SimType0/image_'+str(number_of_files+1)+'.png', dpi=300 )
             plt.tight_layout()
 
             # affichage du plot
@@ -211,9 +211,9 @@ class RumorSimulator():
                     ax.set_xlabel(f'Time')
                     ax.legend()
             if save:
-                file_list = os.listdir("DataStorage/SimType1")
+                file_list = os.listdir("SimulationResults/SimType1")
                 number_of_files = len(file_list)
-                fig.savefig('DataStorage/SimType1/image_'+str(number_of_files+1)+'.png', dpi=300 )
+                fig.savefig('SimulationResults/SimType1/image_'+str(number_of_files+1)+'.png', dpi=300 )
             plt.show()
         elif resultType == 2:
         # Concatenate all results into a single dataframe

@@ -74,8 +74,10 @@ def upload_links(ids, user_id, mongo_user_collection):
 # define rate limit handler function
 if __name__ == '__main__':
 
-    Extractor =TweetExtractor(mongo_uri,neo_uri,neo_user,neo_password,API_credentials)
+    Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','Alger-Algérie','Algiers, Algeria']
+    mongo_db = "twitter_db"
     mongo_user = "AlgeriaTwitterGraph"
-    Extractor.UploadIdstoNeo4j(mongo_user)
+    Extractor =TweetExtractor(mongo_uri,neo_uri,neo_user,neo_password,API_credentials)
+    Extractor.Graph_Extraction(mongo_db,mongo_user,Locations)
 
  
