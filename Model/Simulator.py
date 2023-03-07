@@ -10,7 +10,7 @@ import multiprocessing
 
 class RumorSimulator():
 
-    def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='none',k=0,setptime=0.125):
+    def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='none',blockPeriod=0,k=0,setptime=0.125):
         """
         Runs a simulation of the HSIB model on a given network.
 
@@ -55,7 +55,7 @@ class RumorSimulator():
             If typeOfSim is 0, returns a DataFrame with network measures statistics. Otherwise, returns None.
         """
         # Create an instance of the HSIBmodel class with the given parameters
-        sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose,method=method,k=k,setptime=setptime)
+        sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose,method=method,blockPeriod=blockPeriod,k=k,setptime=setptime)
         
         if verbose:
             print(f'simulations started for {method}, noberof k = {k}, DetT= {1},')

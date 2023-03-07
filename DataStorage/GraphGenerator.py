@@ -52,6 +52,7 @@ class Graph():
 
         nx.set_node_attributes(g, 'non_infected', "state")
         nx.set_node_attributes(g, 'false', "blocked")
+        nx.set_node_attributes(g, 0, "blocking_time")
 
         # S, D, Q, T: supporting, Denying, Questioning, Neutral
         nx.set_node_attributes(g, 'S', "opinion")
