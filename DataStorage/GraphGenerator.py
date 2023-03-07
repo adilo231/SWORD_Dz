@@ -93,12 +93,24 @@ class CreateSytheticGraph(Graph):
         ''' Create a sythetic graph'''
         if graphModel== 'AB' or graphModel== 'barabasi_albert':
             g = nx.barabasi_albert_graph(Graph_size, M)
+            
+            self.degree=nx.degree(g)
+            self.degree_centrality=nx.degree_centrality(g)
+            self.between_centrality=nx.betweenness_centrality(g)
+            self.clustring_coef=nx.clustering(g)
+            self.page_rank=nx.pagerank(g,alpha=0.8)
+            self.closeness_centrality=nx.closeness_centrality(g)
+           
         self.InitParameters(g, parameters)
         return g
 
 
 
 class CreateGraphFrmDB(Graph):
+    def __init__(self,uri="bolt://localhost:7687",username="neo4j",password="admin"):
+        self.uri=uri
+        self.username=username
+        self.password=password
 
     def CreateGraph(self,parameters,graphModel):
         ''' load the facebook graph''' 
@@ -106,18 +118,15 @@ class CreateGraphFrmDB(Graph):
         self.InitParameters(g, parameters)
         return g
 
-    def getConnection(self,uri="bolt://localhost:7687",username="neo4j",password="admin"):
-        driver = GraphDatabase.driver(uri =uri, auth=basic_auth(username, password))
+    def getConnection(self):
+        driver = GraphDatabase.driver(uri =self.uri, auth=basic_auth(self.username, self.password))
         session=driver.session()
-        print("Seccessfully connected to Database: "+uri)
+        print("Seccessfully connected to Database: "+self.uri)
         return session
 
     def loadGraph(self,graphModel):
-        uri="bolt://localhost:7687"
-        username="neo4j"
-        password="admin"
-        password="1151999aymana"
-        session=self.getConnection(uri,username,password)
+
+        session=self.getConnection()
         query=""
         if graphModel== 'FB' :
             query ="MATCH (u1:user)-[r:friend]->(u2:user) return distinct u1.id_user,u2.id_user"
