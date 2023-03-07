@@ -133,9 +133,7 @@ class HSIBmodel():
         l = ['D', 'S']
         seedNode = random.sample(range(0, self.Graph.number_of_nodes()), seed)
         seedOpinion = random.choices(l, k=seed)
-        return seedNode,seedOpinion
-    
-    
+        return seedNode,seedOpinion 
     def DisplyResults(self):
         fig, axe = plt.subplots(2, 3)
         col = self.Statistical.columns
