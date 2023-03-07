@@ -215,46 +215,7 @@ class HSIBmodel():
                         betaDJ.append(self.Graph.degree[j]/(self.Graph.nodes[j]['beta']*self.Graph.nodes[j]['jug'])) 
                 
         return neighb,MaxD,deg_cent,beta,betaD,betaDJ,judgement,betweenness_centrality   
-    
-    ##################################################################################################      
-    def Beta_Blocking_nodes(self,k):
-        # select neighbors from the list of Spreaders    
-        neighbors,_,_,Beta=self.neighbor()
-        
-        for i in range(k):
-            node_to_block = Beta.index(min(Beta))
-            self.Graph.nodes[neighbors[node_to_block]]['blocked']='True'
-            Beta.pop(node_to_block)
-            self.blocked_nodes+=1
-            neighbors.pop(node_to_block) 
-    def Random_Blocking_nodes(self,k):
-       
-        neighbors,_,_,_=self.neighbor()
-        size=len(neighbors)
-        if k>size:
-          k=size-1
-        for i in range(k):
-            node_to_block=random.randint(0, size-1)
-            self.Graph.nodes[neighbors[node_to_block]]['blocked']='true'
-            self.blocked_nodes+=1
-            neighbors.pop(node_to_block)     
-    def Degree_MAX_Blocking_nodes(self,k):
-        neighbors,nodes_degree,_,_=self.neighbor()
-        for i in range(k):   
-                node_to_block = nodes_degree.index(max(nodes_degree))
-                nodes_degree.pop(node_to_block)
-                self.Graph.nodes[neighbors[node_to_block]]['blocked']='True'
-                self.blocked_nodes+=1
-                neighbors.pop(node_to_block)  
-    def Centrality_Blocking_nodes(self,k):      
-        neighbors,_,centrality,_=self.neighbor()
-        for i in range(k):  
-            node_to_block = centrality.index(max(centrality))
-            centrality.pop(node_to_block)
-            self.Graph.nodes[neighbors[node_to_block]]['blocked']='True'
-            self.blocked_nodes+=1
-            neighbors.pop(node_to_block) 
-    ##################################################################################################
+     
     def blocking_methods(self,k,nodes_degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method):
        
         if method == 'RBN' : #Random_Blocking_nodes
