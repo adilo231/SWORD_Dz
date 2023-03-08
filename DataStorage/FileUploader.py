@@ -1,11 +1,11 @@
 from neo4j import GraphDatabase,basic_auth
 import networkx as nx
-
+import pandas as pd
 ## to be as a class for generic files 
 
 class FileUploader():
     
-    def __init__(self, filename="facebook.txt",uri = "bolt://localhost:7687",username="neo4j",password="1151999aymana"):
+    def __init__(self, filename="facebook.txt",uri = "bolt://localhost:7687",username="",password=""):
         self.filename = filename
         self.uri = uri
         self.username = username
@@ -74,25 +74,40 @@ class FileUploader():
 
                 l.append(words)
         #print("successfully registered file in matrice :",len(l)," edge")
+        g=nx.Graph()
         session=self.getConnection()
+        query= "CREATE INDEX  FOR (n:'user') ON (n.'id_user')"
+        session.run(query)
+        print("started load facebook data base")
         listEdge = []
         listNode = []
         for i in l:
             listNode=self.create_user(i[0],session,listNode,graphModel)
             listNode=self.create_user(i[1],session,listNode,graphModel)
             listEdge=self.create_relation(i[0], i[1],session,listEdge,graphModel)
+            u1=int(i[0])
+            u2=int(i[1])
+            g.add_nodes_from([u1,u2])
+            g.add_edge(u1,u2)
         print("successfully created in database")
-               
+        self.add_graph_metrics(g,graphModel,session)
+        print("successfully for add metrics")
+        
+              
     def uploadGraphToDB(self,graphModel):
         l=[]
         g=nx.Graph()
         if graphModel=="ABS":
             g = nx.barabasi_albert_graph(100, 4)
+            query= "CREATE INDEX  FOR (n:'user_small_random') ON (n.'id_user')"
         if graphModel=="ABM":
             g = nx.barabasi_albert_graph(1000, 7)
+            query= "CREATE INDEX  FOR (n:'user_medium_random') ON (n.'id_user')"
         if graphModel=="ABL":
-            g = nx.barabasi_albert_graph(5000, 12)    
-            
+            g = nx.barabasi_albert_graph(5000, 12)
+            query= "CREATE INDEX  FOR (n:'user_large_random') ON (n.'id_user')"
+         
+        session.run(query)       
         l=g.edges()
         session=self.getConnection()
         listEdge = []

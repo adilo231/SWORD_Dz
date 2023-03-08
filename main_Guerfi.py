@@ -31,7 +31,7 @@ if __name__ == '__main__':
                   "beta_min": 0.1}
   
 
-    Generator=gg.CreateGraphFrmDB(uri="bolt://localhost:7687",username="neo4j",password="Graid4154")
+    Generator=gg.CreateGraphFrmDB(uri="bolt://localhost:7687",username="neo4j",password="1151999aymana")
     Simulator = sim.RumorSimulator()
     g = Generator.CreateGraph(parameters,graphModel='ABS')  
    
