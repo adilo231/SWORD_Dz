@@ -19,7 +19,7 @@ if __name__ == '__main__':
     K = 100
     M = 20
     nbb = 0
-    NbrSim =17
+    NbrSim =10
 
     parameters = {'omega_min': np.pi/24,
                   'omega_max': np.pi*2,
@@ -33,14 +33,16 @@ if __name__ == '__main__':
 
     Generator=gg.CreateGraphFrmDB()
     Simulator = sim.RumorSimulator()
-    g = Generator.CreateGraph(parameters,graphModel='ABM')  
+    g = Generator.CreateGraph(parameters,graphModel='FB')  
+  
    
     print("--------------------------------------------------------------------------------------------------------------------")
     start_time = time.time()
     
     typeOfSim=1
-    k=int(0.01*g.number_of_nodes())
+    k=int(0.0001*g.number_of_nodes())
     i=0
+    setptime=0.125
     #aux1 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.006, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='B_BMDB',k=k)
     
     #aux2 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.006, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='T_MDBTCS',k=k)
@@ -49,7 +51,7 @@ if __name__ == '__main__':
     
     # aux4 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='T_MRIBHBTCS',k=k)
     
-    aux_0 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.006, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='None',k=k)
+    aux_0 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.002, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='None',k=k,setptime=setptime)
       
     l=[aux_0]#,aux1,aux2]
 

@@ -107,83 +107,83 @@ class RumorSimulator():
             fig, axs = plt.subplots(nrows=4, ncols=5, figsize=(12, 12))
             fig.set_size_inches(16, 10)
             # tracé de chaque variable en fonction de chaque variable de centralité
-            axs[0, 0].scatter(results["deg_cent"], results["AccpR"],linewidths=0,alpha=1,color=color[0])
+            axs[0, 0].scatter(results["deg_cent"], results["AccpR"],linewidths=0,alpha=0.4,color=color[0])
             axs[0, 0].set_xlabel("Degree Centrality")
             axs[0, 0].set_ylabel("AccpR")
 
-            axs[0, 1].scatter(results["clos_cent"], results["AccpR"],linewidths=0,alpha=1,color=color[0])
+            axs[0, 1].scatter(results["clos_cent"], results["AccpR"],linewidths=0,alpha=0.4,color=color[0])
             axs[0, 1].set_xlabel("Closeness Centrality")
             axs[0, 1].set_ylabel("AccpR")
 
-            axs[0, 2].scatter(results["betw_cent"], results["AccpR"],linewidths=0,alpha=1,color=color[0])
+            axs[0, 2].scatter(results["betw_cent"], results["AccpR"],linewidths=0,alpha=0.4,color=color[0])
             axs[0, 2].set_xlabel("Betweenness Centrality")
             axs[0, 2].set_ylabel("AccpR")
 
-            axs[0, 3].scatter(results["page_rank"], results["AccpR"],linewidths=0,alpha=1,color=color[0])
+            axs[0, 3].scatter(results["page_rank"], results["AccpR"],linewidths=0,alpha=0.4,color=color[0])
             axs[0, 3].set_xlabel("Page Rank")
             axs[0, 3].set_ylabel("AccpR")
 
-            axs[0, 4].scatter(results["degree"], results["AccpR"],linewidths=0,alpha=1,color=color[0])
+            axs[0, 4].scatter(results["degree"], results["AccpR"],linewidths=0,alpha=0.4,color=color[0])
             axs[0, 4].set_xlabel("Degree")
             axs[0, 4].set_ylabel("AccpR")
 
-            axs[1, 0].scatter(results["deg_cent"], results["SendR"],linewidths=0,alpha=1,color=color[1])
+            axs[1, 0].scatter(results["deg_cent"], results["SendR"],linewidths=0,alpha=0.4,color=color[1])
             axs[1, 0].set_xlabel("Degree Centrality")
             axs[1, 0].set_ylabel("SendR")
 
-            axs[1, 1].scatter(results["clos_cent"], results["SendR"],linewidths=0,alpha=1,color=color[1])
+            axs[1, 1].scatter(results["clos_cent"], results["SendR"],linewidths=0,alpha=0.4,color=color[1])
             axs[1, 1].set_xlabel("Closeness Centrality")
             axs[1, 1].set_ylabel("SendR")
 
-            axs[1, 2].scatter(results["betw_cent"], results["SendR"],linewidths=0,alpha=1,color=color[1])
+            axs[1, 2].scatter(results["betw_cent"], results["SendR"],linewidths=0,alpha=0.4,color=color[1])
             axs[1, 2].set_xlabel("Betweenness Centrality")
             axs[1, 2].set_ylabel("SendR")
 
-            axs[1, 3].scatter(results["page_rank"], results["SendR"],linewidths=0,alpha=1,color=color[1])
+            axs[1, 3].scatter(results["page_rank"], results["SendR"],linewidths=0,alpha=0.4,color=color[1])
             axs[1, 3].set_xlabel("Page Rank")
             axs[1, 3].set_ylabel("SendR")
 
-            axs[1, 4].scatter(results["degree"], results["SendR"],linewidths=0,alpha=1,color=color[1])
+            axs[1, 4].scatter(results["degree"], results["SendR"],linewidths=0,alpha=0.4,color=color[1])
             axs[1, 4].set_xlabel("Degree")
             axs[1, 4].set_ylabel("SendR")
 
-            axs[2, 0].scatter(results["deg_cent"], results["Accp_NegR"],linewidths=0,alpha=1,color=color[2])
+            axs[2, 0].scatter(results["deg_cent"], results["Accp_NegR"],linewidths=0,alpha=0.4,color=color[2])
             axs[2, 0].set_xlabel("Degree Centrality")
             axs[2, 0].set_ylabel("Accp_NegR")
 
-            axs[2, 1].scatter(results["clos_cent"], results["Accp_NegR"],linewidths=0,alpha=1,color=color[2])
+            axs[2, 1].scatter(results["clos_cent"], results["Accp_NegR"],linewidths=0,alpha=0.4,color=color[2])
             axs[2, 1].set_xlabel("Closeness Centrality")
             axs[2, 1].set_ylabel("Accp_NegR")
 
-            axs[2, 2].scatter(results["betw_cent"], results["Accp_NegR"],linewidths=0,alpha=1,color=color[2])
+            axs[2, 2].scatter(results["betw_cent"], results["Accp_NegR"],linewidths=0,alpha=0.4,color=color[2])
             axs[2, 2].set_xlabel("Betweenness Centrality")
             axs[2, 2].set_ylabel("Accp_NegR")
 
-            axs[2, 3].scatter(results["page_rank"], results["Accp_NegR"],linewidths=0,alpha=1,color=color[2])
+            axs[2, 3].scatter(results["page_rank"], results["Accp_NegR"],linewidths=0,alpha=0.4,color=color[2])
             axs[2, 3].set_xlabel("Page Rank")
             axs[2, 3].set_ylabel("Accp_NegR")
 
-            axs[2, 4].scatter(results["degree"], results["Accp_NegR"],linewidths=0,alpha=1,color=color[2])
+            axs[2, 4].scatter(results["degree"], results["Accp_NegR"],linewidths=0,alpha=0.4,color=color[2])
             axs[2, 4].set_xlabel("Degree")
             axs[2, 4].set_ylabel("Accp_NegR")
 
-            axs[3, 0].scatter(results["deg_cent"], results["Nb_Accpted_Rm"],linewidths=0,alpha=1,color=color[3])
+            axs[3, 0].scatter(results["deg_cent"], results["Nb_Accpted_Rm"],linewidths=0,alpha=0.4,color=color[3])
             axs[3, 0].set_xlabel("Degree Centrality")
             axs[3, 0].set_ylabel("Nb_Accpted_Rm")
 
-            axs[3, 1].scatter(results["clos_cent"], results["Nb_Accpted_Rm"],linewidths=0,alpha=1,color=color[3])
+            axs[3, 1].scatter(results["clos_cent"], results["Nb_Accpted_Rm"],linewidths=0,alpha=0.4,color=color[3])
             axs[3, 1].set_xlabel("Closeness Centrality")
             axs[3, 1].set_ylabel("Nb_Accpted_Rm")
 
-            axs[3, 2].scatter(results["betw_cent"], results["Nb_Accpted_Rm"],linewidths=0,alpha=1,color=color[3])
+            axs[3, 2].scatter(results["betw_cent"], results["Nb_Accpted_Rm"],linewidths=0,alpha=0.4,color=color[3])
             axs[3, 2].set_xlabel("Betweenness Centrality")
             axs[3, 2].set_ylabel("Nb_Accpted_Rm")
 
-            axs[3, 3].scatter(results["page_rank"], results ["Nb_Accpted_Rm"],linewidths=0,alpha=1,color=color[3])
+            axs[3, 3].scatter(results["page_rank"], results ["Nb_Accpted_Rm"],linewidths=0,alpha=0.4,color=color[3])
             axs[3, 3].set_xlabel("Page Rank")
             axs[3, 3].set_ylabel("Nb_Accpted_Rm")
 
-            axs[3, 4].scatter(results["degree"], results ["Nb_Accpted_Rm"],linewidths=0,alpha=1,color=color[3])
+            axs[3, 4].scatter(results["degree"], results ["Nb_Accpted_Rm"],linewidths=0,alpha=0.4,color=color[3])
             axs[3, 4].set_xlabel("Degree")
             axs[3, 4].set_ylabel("Nb_Accpted_Rm")
 

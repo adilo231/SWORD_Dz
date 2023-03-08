@@ -5,7 +5,7 @@ import networkx as nx
 
 class FileUploader():
     
-    def __init__(self, filename="facebook.txt",uri = "bolt://localhost:7687",username="neo4j",password="admin"):
+    def __init__(self, filename="facebook.txt",uri = "bolt://localhost:7687",username="neo4j",password="1151999aymana"):
         self.filename = filename
         self.uri = uri
         self.username = username
@@ -105,7 +105,7 @@ class FileUploader():
         self.add_graph_metrics(g,graphModel,session)
 
     #--------------------------------------------------------------------------------------------------------------------
-    def add_graph_metrics(self,graph,graphModel,session):
+    def add_graph_metrics(self,graph,graphModel):
         label=""
         if graphModel=="FB":
             pass
@@ -115,7 +115,7 @@ class FileUploader():
             label="_medium_random"
         if graphModel=="ABL":
             label="_large_random"
-
+        session=self.getConnection()
         degres=nx.degree(graph)
         deg_cent=nx.degree_centrality(graph)
         clos_cent=nx.closeness_centrality(graph)

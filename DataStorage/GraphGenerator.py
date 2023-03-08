@@ -106,7 +106,7 @@ class CreateGraphFrmDB(Graph):
         self.InitParameters(g, parameters)
         return g
 
-    def getConnection(self,uri="bolt://localhost:7687",username="neo4j",password="admin"):
+    def getConnection(self,uri="bolt://localhost:7687",username="neo4j",password="1151999aymana"):
         driver = GraphDatabase.driver(uri =uri, auth=basic_auth(username, password))
         session=driver.session()
         print("Seccessfully connected to Database: "+uri)
@@ -115,7 +115,7 @@ class CreateGraphFrmDB(Graph):
     def loadGraph(self,graphModel):
         uri="bolt://localhost:7687"
         username="neo4j"
-        password="admin"
+        
         password="1151999aymana"
         session=self.getConnection(uri,username,password)
         query=""
