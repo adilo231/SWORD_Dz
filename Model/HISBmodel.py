@@ -11,7 +11,7 @@ plt.style.use('ggplot')
 
 
 class HSIBmodel():
-    def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.2, setptime=0.125, Probability=0.2, Tdet=0.125,k=0, method='none',blockPeriod=0,verbose=False):
+    def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=0.125,k=0, method='none',blockPeriod=0,verbose=False):
         """This is a class for the HISBmodel, which is a rumor propagation model based on human and social behavior.
 
         Parameters:
@@ -48,7 +48,7 @@ class HSIBmodel():
             self.method = method
             self.k = k
             self.Tdet=Tdet
-            pass
+            
 
         # Initialize variables
         self.blocked_nodes = 0
@@ -337,7 +337,7 @@ class HSIBmodel():
         """
         if self.verbose:
             print(f'Simulation number {i} is on run')
-        time = 0.125
+        time = self.time
 
         while self.ListInfectedNodes:
             # Initialize counters for tracking the rumor spreading process
@@ -380,7 +380,7 @@ class HSIBmodel():
                             # Acceptance of the Rumor Probability
                             ProbToAccRumor = self.Graph.degree(id) / (self.Graph.degree(id) + self.Graph.degree(each))*self.baisAccepte
                             if (self.Graph.nodes[each]['blocked'] =='false'):
-                                if(np.random.rand() <= ProbToAccRumor ):
+                                if(np.random.rand() <= ProbToAccRumor*0.6 ):
 
                                     self.Graph.nodes[each]['AccpR'] += 1
                                     self.Graph.nodes[id]['Nb_Accpted_Rm'] += 1
@@ -438,6 +438,7 @@ class HSIBmodel():
                 Stat.append(Stat_Global)
                 
             elif typeOfSim == 1:
+                print(self.Statistical)
                 Stat.append(self.Statistical) 
                   
             elif typeOfSim == 2:          

@@ -126,8 +126,11 @@ class CreateGraphFrmDB(Graph):
         return session
 
     def loadGraph(self,graphModel):
-
-        session=self.getConnection()
+        uri="bolt://localhost:7687"
+        username="neo4j"
+        password="admin"
+        password="1151999aymana"
+        session=self.getConnection(uri,username,password)
         query=""
         if graphModel== 'FB' :
             query ="MATCH (u1:user)-[r:friend]->(u2:user) return distinct u1.id_user,u2.id_user"
