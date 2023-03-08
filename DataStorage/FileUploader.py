@@ -76,7 +76,7 @@ class FileUploader():
         #print("successfully registered file in matrice :",len(l)," edge")
         g=nx.Graph()
         session=self.getConnection()
-        query= "CREATE INDEX  FOR (n:'user') ON (n.'id_user')"
+        query= "CREATE INDEX  FOR (n:user) ON (n.id_user)"
         session.run(query)
         print("started load facebook data base")
         listEdge = []
@@ -99,13 +99,13 @@ class FileUploader():
         g=nx.Graph()
         if graphModel=="ABS":
             g = nx.barabasi_albert_graph(100, 4)
-            query= "CREATE INDEX  FOR (n:'user_small_random') ON (n.'id_user')"
+            query= "CREATE INDEX  FOR (n:user_small_random) ON (n.id_user)"
         if graphModel=="ABM":
             g = nx.barabasi_albert_graph(1000, 7)
-            query= "CREATE INDEX  FOR (n:'user_medium_random') ON (n.'id_user')"
+            query= "CREATE INDEX  FOR (n:user_medium_random) ON (n.id_user)"
         if graphModel=="ABL":
             g = nx.barabasi_albert_graph(5000, 12)
-            query= "CREATE INDEX  FOR (n:'user_large_random') ON (n.'id_user')"
+            query= "CREATE INDEX  FOR (n:user_large_random) ON (n.id_user)"
          
         session.run(query)       
         l=g.edges()
