@@ -10,7 +10,7 @@ import multiprocessing
 
 class RumorSimulator():
 
-    def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='none',k=0,setptime=0.125):
+    def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='none',blockPeriod=0,k=0,setptime=0.125):
         """
         Runs a simulation of the HSIB model on a given network.
 
@@ -55,7 +55,7 @@ class RumorSimulator():
             If typeOfSim is 0, returns a DataFrame with network measures statistics. Otherwise, returns None.
         """
         # Create an instance of the HSIBmodel class with the given parameters
-        sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose,method=method,k=k,setptime=setptime)
+        sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose,method=method,blockPeriod=blockPeriod,k=k,setptime=setptime)
         
         if verbose:
             print(f'simulations started for {method}, noberof k = {k}, DetT= {1},')
@@ -63,7 +63,6 @@ class RumorSimulator():
         # Use a multiprocessing Manager to store simulation statistics in a shared list
         with Manager() as manager:
             Stat=manager.list()
-            print('Stat')
             #start_time = time.time()
             # Create a list of processes for running the simulation in parallel  
             #the number of similation depend the number of cores in your laptob
@@ -80,7 +79,6 @@ class RumorSimulator():
                 #es to finish
                 [process.join() for process in processes]
                 
-            print("aaa")
             processes=[multiprocessing.Process(target=sim.runModel,args=(i,typeOfSim,Stat))for i in range(num_process_rest)] 
                 # Start all the processes
             [process.start() for process in processes]
@@ -100,7 +98,7 @@ class RumorSimulator():
                 df=self.CreateSimulationsDF(Stat,df ,typeOfSim,setptime)
                 return df
                 
-    def DisplyResults(self,results,resultType=1,save=False):
+    def DisplyResults(self,results,resultType=1,save=False,imageName=""):
         color=['black','red','green','blue','purple','pink','silver','yellow','orange','oliver','cyan','maroon','lime','magenta']
         if resultType==0:
            # création de la grille de sous-graphiques
@@ -189,10 +187,7 @@ class RumorSimulator():
 
 
             # ajustement des espaces entre les subplots
-            if save:
-                file_list = os.listdir("DataStorage/SimType0")
-                number_of_files = len(file_list)
-                fig.savefig('SimulationResults/SimType0/image_'+str(number_of_files+1)+'.png', dpi=300 )
+           
             plt.tight_layout()
 
             # affichage du plot
@@ -210,10 +205,7 @@ class RumorSimulator():
                     ax.set_ylabel(f'Number of {col[i]}')
                     ax.set_xlabel(f'Time')
                     ax.legend()
-            if save:
-                file_list = os.listdir("SimulationResults/SimType1")
-                number_of_files = len(file_list)
-                fig.savefig('SimulationResults/SimType1/image_'+str(number_of_files+1)+'.png', dpi=300 )
+            
             plt.show()
         elif resultType == 2:
         # Concatenate all results into a single dataframe
@@ -233,13 +225,12 @@ class RumorSimulator():
             if axes[0] != axes[-1]:
                 for ax in axes[:-1]:
                     ax.set_xlabel('')
-
-            if save:
-                file_list = os.listdir("DataStorage/SimType2")
-                number_of_files = len(file_list)
-                fig.savefig('DataStorage/SimType2/image_'+str(number_of_files+1)+'.png', dpi=300 ) 
             plt.show()
 
+        # save the figure in DataStorage/simulationResults
+        if save:
+            path=self.saveResult(imageName,resultType)
+            fig.savefig(path, dpi=300 )
     def CreateSimulationsDF(self,results,df ,simName=1,setptime=0.125):
       
        if(simName==0):
@@ -404,4 +395,30 @@ class RumorSimulator():
         print(data_global)
         return data_global
 
- 
+    def saveResult(self,imageName,type): 
+        dirPath = "DataStorage/SimulationResults/SimType"+str(type)+"/"
+        if imageName !="":
+            imageName=os.path.splitext(imageName)[0]+".png"
+
+            while os.path.exists(dirPath+imageName):
+                name_without_extension = os.path.splitext(imageName)[0]
+                m=name_without_extension.split('_')
+                if len(m)>1:
+                    name_without_extension=m[0]+"_"+str(int(m[1])+1)
+                else:
+                    name_without_extension+="_"+str(1)
+                
+                imageName=name_without_extension+".png"
+        else :
+            imageName="image.png"
+            while os.path.exists(dirPath+imageName):
+                name_without_extension = os.path.splitext(imageName)[0]
+                m=name_without_extension.split('_')
+                if len(m)>1:
+                    name_without_extension=m[0]+"_"+str(int(m[1])+1)
+                else:
+                    name_without_extension+="_"+str(1)
+                
+                imageName=name_without_extension+".png"
+        dirPath+=imageName      
+        return dirPath
