@@ -19,7 +19,7 @@ if __name__ == '__main__':
     K = 100
     M = 20
     nbb = 0
-    NbrSim =10
+    NbrSim =4
 
     parameters = {'omega_min': np.pi/24,
                   'omega_max': np.pi*2,
@@ -31,9 +31,9 @@ if __name__ == '__main__':
                   "beta_min": 0.1}
   
 
-    Generator=gg.CreateGraphFrmDB()
+    Generator=gg.CreateGraphFrmDB(uri="bolt://localhost:7687",username="neo4j",password="1151999aymana")
     Simulator = sim.RumorSimulator()
-    g = Generator.CreateGraph(parameters,graphModel='FB')  
+    g = Generator.CreateGraph(parameters,graphModel='FB')   
   
    
     print("--------------------------------------------------------------------------------------------------------------------")
