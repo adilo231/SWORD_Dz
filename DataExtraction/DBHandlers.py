@@ -44,6 +44,8 @@ class GraphDBHandler():
     def __init__(self,uri,user,password):
         self.driver = GraphDatabase.driver(uri = uri, auth=basic_auth(user, password))
         self.session=self.driver.session()
+
+        
     def UserExist(self,lable,id):
         query= f"match (node:{lable}{{ id:{id} }}) return  node"
         return len(list(self.session.run(query)))>0
