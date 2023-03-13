@@ -3,7 +3,7 @@ import re
 import nltk 
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
-
+import emoji
 import string
 #import connection_mongo
 from wordcloud import WordCloud
@@ -32,17 +32,19 @@ class transform :
 
         # Select the database and collection
         db = client[db_name]
-        for  collection_name in enumerate(collection_names):
-            collection=db[str(collection_name)]
-            docs=collection.find({})
+        for  collection_name in collection_names:
+            tweets = db[collection_name]
+            docs=tweets.find({})
+            count = tweets.count_documents({})
+            print(count)
             for doc in docs:
                 if 'updated'  not in doc.keys():
                     update_dict = {}
                     for key, value in doc.items():
                         if value != None:
                             update_dict[key] = value
-                    update_dict["updated"] = True
-                    collection.replace_one({"_id": doc["_id"]}, update_dict)
+                    update_dict['updated'] = True
+                    tweets.replace_one({"_id": doc["_id"]}, update_dict)
 
     def text_to_tokens(self,text):
         # Replace any URLs in the tweet with the string 'URL'
@@ -53,7 +55,7 @@ class transform :
         tokens = nltk.word_tokenize(text.lower())
         tokens = [emoji.demojize(token) for token in tokens]
         tokens = [token for token in tokens if not any(c.isdigit() for c in token)]
-        stop_words = set(nltk.corpus.stopwords.words()+ list(string.punctuation)+["'","’","”","“",",","،","¨","‘","؛","’","``",'’','“','”']+list(string.digits))
+        stop_words = set(nltk.corpus.stopwords.words()+ list(string.punctuation)+["'","’","”","“",",","،","¨","‘","؛","’","``","''",'’','“','”']+list(string.digits))
         words = [word for sent in tokens for (word, pos) in nltk.pos_tag(word_tokenize(sent)) if (pos not in ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'RB', 'RBR', 'RBS', 'JJ', 'JJR', 'JJS']) and (word not in stop_words)]
         
         # lemmatize words
@@ -66,17 +68,20 @@ class transform :
 
         # Select the database and collection
         db = client[db_name]
-        for  collection_name in enumerate(collection_names):
+        for  collection_name in collection_names:
+            print(collection_name)
             collection=db[str(collection_name)]
             docs=collection.find({})
             for doc in docs:
-                if 'tokens' not in doc.keys():
+                if 'tokens'  not in doc.keys():
                     if 'full_text' in doc.keys():
                         text = doc['full_text'] 
                     else:
                         text = doc['text']
                     
                     words=self.text_to_tokens(text)    
+                    
+
                     collection.update_one({"_id": doc["_id"]}, { "$set": { "tokens": words } })
 
     def Wordcloud_language_generator(self,lang,collection_name):
@@ -103,7 +108,7 @@ class transform :
 
         # Select the database and collection
         db = client[db_name]
-        for  collection_name in enumerate(collection_names):
+        for  collection_name in collection_names:
             collection=db[str(collection_name)]
             docs=collection.find({})
             for doc in docs:
@@ -217,7 +222,8 @@ class transform :
         fig.subplots_adjust(bottom=0.05, top=0.9, wspace=0.3, hspace=0.3)
 
         # Flatten the axs array so that we can iterate over it with a single loop
-        axs = axs.flatten()
+        if(len(collection_names)>1):
+            axs = axs.flatten()
 
         for i, collection_name in enumerate(collection_names):
             # Select the collection
@@ -251,8 +257,9 @@ class transform :
                 current_date += timedelta(days=1)
 
             # Plot the data as a bar chart in the appropriate subplot
-            axs[i].plot(tweet_counts.keys(), tweet_counts.values(), '-bo')
-            axs[i].set_title(collection_name)
+            if(len(collection_names)>1):
+                axs[i].plot(tweet_counts.keys(), tweet_counts.values(), '-bo')
+                axs[i].set_title(collection_name)
 
         # Hide any unused subplots
         for i in range(len(collection_names), n_rows * n_cols):
@@ -262,4 +269,4 @@ class transform :
         fig.suptitle('Date distribution of each collection')
         
         # Display the plot
-        plt.show()
+        #plt.show()
