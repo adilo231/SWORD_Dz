@@ -105,17 +105,21 @@ class transform :
                 if bool(re.match(arabic_pattern, word)):
                     reshaped_text = arabic_reshaper.reshape(word)
                     display_text = get_display(reshaped_text)
+                    display_text = display_text.replace("_", "")
                     words_reshaped.append(display_text)
-                else:
-                    words_reshaped.append(word)
+                # else:
+                #     words_reshaped.append(word)
             words=words_reshaped
         
         # create a frequency distribution of the words
         freq_dist = nltk.FreqDist(words)
 
         # create a word cloud from the most frequent words
+        if lang=="ar":
+            wordcloud = WordCloud(width=1600, height=800,font_path='font/NotoSansArabic_SemiCondensed-ExtraBold.ttf', background_color='white').generate_from_frequencies(freq_dist)
+        else:
+            wordcloud = WordCloud(width=1600, height=800, background_color='white').generate_from_frequencies(freq_dist)
 
-        wordcloud = WordCloud(width=1600, height=800,font_path='font/kawkab-light.ttf', background_color='white').generate_from_frequencies(freq_dist)
         return wordcloud
     
     def string_to_datetime(self,collection_names,db_name,mongo_client_url):
