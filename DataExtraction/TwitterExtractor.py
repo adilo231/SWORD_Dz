@@ -1,6 +1,6 @@
 import tweepy
 import time
-from DataExtraction.DBHandlers import  GraphDBHandler,DocDBHandler
+from DataStorage.DBHandlers import  GraphDBHandler,DocDBHandler
 import random
 import pickle
 import os

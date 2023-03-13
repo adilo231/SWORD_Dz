@@ -6,6 +6,8 @@ import pandas as pd
 import time
 from tqdm import  tqdm
 import DataStorage.FileUploader as fp
+import json 
+import networkx as nx
 
 
 
@@ -31,11 +33,13 @@ if __name__ == '__main__':
                   "beta_min": 0.1}
   
 
-    Generator=gg.CreateGraphFrmDB(uri="bolt://localhost:7687",username="neo4j",password="1151999aymana")
+    Generator=gg.CreateGraphFrmDB()
     Simulator = sim.RumorSimulator()
-    g = Generator.CreateGraph(parameters,graphModel='FB')   
-  
-   
+    #g = Generator.CreateGraph(parameters,graphModel='ABL')   
+    with open('graph.json', 'r') as f:
+        json_data = json.load(f)
+
+    g = nx.node_link_graph(json_data)
     print("--------------------------------------------------------------------------------------------------------------------")
     start_time = time.time()
     

@@ -7,8 +7,16 @@ import random
 
 
 class DocDBHandler():
-    def __init__(self,connectionString):
-        self.myclient = MongoClient(connectionString)
+    def __init__(self):
+        f = open('authentification.json')
+        data = json.load(f)
+        myclient=None
+        try:
+            myclient=MongoClient(data['mongo']['uri'])
+        except:
+            print("couldn't connect to Mongo")
+        if myclient!=None:
+            self.myclient = myclient
 
     def GetDocuments(self):
         return self.col.find()
@@ -41,9 +49,20 @@ class DocDBHandler():
 
 
 class GraphDBHandler():
-    def __init__(self,uri,user,password):
-        self.driver = GraphDatabase.driver(uri = uri, auth=basic_auth(user, password))
+    def __init__(self):
+        self.session=None
+        self.driver=None
+        f = open('authentification.json')
+        data = json.load(f)
+        auth=data['neo4j']
+        self.driver = GraphDatabase.driver(uri = auth['uri'], auth=basic_auth(auth['username'], auth['password']))
         self.session=self.driver.session()
+        print(self.session)
+        # except:
+        #      print ("Authentication to Graph DB failed")
+      
+           
+
     def UserExist(self,lable,id):
         query= f"match (node:{lable}{{ id:{id} }}) return  node"
         return len(list(self.session.run(query)))>0
@@ -59,6 +78,9 @@ class GraphDBHandler():
         if not self.LinkExist(lable1,lable2,RelationType,id1,id2):
             query= f"match (u1:{lable1}{{ id:{id1} }}) ,(u2:{lable2}{{id:{id2} }}) create (u1)-[r:{RelationType}]->(u2) return r"
             self.session.run(query)
+    
+    def getConnection(self):
+        return self.session
       
 
         

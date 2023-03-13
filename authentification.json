@@ -1,0 +1,35 @@
+{ "API_credentials":
+    [{
+        "consumer_key" : "2nyGsL1XyRXFGMw0MXbvm7cnY",
+        "consumer_secret" : "SPTXJkrZfukdZ4gnhYZVgOmpvEbE9Z1lKwxjRHOxbbucidENzs",
+        "access_key" : "2275955796-bcNPjJsfAWdzG1dJrd7AqjzoWgsEP83XgxYNIaq",
+        "access_secret" : "IhzSm6k7GyqndpqrSPgypQDIm93uMjaBRkRw431TABLSE"},
+    {
+            "consumer_key" : "NlCb4KrL6LlB8HVB3RGYLy0lU",
+            "consumer_secret" : "GvACIXrd7jWvNWnIg7geb8gfL80j0L7OuTmmHCLl5DAUMDLwHb",
+            "access_key" : "1512829229356011530-CTLalKDfZPkJDPI2EfmG3CebbMXfDh",
+            "access_secret" : "w8ndvJ0FMK2qyzwzjqRBZ2ca57PAcho4QC8v2Xty6lQ35"},
+    {
+                "consumer_key" : "dna9eBEhIe9oVIisEyUc8ZsHX",
+                "consumer_secret" : "0J7W6APSraCL4sJWvLSJyCGVOuHb5lPKyRK4NijZQQr0o0sSDm",
+                "access_key" : "2275955796-2kLj1PkrA1gfI3xffissxqYlTdHbibeafRsSMKb",
+                "access_secret" :  "zbE7p91v1jGfXYXjA50PVwur9gGFVYNZkZ7cKKL7lAWvq"}
+                
+    ]
+,
+
+"neo4j":{
+    "uri" : "bolt://localhost:7687",
+    "username" : "neo4j",
+    "password" : "Graid4154"
+},
+"mongo":{
+    "uri":"mongodb://localhost:27017/"
+
+}
+
+
+
+        
+        
+}

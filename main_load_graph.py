@@ -9,6 +9,6 @@ import DataStorage.FileUploader as fp
 
 Generator=fp.FileUploader(uri="bolt://localhost:7687",username="neo4j",password="1151999aymana")
 Generator.uploadFile(graphModel='FB')
-Generator.uploadGraphToDB('ABS')
-Generator.uploadGraphToDB('ABM')
-Generator.uploadGraphToDB('ABL')
+# Generator.uploadGraphToDB('ABS')
+# Generator.uploadGraphToDB('ABM')
+# Generator.uploadGraphToDB('ABL')

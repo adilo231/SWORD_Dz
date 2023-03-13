@@ -25,3 +25,4 @@ DataStorage/SimulationResults/SimType*
 main.py
 .DS*
 neo4j.ipynb
+graph.json

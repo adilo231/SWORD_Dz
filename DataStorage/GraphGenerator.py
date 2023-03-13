@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import networkx as nx
 from neo4j import GraphDatabase,basic_auth
+from DataStorage.DBHandlers import GraphDBHandler
+import json
 # need three class 1 mother and two daughters , one for suthetic graphs the other one to extract from the DB
 
 class Graph():
@@ -57,6 +59,8 @@ class Graph():
         nx.set_node_attributes(g, 'S', "opinion")
 
         init=0
+        nx.set_node_attributes(g, init, 'blocking_time')
+        
         nx.set_node_attributes(g, init, 'clustring_coef')
         for i in range(g.number_of_nodes()):
             g.nodes[i]['clustring_coef']=self.clustring_coef[i]
@@ -100,24 +104,20 @@ class CreateSytheticGraph(Graph):
 
 class CreateGraphFrmDB(Graph):
 
+    def __init__(self):
+        Handler=GraphDBHandler()
+        self.session=Handler.getConnection()
+
     def CreateGraph(self,parameters,graphModel):
         ''' load the facebook graph''' 
         g =self.loadGraph(graphModel)
         self.InitParameters(g, parameters)
+       
         return g
 
-    def getConnection(self,uri="bolt://localhost:7687",username="neo4j",password="1151999aymana"):
-        driver = GraphDatabase.driver(uri =uri, auth=basic_auth(username, password))
-        session=driver.session()
-        print("Seccessfully connected to Database: "+uri)
-        return session
 
     def loadGraph(self,graphModel):
-        uri="bolt://localhost:7687"
-        username="neo4j"
-        
-        password="1151999aymana"
-        session=self.getConnection(uri,username,password)
+      
         query=""
         if graphModel== 'FB' :
             query ="MATCH (u1:user)-[r:friend]->(u2:user) return distinct u1.id_user,u2.id_user"
@@ -134,7 +134,7 @@ class CreateGraphFrmDB(Graph):
         if query !="":
             query=query+extrat_query1+extrat_query2
             print(query)
-            dtf_data = pd.DataFrame([dict(_) for _ in session.run(query)])
+            dtf_data = pd.DataFrame([dict(_) for _ in self.session.run(query)])
             l=dtf_data.values.tolist()
         else:
             return None

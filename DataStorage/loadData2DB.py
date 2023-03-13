@@ -1,25 +1,19 @@
 from neo4j import GraphDatabase,basic_auth
 import networkx as nx
 import pandas as pd
+from DataStorage.DBHandlers import GraphDBHandler 
 ## to be as a class for generic files 
 
 class FileUploader():
     
-    def __init__(self, filename="facebook.txt",uri = "bolt://localhost:7687",username="",password=""):
+    def __init__(self, filename="facebook.txt"):
         self.filename = filename
-        self.uri = uri
-        self.username = username
-        self.password = password
-        self.session=None
-    def getConnection(self):
-        driver = GraphDatabase.driver(uri =self.uri, auth=basic_auth(self.username, self.password))
-        session=driver.session()
-        self.session=session
-        print("Seccessfully connected to  "+self.uri)
-        return session
+        Handler=GraphDBHandler()
+        self.session=Handler.getConnection()
+   
 
     #-------------------------------------------------------------------------------------------------------------------
-    def create_user(self,id,session,listNode,graphModel):
+    def create_user(self,id,listNode,graphModel):
         label=""
         if graphModel=="FB":
             pass
@@ -34,12 +28,12 @@ class FileUploader():
         if id in listNode: pass
         else:
             query= "create (u:user"+label+"{id_user:"+ids+"})"
-            session.run(query)
+            self.session.run(query)
             listNode.append(id)
         return listNode
     
     #-------------------------------------------------------------------------------------------------------------------
-    def create_relation(self,id1,id2,session,listEdge,graphModel):
+    def create_relation(self,id1,id2,listEdge,graphModel):
         label=""
         labelR=""
         if graphModel=="FB":
@@ -59,7 +53,7 @@ class FileUploader():
         if (ids1+" "+ids2) in listEdge: pass
         else :
             query= "match (u1:user"+label+"{id_user:"+ids1+"}) ,(u2:user"+label+"{id_user:"+ids2+"}) create (u1)-[r:friend"+labelR+"]->(u2) return r"
-            session.run(query)
+            self.session.run(query)
             listEdge.append(ids1+" "+ids2)
         return listEdge
 
@@ -75,22 +69,21 @@ class FileUploader():
                 l.append(words)
         #print("successfully registered file in matrice :",len(l)," edge")
         g=nx.Graph()
-        session=self.getConnection()
-        query= "CREATE INDEX  FOR (n:user) ON (n.id_user)"
-        session.run(query)
+        #query= "CREATE INDEX  FOR (n:user) ON (n.id_user)"
+        #session.run(query)
         print("started load facebook data base")
         listEdge = []
         listNode = []
         for i in l:
-            listNode=self.create_user(i[0],session,listNode,graphModel)
-            listNode=self.create_user(i[1],session,listNode,graphModel)
-            listEdge=self.create_relation(i[0], i[1],session,listEdge,graphModel)
+            listNode=self.create_user(i[0],listNode,graphModel)
+            listNode=self.create_user(i[1],listNode,graphModel)
+            listEdge=self.create_relation(i[0], i[1],listEdge,graphModel)
             u1=int(i[0])
             u2=int(i[1])
             g.add_nodes_from([u1,u2])
             g.add_edge(u1,u2)
         print("successfully created in database")
-        self.add_graph_metrics(g,graphModel,session)
+        self.add_graph_metrics(g,graphModel)
         print("successfully for add metrics")
         
               
@@ -107,17 +100,17 @@ class FileUploader():
             g = nx.barabasi_albert_graph(5000, 12)
             query= "CREATE INDEX  FOR (n:user_large_random) ON (n.id_user)"
          
-        session.run(query)       
+        self.session.run(query)       
         l=g.edges()
-        session=self.getConnection()
+       
         listEdge = []
         listNode = []
         for i in l:
-            listNode=self.create_user(int(i[0]),session,listNode,graphModel)
-            listNode=self.create_user(int(i[1]),session,listNode,graphModel)
-            listEdge=self.create_relation(int(i[0]), int(i[1]),session,listEdge,graphModel)
+            listNode=self.create_user(int(i[0]),listNode,graphModel)
+            listNode=self.create_user(int(i[1]),listNode,graphModel)
+            listEdge=self.create_relation(int(i[0]), int(i[1]),listEdge,graphModel)
         print("successfully created the "+graphModel+" graph in the database")
-        self.add_graph_metrics(g,graphModel,session)
+        self.add_graph_metrics(g,graphModel)
 
     #--------------------------------------------------------------------------------------------------------------------
     def add_graph_metrics(self,graph,graphModel):
@@ -130,7 +123,7 @@ class FileUploader():
             label="_medium_random"
         if graphModel=="ABL":
             label="_large_random"
-        session=self.getConnection()
+      
         degres=nx.degree(graph)
         deg_cent=nx.degree_centrality(graph)
         clos_cent=nx.closeness_centrality(graph)
@@ -144,7 +137,7 @@ class FileUploader():
             query+=", u.page_rank= "+ str(page_rank[i])+", u.clustering= "+str(clustering[i]) 
 
             try:
-                session.run(query)
+                self.session.run(query)
             except:
                 print("connection error in add_graph_metrics")
         print("Metrics added successfully")
