@@ -6,8 +6,8 @@ client_mongo = "mongodb://localhost:27017/"
 # Select the database and collection
 db_name = "twitter_db"
 
-collection_names=['test','Morocco Algeria','Hirake','CDC','Fertility','Prix']#,'Morocco Algeria','Hirake','CDC','Fertility','Prix'
-#collection_names=['Hirake','CDC','Fertility','Morocco Algeria','Prix','Teboune','Algeria','Ukraine']
+
+collection_names=['Hirake','CDC','Fertility','Morocco Algeria','Prix','Teboune','Algeria','Ukraine']
 transforms=transform()
 
 #remove null attributes
