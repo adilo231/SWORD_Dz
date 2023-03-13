@@ -51,7 +51,9 @@ class transform :
 
         # preprocess the text
         tokens = nltk.word_tokenize(text.lower())
-        stop_words = set(nltk.corpus.stopwords.words()+ list(string.punctuation))
+        tokens = [emoji.demojize(token) for token in tokens]
+        tokens = [token for token in tokens if not any(c.isdigit() for c in token)]
+        stop_words = set(nltk.corpus.stopwords.words()+ list(string.punctuation)+["'","’","”","“",",","،","¨","‘","؛","’","``",'’','“','”']+list(string.digits))
         words = [word for sent in tokens for (word, pos) in nltk.pos_tag(word_tokenize(sent)) if (pos not in ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'RB', 'RBR', 'RBS', 'JJ', 'JJR', 'JJS']) and (word not in stop_words)]
         
         # lemmatize words
