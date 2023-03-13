@@ -7,37 +7,38 @@ import emoji
 import string
 #import connection_mongo
 from wordcloud import WordCloud
-import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 from nltk.stem import WordNetLemmatizer
 from datetime import datetime,timedelta
-from argparse import RawDescriptionHelpFormatter
-import json
-import os
 import pandas as pd
 from pymongo import MongoClient
-import gensim
 from gensim.utils import simple_preprocess
 from gensim.parsing.preprocessing import STOPWORDS
-from gensim import corpora
 import matplotlib.pyplot as plt
-import math
+
+import arabic_reshaper
+from bidi.algorithm import get_display
+
+nltk.download('wordnet')
+
+from tqdm import tqdm
         
 class transform :
     def __init__(self) -> None:
         pass
 
-    def remove_and_update_null(self,collection_names,db_name,mongo_client_url):
+    def remove_and_update_null(self,collection_names,db_name,mongo_client_url,verbose=False):
         client = pymongo.MongoClient(mongo_client_url)
 
         # Select the database and collection
         db = client[db_name]
-        for  collection_name in collection_names:
+        for  collection_name in tqdm(collection_names,position=0):
             tweets = db[collection_name]
             docs=tweets.find({})
             count = tweets.count_documents({})
-            print(count)
-            for doc in docs:
+            if verbose:
+                print('Number of tweet containg null values ',count)
+            for doc in tqdm(docs,position=1):
                 if 'updated'  not in doc.keys():
                     update_dict = {}
                     for key, value in doc.items():
@@ -47,6 +48,7 @@ class transform :
                     tweets.replace_one({"_id": doc["_id"]}, update_dict)
 
     def text_to_tokens(self,text):
+
         # Replace any URLs in the tweet with the string 'URL'
         text = re.sub(r'http\S+', '', text)
         text = re.sub(r'RT', '', text)
@@ -68,11 +70,11 @@ class transform :
 
         # Select the database and collection
         db = client[db_name]
-        for  collection_name in collection_names:
+        for  collection_name in tqdm(collection_names,position=0):
             print(collection_name)
             collection=db[str(collection_name)]
             docs=collection.find({})
-            for doc in docs:
+            for doc in tqdm(docs,position=1):
                 if 'tokens'  not in doc.keys():
                     if 'full_text' in doc.keys():
                         text = doc['full_text'] 
@@ -80,11 +82,9 @@ class transform :
                         text = doc['text']
                     
                     words=self.text_to_tokens(text)    
-                    
-
                     collection.update_one({"_id": doc["_id"]}, { "$set": { "tokens": words } })
 
-    def Wordcloud_language_generator(self,lang,collection_name):
+    def Wordcloud_language_generator(self,lang,collection_name,verbose=False):
         # Query the database for all tweets and their corresponding frensh language
         results = collection_name.find({"lang":lang})
         r=collection_name.count_documents({"lang":lang})
@@ -94,13 +94,28 @@ class transform :
                 words=words+result['tokens']
         else:
             words.append("NoTweet")
-
+        if lang=='ar':
+            arabic_pattern = r'^[\u0600-\u06FF]+$'
+            words_reshaped=[]
+            for word in words:
+                    
+                    # The above pattern matches any Unicode character in the Arabic range
+                    # The ^ and $ characters are used to indicate that the whole string should be matched
+    
+                if bool(re.match(arabic_pattern, word)):
+                    reshaped_text = arabic_reshaper.reshape(word)
+                    display_text = get_display(reshaped_text)
+                    words_reshaped.append(display_text)
+                else:
+                    words_reshaped.append(word)
+            words=words_reshaped
+        
         # create a frequency distribution of the words
         freq_dist = nltk.FreqDist(words)
 
         # create a word cloud from the most frequent words
 
-        wordcloud = WordCloud(width=1600, height=800,font_path='font\kawkab-light.ttf', background_color='white').generate_from_frequencies(freq_dist)
+        wordcloud = WordCloud(width=1600, height=800,font_path='font/kawkab-light.ttf', background_color='white').generate_from_frequencies(freq_dist)
         return wordcloud
     
     def string_to_datetime(self,collection_names,db_name,mongo_client_url):
@@ -117,7 +132,7 @@ class transform :
                     datee= datetime.strptime(doc['created_at'], date_format)
                     collection.update_one( {"_id": doc["_id"]} , { "$set": { "date": datee } })
 
-    def cloud_of_words(self,collection_names,db_name,mongo_client_url):
+    def cloud_of_words(self,collection_names,db_name,mongo_client_url,verbose=False):
         # Connect to MongoDB "mongodb://localhost:27017/"
         client = pymongo.MongoClient(mongo_client_url)
 
@@ -133,27 +148,33 @@ class transform :
         axs = axs.flatten()
 
         for i, collection_name in enumerate(collection_names):
-            print(collection_name, "start")
+            if verbose:
+                print( f' Starting with collection {collection_name} ')
+          
             collection=db[str(collection_name)]
-            wordcloud_fr=self.Wordcloud_language_generator(lang="fr",collection_name=collection)
-            print("french done")
+            wordcloud_fr=self.Wordcloud_language_generator(lang="fr",collection_name=collection,verbose=verbose)
+            if verbose:
+                print( f' \t French Cloud of word done for collection: {collection_name} ')
 
             # Query the database for all tweets and their corresponding arabic language
             wordcloud_ar=self.Wordcloud_language_generator(lang="ar",collection_name=collection)
-            print("arabic done")
+            if verbose:
+                print( f' \t Arabic Cloud of word done for collection: {collection_name} ')
 
             # Query the database for all tweets and their corresponding english language
             wordcloud_en=self.Wordcloud_language_generator(lang="en",collection_name=collection)
-            print("english done")
+            if verbose:
+                print( f' \t English Cloud of word done for collection: {collection_name} ')
             # plot the word cloud in a subplot
             axs[i].imshow(wordcloud_fr)
             axs[i].set_title(str(collection_name)+str('_French'))
 
+
             axs[i+ len(collection_names)].imshow(wordcloud_ar)
-            axs[i+ len(collection_names)].set_title(str(collection_name)+str('_Arabic'))
+            axs[i+ len(collection_names)].set_title(str(collection_name)+str(' Arabic'))
 
             axs[i+2*len(collection_names)].imshow(wordcloud_en)
-            axs[i+2*len(collection_names)].set_title(str(collection_name)+str('_English'))
+            axs[i+2*len(collection_names)].set_title(f'Collection Could of word {collection_name} in English')
 
         for ax in axs:
             ax.axis('off')
