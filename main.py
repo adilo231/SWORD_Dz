@@ -1,10 +1,6 @@
-import DataStorage.GraphGenerator as gg
+
 from DataExtraction.TwitterExtractor import  TweetExtractor
-import Model.Simulator as sim
-import numpy as np
-import pandas as pd
-import time
-from tqdm import  tqdm
+
 
 # Twitter API credentials
 API_credentials={
@@ -63,7 +59,11 @@ if __name__ == '__main__':
     # mongo_user_collection = "Teboune_users"
     # # Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user_collection)
 
-
+# 1,237,920 2,912,785
+# 1,264,045 3,055,290
+# 1,301,232 3,274,314
+# 1,625,307 4,443,375
+# 1,756,211 4,987,064
     Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','Alger-Algérie','Algiers, Algeria']
     mongo_db = "twitter_db"
     mongo_user = "AlgeriaTwitterGraph"
