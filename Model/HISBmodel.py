@@ -11,7 +11,7 @@ plt.style.use('ggplot')
 
 
 class HSIBmodel():
-    def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.2, Tdet=0.125,k=0, method='none',verbose=False):
+    def __init__(self, Graph, Seed_Set=None, opinion_set=None,seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=0.125,k=0, method='none',blockPeriod=0,verbose=False):
         """This is a class for the HISBmodel, which is a rumor propagation model based on human and social behavior.
 
         Parameters:
@@ -48,13 +48,14 @@ class HSIBmodel():
             self.method = method
             self.k = k
             self.Tdet=Tdet
-            pass
+            
 
         # Initialize variables
         self.blocked_nodes = 0
         self.used_nodes_in_TCS=0
         self.time = 0.125
-        self.Probability = 0.3
+        self.blockPeriod=blockPeriod
+        self.Probability = Probability
         self.setptime = setptime
         self.Graph = Graph
         self.baisAccepte = baisAccepte
@@ -72,7 +73,8 @@ class HSIBmodel():
                                               'Spreaders': self.Nbr_Infected,
                                               'Opinion_Denying': self.OpinionDenying,
                                               'Opinion_Supporting': self.OpinionSupporting,
-                                              'RumorPopularity': RumorPopularity
+                                              'RumorPopularity': RumorPopularity,
+                                              'method':self.method
                                               }, index=[0])
     def SetParameters(self, opinion_set):
         """Set the parameters for infected nodes
@@ -131,9 +133,7 @@ class HSIBmodel():
         l = ['D', 'S']
         seedNode = random.sample(range(0, self.Graph.number_of_nodes()), seed)
         seedOpinion = random.choices(l, k=seed)
-        return seedNode,seedOpinion
-    
-    
+        return seedNode,seedOpinion 
     def DisplyResults(self):
         fig, axe = plt.subplots(2, 3)
         col = self.Statistical.columns
@@ -186,13 +186,18 @@ class HSIBmodel():
     def neighbor(self):
         neighb=[]
         MaxD=[]
-        Cente=[]
+        deg_cent=[]
         beta=[]
-        #Cent=((nx.degree_centrality(g)))
+        betaD=[]
+        betaDJ=[]
+        judgement=[]
+        betweenness_centrality=[]
         
         Cent=[]
+        jug=[]
         for i in range(self.Graph.number_of_nodes()):
             Cent.append(self.Graph.nodes[i]['degree_centrality'])
+            jug.append(self.Graph.nodes[i]['jug'])  
                
         for i in self.ListInfectedNodes:
             n=self.Graph.neighbors(i)
@@ -201,155 +206,102 @@ class HSIBmodel():
                 if j not in self.ListInfectedNodes :
                     if j not in neighb :
                         neighb.append(j)
-                        Cente.append(Cent[j])
+                        deg_cent.append(Cent[j])
+                        judgement.append(jug[j])
                         MaxD.append(self.Graph.degree[j])
                         beta.append(self.Graph.nodes[j]['beta'])
-                      
-        return neighb,MaxD,Cente,beta       
-    def judgements(self,nodes):
-        jug =[]
-        for i in nodes:
-            jug.append(self.Graph.nodes[i]['jug'])  
-        return jug
-          
-    def Beta_Blocking_nodes(self,k):
-        # select neighbors from the list of Spreaders    
-        neighbors,_,_,Beta=self.neighbor()
-        
-        for i in range(k):
-            node_to_block = Beta.index(min(Beta))
-            self.Graph.nodes[neighbors[node_to_block]]['blocked']='True'
-            Beta.pop(node_to_block)
-            self.blocked_nodes+=1
-            neighbors.pop(node_to_block) 
-    def Random_Blocking_nodes(self,k):
-       
-        neighbors,_,_,_=self.neighbor()
-        size=len(neighbors)
-        if k>size:
-          k=size-1
-        for i in range(k):
-            node_to_block=random.randint(0, size-1)
-            self.Graph.nodes[neighbors[node_to_block]]['blocked']='true'
-            self.blocked_nodes+=1
-            neighbors.pop(node_to_block)
-            
-    def Degree_MAX_Blocking_nodes(self,k):
-        neighbors,nodes_degree,_,_=self.neighbor()
-        for i in range(k):   
-                node_to_block = nodes_degree.index(max(nodes_degree))
-                nodes_degree.pop(node_to_block)
-                self.Graph.nodes[neighbors[node_to_block]]['blocked']='True'
-                self.blocked_nodes+=1
-                neighbors.pop(node_to_block)  
-    def Centrality_Blocking_nodes(self,k):      
-        neighbors,_,centrality,_=self.neighbor()
-        for i in range(k):  
-            node_to_block = centrality.index(max(centrality))
-            centrality.pop(node_to_block)
-            self.Graph.nodes[neighbors[node_to_block]]['blocked']='True'
-            self.blocked_nodes+=1
-            neighbors.pop(node_to_block) 
-    
-    def blocking_methods(self,k,nodes_degree,centrality,Beta,method):
+                        betweenness_centrality.append(self.Graph.nodes[j]['between_centrality'])
+                        betaD.append(self.Graph.degree[j]/self.Graph.nodes[j]['beta'])
+                        betaDJ.append(self.Graph.degree[j]/(self.Graph.nodes[j]['beta']*self.Graph.nodes[j]['jug'])) 
+                
+        return neighb,MaxD,deg_cent,beta,betaD,betaDJ,judgement,betweenness_centrality   
+     
+    def blocking_methods(self,k,nodes_degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method):
        
         if method == 'RBN' : #Random_Blocking_nodes
             node_to_block=random.randint(0,k)
-           
-            
+                 
         if method == 'BBN' : #Beta_Blocking_nodes
             node_to_block = Beta.index(min(Beta))
             Beta.pop(node_to_block)
            
-            
         if method == 'DMBN' : #Degree_MAX_Blocking_nodes
             node_to_block = nodes_degree.index(max(nodes_degree))
             nodes_degree.pop(node_to_block)
         
-        if method == 'BCN' : #Centrality_Blocking_nodes
-            node_to_block = centrality.index(max(centrality))
-            centrality.pop(node_to_block)
+        if method == 'BCN' : #degree_centrality_Blocking_nodes
+            node_to_block = degree_centrality.index(max(degree_centrality))
+            degree_centrality.pop(node_to_block)
 
+        if method == 'BCN' : #betweenness_centrality_Blocking_nodes
+            node_to_block = betweenness_centrality.index(max(betweenness_centrality))
+            betweenness_centrality.pop(node_to_block) 
+        
+        if method == 'MINJUGBN': #judgement_Blocking_nodes
+            node_to_use = judgement.index(min(judgement))
+            judgement.pop(node_to_use)
+
+        if method == 'BMDB' : #maximum degree/beta maximum
+            node_to_block = betaD.index(max(betaD))
+            betaD.pop(node_to_block)
+            
+        if method == 'BMDBj' : #maximum(degree/(beta*jug))
+            node_to_block = betaDJ.index(max(betaDJ))
+            betaDJ.pop(node_to_block)
         return node_to_block
             
     def Block_nodes(self,k,method):
-        neighbors,nodes_degree,centrality,Beta=self.neighbor()
+        neighbors,nodes_degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality=self.neighbor()
         size=len(neighbors)
         if k>size:
           k=size-1
        
         for i in range(k):   
-                node_to_block = self.blocking_methods(k-i,nodes_degree,centrality,Beta,method)
-                print(neighbors)
-                print(node_to_block)
-                self.Graph.nodes[neighbors[node_to_block]]['blocked']='True'
-                self.blocked_nodes+=1
-                neighbors.pop(node_to_block)
-                
-                  
+            node_to_block = self.blocking_methods(k-i,nodes_degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method)
+            self.Graph.nodes[neighbors[node_to_block]]['blocked']='True'
+            self.Graph.nodes[neighbors[node_to_block]]['blocking_time']=self.time
+            self.blocked_nodes+=1
+            neighbors.pop(node_to_block)
     
-    def TCS_methods(self,k,degree,centrality,Beta,judgement,method):
+
+    def TCS_methods(self,k,degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method):
         if method == 'RTCS' :
             node_to_use=random.randint(0, k)
         if method == 'MDTCS' :
             node_to_use = degree.index(max(degree))
             degree.pop(node_to_use)
+        if method == 'MDCTCS' :
+            node_to_use = degree_centrality.index(max(degree_centrality))
+            degree_centrality.pop(node_to_use)
+        if method == 'MBCTCS' :
+            node_to_use = betweenness_centrality.index(max(betweenness_centrality))
+            betweenness_centrality.pop(node_to_use)
         if method == 'MRIBHBTCS':
             node_to_use = judgement.index(min(judgement))
             judgement.pop(node_to_use)
+        if method == 'MINBETATCS':
+            node_to_use = Beta.index(min(Beta))
+            Beta.pop(node_to_use)
+        if method == 'MDBTCS' :
+            node_to_use = betaD.index(max(betaD))
+            betaD.pop(node_to_use)
+        if method == 'MDBJTCS' :
+            node_to_use = betaDJ.index(max(betaDJ))
+            betaDJ.pop(node_to_use)
         return node_to_use
     
     def Truth_campaign_strategy(self,k,method):
-        neighbors,degree,centrality,Beta=self.neighbor()
-        judgement=self.judgements(neighbors)
+        neighbors,degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality=self.neighbor()
         size=len(neighbors)
         if k > size :
             k=size-1
         for i in range(k):
-            node_to_use=self.TCS_methods(k,degree,centrality,Beta,judgement,method)
+            node_to_use=self.TCS_methods(k-i,degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method)
             self.Graph.nodes[neighbors[node_to_use]]['jug']=1
             self.Graph.nodes[neighbors[node_to_use]]['state']='infected'
             self.used_nodes_in_TCS+=1
             neighbors.pop(node_to_use)
           
-
-    def Random_Truth_Comp(self,k):
-        neighbors,_,_,_=self.neighbor()
-        size=len(neighbors)
-        if k > size :
-            k=size-1
-        for i in range(k):
-            node_to_use=random.randint(0, size-1)
-            self.Graph.nodes[neighbors[node_to_use]]['jug']=1
-            self.Graph.nodes[neighbors[node_to_use]]['state']='infected'
-            self.used_nodes_in_TCS+=1
-            neighbors.pop(node_to_use)
-            
-    def MaxDegree_Truth_Comp(self,K):
-        neighbors,degree,_,_=self.neighbor()
-        size=len(neighbors)
-        k=K
-        if k > size :
-           k=size-1
-        for i in range(k):
-            node_to_use = degree.index(max(degree))
-            self.Graph.nodes[neighbors[node_to_use]]['jug']=1
-            self.Graph.nodes[neighbors[node_to_use]]['state']='infected'
-            neighbors.pop(node_to_use)
-            degree.pop(node_to_use)
-    def MRIBHB_Truth_Comp(self,k):
-        neighbors,_,_,_=self.neighbor()
-        size=len(neighbors)
-        if k > size :
-           k=size-1
-        judgement=self.judgements(neighbors)
-        for i in range(k):
-            node_to_use = judgement.index(min(judgement))
-            self.Graph.nodes[neighbors[node_to_use]]['jug']=1
-            self.Graph.nodes[neighbors[node_to_use]]['state']='infected'
-            neighbors.pop(node_to_use)
-            judgement.pop(node_to_use)
-
 
 
     def applyRIM(self):
@@ -361,7 +313,14 @@ class HSIBmodel():
             if m[0]=='B':
                 self.Block_nodes(self.k,m[1])
 
-                
+    def check_blocking_period(self):
+        if self.blockPeriod>0:
+            for i in range(self.Graph.number_of_nodes()):
+                t=self.Graph.nodes[i]['blocking_time']
+                if self.Graph.nodes[i]['blocked']=='True' and (self.time-t)>self.blockPeriod :
+                    self.Graph.nodes[i]['blocking_time']=0
+                    self.Graph.nodes[i]['blocked']='false'
+             
             
         
     def runModel(self, i=0, typeOfSim=1, Stat=0):
@@ -378,7 +337,7 @@ class HSIBmodel():
         """
         if self.verbose:
             print(f'Simulation number {i} is on run')
-        time = 0.125
+        time = self.time
 
         while self.ListInfectedNodes:
             # Initialize counters for tracking the rumor spreading process
@@ -421,7 +380,7 @@ class HSIBmodel():
                             # Acceptance of the Rumor Probability
                             ProbToAccRumor = self.Graph.degree(id) / (self.Graph.degree(id) + self.Graph.degree(each))*self.baisAccepte
                             if (self.Graph.nodes[each]['blocked'] =='false'):
-                                if(np.random.rand() <= ProbToAccRumor ):
+                                if(np.random.rand() <= ProbToAccRumor*0.6 ):
 
                                     self.Graph.nodes[each]['AccpR'] += 1
                                     self.Graph.nodes[id]['Nb_Accpted_Rm'] += 1
@@ -447,6 +406,7 @@ class HSIBmodel():
                 self.k-=self.used_nodes_in_TCS
                 if self.k>0 and self.method!= 'None':
                     self.applyRIM()
+                self.check_blocking_period()
         # save each step to send it to viewing later
             
             new = pd.DataFrame(data={'Non_Infected': self.Nbr_nonInfected,
@@ -458,6 +418,7 @@ class HSIBmodel():
                                      'method':self.method                                     }, index=[time])
             self.Statistical = pd.concat([self.Statistical, new])
             time += self.setptime
+            self.time = time
         if self.verbose:
             print(f'Simulation number {i} has finnied')
 
@@ -477,6 +438,7 @@ class HSIBmodel():
                 Stat.append(Stat_Global)
                 
             elif typeOfSim == 1:
+                print(self.Statistical)
                 Stat.append(self.Statistical) 
                   
             elif typeOfSim == 2:          

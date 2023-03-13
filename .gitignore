@@ -10,8 +10,8 @@ main2.py
 neo4j.ipynb
 /main.py
 /SimType*
-
-DataStorage/SimType*
+/main_boulma
+DataStorage/SimulationResults/SimType*
 /APP_Init
 /conf
 /data
