@@ -5,6 +5,7 @@ import random
 import pickle
 import os
 from tqdm import tqdm
+import json
 def Algerian_location(location):
     Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','dz','Tipaza','bladi','setif','Oran',
                 'Adrar', 'أدرار', 'Chlef', 'الشلف', 'Laghouat', 'الأغواط', 'Oum El Bouaghi', 'أم البواقي', 
@@ -28,13 +29,18 @@ def Algerian_location(location):
         if loc in location: return True
     return False
 
+
 class TweetExtractor():
-    def __init__(self,connectionStringDocDB,neo_uri,userGDB,passwordGDB,API_credentials):
+    def __init__(self,Creadits=0):
         print('Init Extractore')
-        self.graphDB_Driver =GraphDBHandler(neo_uri,userGDB,passwordGDB)
+        self.graphDB_Driver =GraphDBHandler()
 
         # connect to MongoDB
-        self.DocGB_Driver = DocDBHandler(connectionStringDocDB)
+        self.DocGB_Driver = DocDBHandler()
+
+        f = open('authentification.json')
+        data= json.load(f)
+        API_credentials=data['API_credentials'][Creadits]
 
         # authenticate with Twitter API
         self.auth = tweepy.OAuthHandler(API_credentials["consumer_key"], API_credentials["consumer_secret"])
@@ -189,17 +195,14 @@ class TweetExtractor():
                  print("No data to be Uploaded sleeping for 5 mins")
                  time.sleep(60*5)               
 
-    def Graph_Extraction(self,mongo_db,mongo_user_collection,verbose=False):
+    def Graph_Extraction(self,mongo_db,mongo_user_collection,query,verbose=False):
        
         # Set Mong DB and collection
         db = self.DocGB_Driver.myclient[mongo_db]
         user_collection = db[mongo_user_collection]
 
                 
-        query = "MATCH (u:User {Checked: False})   RETURN u.id_str AS id"
-        #query="MATCH (u:User) WHERE u.cursor_followers <> 0 AND u.cursor_followers <> -1 RETURN u.id_str as id "
-        #query="MATCH (p:User{Checked: False})-[r:FOLLOWS]->({id_str:$id})RETURN p.id_str as id "
-        # Retrieve user IDs from Neo4j that hasn't been checked
+        
         result = self.graphDB_Driver.session.run(query,id="1239152434309738496")
         user_ids = [record["id"] for record in result]
         if verbose:
@@ -208,7 +211,7 @@ class TweetExtractor():
         
         # Iterate over user IDs
         for user_id in user_ids:
-            print()
+            
             try:
                 # Retrieve user's  from Twitter API
                 user = self.api.get_user(user_id)._json
@@ -262,8 +265,11 @@ class TweetExtractor():
                     
                     while cursor != 0 and user['friends_count']>0:
                         friend_ids = []
-                        print(f"\t\t\t cursor {cursor}")
-                        time.sleep(1)
+                        if verbose:
+                            print(f"\t\t\t cursor {cursor}")
+
+
+                        time.sleep(0.5)
                         resutls=tweepy.Cursor(self.api.friends_ids,cursor=cursor, user_id=user_id,count=500).pages()
                         page = next(resutls)
                         cursor = resutls.next_cursor
@@ -276,7 +282,8 @@ class TweetExtractor():
                                             cursor=cursor
                                             )
                         friend_ids.extend(page)
-                        print(f"\t\t\t cursor {cursor}")
+                        if verbose:
+                            print(f"\t\t\t cursor {cursor}")
                        
                         if verbose:
                             print(f"\t\t\t{butch_number}/{round(len(friend_ids)/500)+1} -> {len(friend_ids)} extracted ready to load to DB")
@@ -314,7 +321,8 @@ class TweetExtractor():
                     # Get Followers IDs
                     while cursor != 0 and user['followers_count']>0:
                         follower_ids = []
-                        print(f"\t\t\t cursor {cursor}")
+                        if verbose:
+                            print(f"\t\t\t cursor {cursor}")
 
 
 
@@ -331,7 +339,8 @@ class TweetExtractor():
                                             cursor=cursor
                                             )
                         follower_ids.extend(page)
-                        print(f"\t\t\t cursor {cursor}")
+                        if verbose:
+                            print(f"\t\t\t cursor {cursor}")
                         
                         if verbose:
                             print(f"\t\t\t {butch_number}/{round(user['followers_count']/500)+1} ->  {len(follower_ids)} ID extracted ready to load to DB")

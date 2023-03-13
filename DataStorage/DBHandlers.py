@@ -57,7 +57,7 @@ class GraphDBHandler():
         auth=data['neo4j']
         self.driver = GraphDatabase.driver(uri = auth['uri'], auth=basic_auth(auth['username'], auth['password']))
         self.session=self.driver.session()
-        print(self.session)
+        
         # except:
         #      print ("Authentication to Graph DB failed")
       

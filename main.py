@@ -1,6 +1,6 @@
 
 from DataExtraction.TwitterExtractor import  TweetExtractor
-
+import sys
 
 # Twitter API credentials
 API_credentials={
@@ -27,62 +27,59 @@ neo_password = "admin"
 # define rate limit handler function
 if __name__ == '__main__':
 
-    # keywordslist=[]
-    # keywordslist.append(["fertility", "vaccines", "covid"])
-    # keywordslist.append(["CDC", "deaths", "covid"])
+    if len(sys.argv) != 2:
+        print("Usage: python script.py <integer>")
+        sys.exit(1)
+
+    # Convert the argument to an integer
+    try:
+        num = int(sys.argv[1])
+        Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','Alger-Algérie','Algiers, Algeria']
+        mongo_db = "twitter_db"
+        mongo_user = "AlgeriaTwitterGraph"
     
 
-    # keywords=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','جزائر','dz','DZ']
-    # # Define the search query
-    # query = " OR  ".join(keywords)
-    
-    # Query={
-    #     'query' : query,
-    # }
+        if num==0:
+            query = "MATCH (u:User {Checked: False})   RETURN u.id_str AS id"
+            Extractor =TweetExtractor(0)
+            # Retrieve user IDs from Neo4j that hasn't been checked
+            Extractor.Graph_Extraction(mongo_db,mongo_user,query,verbose=True)
 
 
+        elif num==1:
+            query="MATCH (u:User) WHERE u.cursor_followers <> 0 AND u.cursor_followers <> -1 RETURN u.id_str as id "
+            Extractor =TweetExtractor(1)
+            # Retrieve user IDs from Neo4j that hasn't been checked
+            Extractor.Graph_Extraction(mongo_db,mongo_user,query,verbose=True)
 
-    # mongo_db = "twitter_db"
-    # mongo_tweet_collection = "Algeria"
-    # mongo_user_collection = f"Algeria_users"
-    # Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user_collection,verbose=False)
-    # Extractor =TweetExtractor(mongo_uri,neo_uri,neo_user,neo_password,API_credentials)
-    # Query={
-    #     'query' : "تبون",
-    #     'lang': "en"
+        elif num==2:
+            Extractor =TweetExtractor(2)
+            query="MATCH (p:User{Checked: false})-[r:FOLLOWS]->({id_str:$id})RETURN p.id_str as id "
+            # Retrieve user IDs from Neo4j that hasn't been checked
+            Extractor.Graph_Extraction(mongo_db,mongo_user,query,verbose=True)
 
-    # }
-    
+    except ValueError:
+            print("Invalid integer provided.")
+            sys.exit(1)
 
-    # mongo_db = "twitter_db"
-    # mongo_tweet_collection = "Teboune"
-    # mongo_user_collection = "Teboune_users"
-    # # Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user_collection)
 
-# 1,237,920 2,912,785
-# 1,264,045 3,055,290
-# 1,301,232 3,274,314
-# 1,625,307 4,443,375
-# 1,756,211 4,987,064
-    Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','Alger-Algérie','Algiers, Algeria']
-    mongo_db = "twitter_db"
-    mongo_user = "AlgeriaTwitterGraph"
-    Extractor =TweetExtractor(mongo_uri,neo_uri,neo_user,neo_password,API_credentials)
-    Extractor.Graph_Extraction(mongo_db,mongo_user,Locations)
+        
+
+
     
 
 
 
 
     #Graph's Parametres
-    n = 300
-    seedsSize=0.02
-    typeOfSim=2
-    NbrSim=5
-    P = 0.3
-    K = 0.1
-    M = 20
-    nbb = 0
+    # n = 300
+    # seedsSize=0.02
+    # typeOfSim=2
+    # NbrSim=5
+    # P = 0.3
+    # K = 0.1
+    # M = 20
+    # nbb = 0
     
 
     # parameters = {'omega_min': np.pi/24,

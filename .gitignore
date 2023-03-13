@@ -26,3 +26,4 @@ main.py
 .DS*
 neo4j.ipynb
 graph.json
+authentification.json
