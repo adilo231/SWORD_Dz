@@ -86,6 +86,7 @@ class TweetExtractor():
         if verbose:
             print('Extraction Started')
         try:
+            print(query['query'])
             for tweet in tweepy.Cursor(self.api.search, q=query['query'],tweet_mode='extended').items():
                 
                     Tweet = tweet._json
@@ -117,8 +118,8 @@ class TweetExtractor():
                         if verbose:
                             print(f"\t\tTweet {Tweet['id_str']} Already added....")
                         
-                    if verbose:
-                            print(f"\tAdd to neo4j")
+                    # if verbose:
+                    #         print(f"\tAdd to neo4j")
                     # if the tweet is a retweet, create a relationship between the retweet and the source tweet in Neo4j
                     # if hasattr(tweet, "retweeted_status"):
                     #     with self.graphDB_Driver.session as session:
@@ -343,7 +344,7 @@ class TweetExtractor():
                             print(f"\t\t\t cursor {cursor}")
                         
                         if verbose:
-                            print(f"\t\t\t {butch_number}/{round(user['followers_count']/500)+1} ->  {len(follower_ids)} ID extracted ready to load to DB")
+                            print(f"\t\t\t {butch_number}/{round(user['followers_count']/500)+1} -> {len(follower_ids)} ID extracted ready to load to DB")
                         with open(f"Data/cache/{user_id}_follower_{butch_number}.pkl", 'wb') as f:
                                 pickle.dump(follower_ids, f)
                         butch_number+=1

@@ -27,33 +27,70 @@ neo_password = "admin"
 # define rate limit handler function
 if __name__ == '__main__':
 
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         print("Usage: python script.py <integer>")
         sys.exit(1)
 
     # Convert the argument to an integer
     try:
         num = int(sys.argv[1])
+        num2 = int(sys.argv[2])
         Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','Alger-Algérie','Algiers, Algeria']
         mongo_db = "twitter_db"
         mongo_user = "AlgeriaTwitterGraph"
     
 
         if num==0:
-            query = "MATCH (u:User {Checked: False})   RETURN u.id_str AS id"
             Extractor =TweetExtractor(0)
+            if num2:
+                
+                Query={}
+                # Query['query'] = """( الجزائر OR Algérie OR algerie OR #Algérie OR ALGERIA OR Algeria) AND (fiat OR Fiat OR FIAT OR voiture OR #Fiat  OR فيات)"""
+                Query['query'] = """ (التمور AND الجزائرية ) OR
+                                    (#المغاربة_يشوهون_التمور_الجزائرية) OR
+                                    (#التمور_الجزائرية ) """
+
+                Query['lang']='*'
+                mongo_db = "twitter_db"
+                mongo_tweet_collection = 'DATTE-DZ'
+                mongo_user = f"AlgeriaTwitterGraph"
+                Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user)
+
+            query = "MATCH (u:User {Checked: False})   RETURN u.id_str AS id"
+            
             # Retrieve user IDs from Neo4j that hasn't been checked
             Extractor.Graph_Extraction(mongo_db,mongo_user,query,verbose=True)
 
 
         elif num==1:
-            query="MATCH (u:User) WHERE u.cursor_followers <> 0 AND u.cursor_followers <> -1 RETURN u.id_str as id "
             Extractor =TweetExtractor(1)
+            if num2:
+                
+                Query={}
+                Query['query'] = """الجزائر OR Algérie OR algerie OR #Algérie OR ALGERIA OR Algeria #Algeria"""
+                
+
+                Query['lang']='*'
+                mongo_db = "twitter_db"
+                mongo_tweet_collection = 'Algeria'
+                mongo_user = f"AlgeriaTwitterGraph"
+                Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user)
+            
+            query="MATCH (u:User) WHERE u.cursor_followers <> 0 AND u.cursor_followers <> -1 RETURN u.id_str as id "
             # Retrieve user IDs from Neo4j that hasn't been checked
             Extractor.Graph_Extraction(mongo_db,mongo_user,query,verbose=True)
 
         elif num==2:
             Extractor =TweetExtractor(2)
+            if num2:
+                Query={}
+                Query['query'] = """#تبون_يمثلني"""
+                Query['lang']='*'
+                mongo_db = "twitter_db"
+                mongo_tweet_collection = 'Tebboune_me_present'
+                mongo_user = f"AlgeriaTwitterGraph"
+                Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user)
+
             query="MATCH (p:User{Checked: false})-[r:FOLLOWS]->({id_str:$id})RETURN p.id_str as id "
             # Retrieve user IDs from Neo4j that hasn't been checked
             Extractor.Graph_Extraction(mongo_db,mongo_user,query,verbose=True)
