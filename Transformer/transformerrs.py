@@ -307,21 +307,16 @@ class transform :
             first_day = min(datetime.strptime(first_date['created_at'], date_format).date(),datetime.strptime(last_date['created_at'], date_format).date())
             last_day  = max(datetime.strptime(first_date['created_at'], date_format).date(),datetime.strptime(last_date['created_at'], date_format).date())
             
-            current_date = first_day
-            while current_date <= last_day:
-                current_date_str = current_date
-                tweet_counts[current_date_str] = 0
-                tweets = db[collection_name]
-                result=tweets.find({}).sort('date',pymongo.ASCENDING)
-            
-                for date in result:
-                    tweet_date = datetime.strptime(date['created_at'], date_format).date()
-                    #print(tweet_date)
-                    if tweet_date == current_date :
-                        
-                        tweet_counts[current_date_str] += 1
-                #print(current_date,tweet_counts[current_date_str])
-                current_date += timedelta(days=1)
+            tweet_counts = {}
+            tweets = db[collection_name]
+            results = tweets.find({}).sort('date',pymongo.ASCENDING)
+            for result in results:
+                tweet_date = datetime.strptime(result['created_at'], date_format).date()
+                if first_day <= tweet_date <= last_day:
+                    current_date_str = tweet_date
+                    if current_date_str not in tweet_counts:
+                        tweet_counts[current_date_str] = 0
+                    tweet_counts[current_date_str] += 1
                 
             # Create a new figure for each collection
             fig = plt.figure(figsize=(10, 6))
