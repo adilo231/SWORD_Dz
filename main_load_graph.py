@@ -5,10 +5,10 @@ import numpy as np
 import pandas as pd
 import time
 from tqdm import  tqdm
-import DataStorage.FileUploader as fp
+import DataStorage.loadData2DB as fp
 
-Generator=fp.FileUploader(uri="bolt://localhost:7687",username="neo4j",password="1151999aymana")
-Generator.uploadFile(graphModel='FB')
-# Generator.uploadGraphToDB('ABS')
-# Generator.uploadGraphToDB('ABM')
-# Generator.uploadGraphToDB('ABL')
+Generator=fp.FileUploader()
+#Generator.uploadFile(graphModel='FB')
+#Generator.uploadGraphToDB('ABS')
+Generator.uploadGraphToDB('ABM')
+Generator.uploadGraphToDB('ABL')
