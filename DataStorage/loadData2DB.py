@@ -100,7 +100,7 @@ class FileUploader():
             g = nx.barabasi_albert_graph(5000, 12)
             query= "CREATE INDEX  FOR (n:user_large_random) ON (n.id_user)"
          
-        self.session.run(query)       
+        #self.session.run(query)       
         l=g.edges()
        
         listEdge = []
