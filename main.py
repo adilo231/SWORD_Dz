@@ -84,16 +84,16 @@ if __name__ == '__main__':
             Extractor =TweetExtractor(2)
             if num2:
                 Query={}
-                Query['query'] = """#تبون_يمثلني"""
+                Query['query'] = """Mahrez"""
                 Query['lang']='*'
                 mongo_db = "twitter_db"
                 mongo_tweet_collection = 'Tebboune_me_present'
                 mongo_user = f"AlgeriaTwitterGraph"
                 Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user)
 
-            query="MATCH (p:User{Checked: false})-[r:FOLLOWS]->({id_str:$id})RETURN p.id_str as id "
-            # Retrieve user IDs from Neo4j that hasn't been checked
-            Extractor.Graph_Extraction(mongo_db,mongo_user,query,verbose=True)
+            # query="MATCH (p:User{Checked: false})-[r:FOLLOWS]->({id_str:$id})RETURN p.id_str as id "
+            # # Retrieve user IDs from Neo4j that hasn't been checked
+            # Extractor.Graph_Extraction(mongo_db,mongo_user,query,verbose=True)
 
     except ValueError:
             print("Invalid integer provided.")

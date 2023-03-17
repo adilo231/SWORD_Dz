@@ -190,7 +190,7 @@ class transform :
                                                                 verbose=verbose)
 
         # Create a new figure for each collection
-        i=len(word_fr)>1+len(word_ar)>1+len(word_en)>1
+        i=int(len(word_fr)>1)+int(len(word_ar)>1)+int(len(word_en)>1)
         fig, axs = plt.subplots(figsize=(20, 8), nrows=1,ncols=i)
         print(i)
         j=0
@@ -225,7 +225,6 @@ class transform :
                 axs[j].imshow(wordcloud_en)
                 axs[j].set_title(f'Cloud of word {collection_name} in English')
             else:
-                plt.style.use('ggplot') 
                 plt.imshow(wordcloud_en)
                 plt.title(f'Cloud of word {collection_name} in English')
                 plt.axis('off')
@@ -237,8 +236,7 @@ class transform :
         # Set the title of the entire figure
         fig.suptitle(f'Word Clouds for Collection {collection_name}')
 
-    # Show the figure
-    #plt.show()
+
 
     
     def tweets_lang_repartition(self,collection_name, verbose):
@@ -272,9 +270,14 @@ class transform :
         ang_collection = int(collection.count_documents({"lang": "en"}))
         other_collection = int(collection.count_documents({})) - (fr_collection + ar_collection + ang_collection)
 
+        plt.figure(figsize=(10,10))
         plt.style.use('ggplot') 
         plt.bar(['French', 'Arabic', 'English', 'Other'], [fr_collection, ar_collection, ang_collection, other_collection])
-        
+        plt.title("Distribution of number of tweets by language")
+
+        # Add numbers to bars
+        for i, v in enumerate([fr_collection, ar_collection, ang_collection, other_collection]):
+            plt.text(i, v + 100, str(v), ha='center')
        
 
         
