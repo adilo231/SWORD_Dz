@@ -56,10 +56,10 @@ if __name__ == '__main__':
                 mongo_user = f"AlgeriaTwitterGraph"
                 Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user)
 
-            query = "MATCH (u:User {Checked: False})   RETURN u.id_str AS id"
+            # query = "MATCH (u:User {Checked: False})   RETURN u.id_str AS id"
             
-            # Retrieve user IDs from Neo4j that hasn't been checked
-            Extractor.Graph_Extraction(mongo_db,mongo_user,query,verbose=True)
+            # # Retrieve user IDs from Neo4j that hasn't been checked
+            # Extractor.Graph_Extraction(mongo_db,mongo_user,query,verbose=True)
 
 
         elif num==1:
