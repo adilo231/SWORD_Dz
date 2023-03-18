@@ -49,6 +49,9 @@ if __name__ == '__main__':
                 Query['query'] = """ (التمور AND الجزائرية ) OR
                                     (#المغاربة_يشوهون_التمور_الجزائرية) OR
                                     (#التمور_الجزائرية ) """
+                # Query['query'] = """كمال رزيق"""
+                #  Query['query'] = """ (كمال رزيق)  OR (Kamel Rezig)"""
+               
 
                 Query['lang']='*'
                 mongo_db = "twitter_db"
@@ -84,10 +87,11 @@ if __name__ == '__main__':
             Extractor =TweetExtractor(2)
             if num2:
                 Query={}
-                Query['query'] = """Mahrez"""
+                # (change AND algérie)
+                Query['query'] = """#أحمد_عطاف"""
                 Query['lang']='*'
                 mongo_db = "twitter_db"
-                mongo_tweet_collection = 'Tebboune_me_present'
+                mongo_tweet_collection = 'Attaf'
                 mongo_user = f"AlgeriaTwitterGraph"
                 Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user)
 
