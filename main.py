@@ -70,7 +70,17 @@ if __name__ == '__main__':
             if num2:
                 
                 Query={}
-                Query['query'] = """الجزائر OR Algérie OR algerie OR #Algérie OR ALGERIA OR Algeria #Algeria"""
+               
+
+
+                start_date = '2023-01-01'
+                end_date = '2023-03-31'
+                keywords = ["الجزائر" , "Algérie" , "algerie" , "#Algérie" , "ALGERIA" , "Algeria", "#Algeria"]
+                keyword_query = ' OR '.join(keywords)
+                Query['query'] = f" since:{start_date} until:{end_date} ({keyword_query})"
+
+
+                 
                 
 
                 Query['lang']='*'
@@ -79,16 +89,17 @@ if __name__ == '__main__':
                 mongo_user = f"AlgeriaTwitterGraph"
                 Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user)
             
-            query="MATCH (u:User) WHERE u.cursor_followers <> 0 AND u.cursor_followers <> -1 RETURN u.id_str as id "
-            # Retrieve user IDs from Neo4j that hasn't been checked
-            Extractor.Graph_Extraction(mongo_db,mongo_user,query,verbose=True)
+            # query="MATCH (u:User) WHERE u.cursor_followers <> 0 AND u.cursor_followers <> -1 RETURN u.id_str as id "
+            # # Retrieve user IDs from Neo4j that hasn't been checked
+            # Extractor.Graph_Extraction(mongo_db,mongo_user,query,verbose=True)
 
         elif num==2:
             Extractor =TweetExtractor(2)
             if num2:
                 Query={}
                 # (change AND algérie)
-                Query['query'] = """#أحمد_عطاف"""
+                # Query['query'] = """#أحمد_عطاف"""
+                Query['query'] = """Attaf"""
                 Query['lang']='*'
                 mongo_db = "twitter_db"
                 mongo_tweet_collection = 'Attaf'
