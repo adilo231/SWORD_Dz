@@ -350,7 +350,7 @@ class transform :
         plt.plot(tweet_counts.keys(), tweet_counts.values(),'-bo')
         plt.title(collection_name)
         # Save the figure with a filename based on the collection name
-        fig.savefig(f"{collection_name}.png")
+        #fig.savefig(f"{collection_name}.png")
         if verbose:
             print(f"Figure {i+1} saved as {collection_name}.png")
         i += 1
