@@ -17,12 +17,17 @@ The rumor detection module is constituted of several deep learning graph neural 
 The simulation module allows the framework to simulate rumor propagation based on HISB model. The module can simulate on different real or synthetic graphs, with the graphs stored in the databases mentioned earlier. This module also allows us to test rumor influence minimization strategies such as blocking nodes and truth campaign strategies and provides statistical analysis. The progress on this module is 80%.
 
 Progress:
-Data Extraction Module - 80% [████████████████████░░░░░░░░░]
-Data Storage Module - 70% [█████████████████░░░░░░░░░░░░░░]
-Transformers Module - 10% [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░]
-Rumor Detection Module - 0% [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]
-Simulation Module - 80% [████████████████████░░░░░░░░░]
-Overall Progress - 48% [██████████░░░░░░░░░░░░░░░░░░░░]
+Data Extraction Module - 80% [████████████████████░░░░░░░░░░░]
+
+Data Storage Module    - 70% [█████████████████░░░░░░░░░░░░░░]
+
+Transformers Module    - 60% [████████████░░░░░░░░░░░░░░░░░░░]
+
+Rumor Detection Module - 60% [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]
+
+Simulation Module      - 80% [████████████████████░░░░░░░░░░░░]
+
+Overall Progress       - 48% [██████████░░░░░░░░░░░░░░░░░░░░░░]
 
 Progress:
 Data Extraction Module - 80%
