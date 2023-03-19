@@ -43,12 +43,19 @@ if __name__ == '__main__':
         if num==0:
             Extractor =TweetExtractor(0)
             if num2:
+                start_date = '2022-01-01'
+                end_date = '2023-03-10'
                 
-                Query={}
-                # Query['query'] = """( الجزائر OR Algérie OR algerie OR #Algérie OR ALGERIA OR Algeria) AND (fiat OR Fiat OR FIAT OR voiture OR #Fiat  OR فيات)"""
-                Query['query'] = """ (التمور AND الجزائرية ) OR
+                query = """ (التمور AND الجزائرية ) OR
                                     (#المغاربة_يشوهون_التمور_الجزائرية) OR
                                     (#التمور_الجزائرية ) """
+                query='Kamel Rezig'
+                Query={}
+                Query['query'] = f" since:{start_date} until:{end_date} ({query})"
+                
+
+                # Query['query'] = """( الجزائر OR Algérie OR algerie OR #Algérie OR ALGERIA OR Algeria) AND (fiat OR Fiat OR FIAT OR voiture OR #Fiat  OR فيات)"""
+                
                 # Query['query'] = """كمال رزيق"""
                 #  Query['query'] = """ (كمال رزيق)  OR (Kamel Rezig)"""
                

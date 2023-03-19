@@ -5,7 +5,6 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 import emoji
 import string
-#import connection_mongo
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from nltk.stem import WordNetLemmatizer

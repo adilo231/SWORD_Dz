@@ -7,7 +7,7 @@ client_mongo = "mongodb://localhost:27017/"
 db_name = "twitter_db"
 
 
-collection_names='Algeria'
+collection_names='DATTE-DZ'
 
 
 transforms=transform(db_name)
