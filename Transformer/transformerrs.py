@@ -20,6 +20,17 @@ from DataStorage.DBHandlers import  DocDBHandler
 import arabic_reshaper
 from bidi.algorithm import get_display
 
+
+
+
+from tqdm import tqdm
+import csv
+from nltk.stem import SnowballStemmer
+from sklearn.model_selection import train_test_split
+from nltk.classify import NaiveBayesClassifier
+from nltk.sentiment import SentimentIntensityAnalyzer
+
+
 # nltk.download('wordnet')
 
 from tqdm import tqdm
@@ -354,3 +365,264 @@ class transform :
         if verbose:
             print(f"Figure {i+1} saved as {collection_name}.png")
         i += 1
+
+    def extract_features(self,tokens, word_features,verbose=False):
+        token_set = set(tokens)
+        features = {}
+        for word in word_features:
+            features['contains({})'.format(word)] = (word in token_set)
+        return features
+    
+    def stance_language_repartition(self,collection_name, verbose=False):
+        
+        # Select the database and collection
+        db = self.DocGB_Driver.myclient[self.db_name]
+
+        if verbose:
+            print(f'Starting with collection {collection_name}')
+
+        collection = db[str(collection_name)]
+        
+        
+        collection=db[str(collection_name)]
+        ar_count=collection.count_documents({"lang":"ar"})
+        fr_count=collection.count_documents({"lang":"fr"})
+        en_count=collection.count_documents({"lang":"en"})
+
+        number_graphs=0
+
+        print("ar_count",ar_count)
+        print("fr_count",fr_count)
+        print("en_count",en_count)
+
+        if ar_count>0:
+            number_graphs=number_graphs +1
+            #preparing Classifier
+            print("preparing Classifier","\n")
+            data=[]
+            # Open the CSV file
+            with open('Transformer/train_all_ext.csv', newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                next(reader)  # Skip the header row if there is one
+
+                # Loop through each row in the CSV file
+                for row in reader:
+                    # Extract the text and stance from the row
+                    text = row[2]  # Assuming the text is in the first column
+                    stance = row[1]  # Assuming the stance is in the second column
+
+                    # Append the (text, stance) pair to the data list
+                    data.append((text, stance))
+                
+            stop_words = set(stopwords.words('arabic'))
+            stemmer = SnowballStemmer('arabic')
+            preprocessed_data = []
+            for text, stance in data:
+                tokens = word_tokenize(text)
+                filtered_tokens = [stemmer.stem(token) for token in tokens if token not in stop_words]
+                preprocessed_data.append((filtered_tokens, stance))
+
+            # Extract features
+            all_words = nltk.FreqDist([token for text, stance in preprocessed_data for token in text])
+            word_features = list(all_words)[:1000]
+            
+            featuresets = [(self.extract_features(text, word_features), stance) for (text, stance) in preprocessed_data]
+
+            # Split the data into training and testing sets
+            train_set, test_set = train_test_split(featuresets, test_size=0.2, random_state=42)
+
+            # Train the classifier
+            classifier = NaiveBayesClassifier.train(train_set)
+
+            # Evaluate the classifier
+            # accuracy = nltk.classify.accuracy(classifier, test_set)
+            # print("Accuracy:", accuracy)
+
+
+            #classification
+
+            docs=collection.find({"lang":"ar"})
+            ar_positif=0
+            ar_negatif=0
+            ar_neutre=0
+            i=0
+            for  doc in tqdm(docs) :
+                if'text' in doc.keys():
+                    tokens = word_tokenize(doc['text'])
+                if'full_text' in doc.keys():
+                    tokens = word_tokenize(doc['full_text'])   
+
+                filtered_tokens = [stemmer.stem(token) for token in tokens if token not in stop_words]
+
+                # Extraire les features du texte prétraité
+                features = self.extract_features(filtered_tokens, word_features)
+
+                # Classer le texte en utilisant le classificateur entraîné
+                stance = classifier.classify(features)
+                if stance=='neutral':
+                    ar_neutre=ar_neutre +1
+                if stance=='negative':
+                    ar_negatif=ar_negatif +1
+                if stance=='positive':
+                    ar_positif= ar_positif +1
+                # Afficher le stance prédit
+                #print("Stance prédit [",i,"] : ", stance)
+                # i=i+1
+            #print("+ - +-",ar_positif, ar_negatif,  ar_neutre)
+
+
+        if fr_count>0:
+            number_graphs=number_graphs +1
+            #preparing Classifier
+            print("preparing Classifier","\n")
+            data=[]
+            # Open the CSV file
+            with open('Transformer/betsentiment-FR-tweets-sentiment-teams.csv', newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                next(reader)  # Skip the header row if there is one
+
+                # Loop through each row in the CSV file
+                for row in reader:
+                    # Extract the text and stance from the row
+                    text = row[2]  # Assuming the text is in the first column
+                    stance = row[4]  # Assuming the stance is in the second column
+
+                    # Append the (text, stance) pair to the data list
+                    data.append((text, stance))
+                    
+            
+            stop_words = set(stopwords.words('french'))
+            stemmer = SnowballStemmer('french')
+            preprocessed_data = []
+            for text, stance in data:
+                tokens = word_tokenize(text)
+                filtered_tokens = [stemmer.stem(token) for token in tokens if token not in stop_words]
+                preprocessed_data.append((filtered_tokens, stance))
+
+            # Extract features
+            all_words = nltk.FreqDist([token for text, stance in preprocessed_data for token in text])
+            word_features = list(all_words)[:1000]
+            
+            featuresets = [(self.extract_features(text, word_features), stance) for (text, stance) in preprocessed_data]
+
+            # Split the data into training and testing sets
+            train_set, test_set = train_test_split(featuresets, test_size=0.2, random_state=42)
+
+            # Train the classifier
+            classifier = NaiveBayesClassifier.train(train_set)
+
+            # Evaluate the classifier
+            # accuracy = nltk.classify.accuracy(classifier, test_set)
+            # print("Accuracy:", accuracy)
+
+
+            #classification
+
+            docs=collection.find({"lang":"fr"})
+            fr_positif=0
+            fr_negatif=0
+            fr_neutre=0
+            i=0
+            for  doc in tqdm(docs) :
+                if'text' in doc.keys():
+                    tokens = word_tokenize(doc['text'])
+                if'full_text' in doc.keys():
+                    tokens = word_tokenize(doc['full_text'])   
+
+                filtered_tokens = [stemmer.stem(token) for token in tokens if token not in stop_words]
+
+                # Extraire les features du texte prétraité
+                features = self.extract_features(filtered_tokens, word_features)
+
+                # Classer le texte en utilisant le classificateur entraîné
+                stance = classifier.classify(features)
+                if stance=='NEUTRAL':
+                    fr_neutre=fr_neutre +1
+                if stance=='NEGATIVE':
+                    fr_negatif=fr_negatif +1
+                if stance=='POSITIVE':
+                    fr_positif= fr_positif +1
+                # Afficher le stance prédit
+                #print("Stance prédit [",i,"] : ", stance)
+                # i=i+1
+            #print("+ - +-",fr_positif, fr_negatif,  fr_neutre)
+
+
+        if en_count>0:
+            number_graphs=number_graphs +1
+            docs=collection.find({"lang":"en"})
+            en_positif=0
+            en_negatif=0
+            en_neutre=0
+            #preparing Classifier
+            print("preparing Classifier","\n")
+            # Download the pre-trained sentiment analyzer
+            nltk.download('vader_lexicon')
+
+            # Initialize the sentiment analyzer
+            sid = SentimentIntensityAnalyzer()
+            
+            for doc in tqdm(docs):
+                # Example text to classify
+                if 'text' in doc.keys():
+                    text=doc['text']
+                if 'full_text' in doc.keys():
+                    text=doc['full_text']
+
+                # Classify the text
+                scores = sid.polarity_scores(text)
+
+                # Determine the overall sentiment
+                if scores['compound'] > 0:
+                    sentiment = 'positive'
+                    en_positif=en_positif +1
+            
+                elif scores['compound'] < 0:
+                    sentiment = 'negative'
+                    en_negatif=en_negatif +1
+            
+                else:
+                    sentiment = 'neutral'
+                    en_neutre=en_neutre +1
+
+            # Print the sentiment
+            #print("+ - +-",en_positif,en_negatif ,en_neutre)
+
+
+        #print(number_graphs)
+        # Plot
+        fig, axs = plt.subplots(1, number_graphs, figsize=(10, 5))
+        i=0
+        # Arabic subplot
+        if ar_count>0:
+            ar_data = [ar_positif, ar_negatif, ar_neutre]
+            if number_graphs == 1 :
+                plt.bar(['Positive', 'Negative', 'Neutral'], ar_data)
+                plt.title(str(collection_name)+' Arabic Stance')
+            else:
+                axs[i].bar(['Positive', 'Negative', 'Neutral'], ar_data)
+                axs[i].set_title(str(collection_name)+' Arabic Stance')
+                i=i+1
+
+        if fr_count >0:
+            # French subplot
+            fr_data = [fr_positif, fr_negatif, fr_neutre]
+            if number_graphs == 1 :
+                plt.bar(['Positive', 'Negative', 'Neutral'], ar_data)
+                plt.title(str(collection_name)+' French Stance')
+            else:
+                axs[i].bar(['Positive', 'Negative', 'Neutral'], fr_data)
+                axs[i].set_title(str(collection_name)+' French Stance')
+                i=i+1
+
+        if en_count >0:
+            # English subplot
+            en_data = [en_positif, en_negatif, en_neutre]
+            if number_graphs == 1 :
+                plt.bar(['Positive', 'Negative', 'Neutral'], ar_data)
+                plt.title(str(collection_name)+' English Stance')
+            else:
+                axs[i].bar(['Positive', 'Negative', 'Neutral'], en_data)
+                axs[i].set_title(str(collection_name)+' English Stance')
+        plt.show()
+
