@@ -1,0 +1,19 @@
+1- Collect Data about since 2022-01 
+            - Algerie
+            - Ukraine
+            - Teboune
+            - covid
+2- Collect Data about Tendance
+            -fiat
+            -Datte
+            - voiture -3 ans
+            -...
+3- Transforma code 
+            - French classifier
+            - Word of could stance should be stored in the doc
+            - dont forget the sylte and numbers for hist
+            - Add Meta Doc for a colection
+
+
+5- Rumor classification code
+
