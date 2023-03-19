@@ -398,7 +398,7 @@ class transform :
         if ar_count>0:
             number_graphs=number_graphs +1
             #preparing Classifier
-            print("preparing Classifier","\n")
+            print("preparing Arabic Classifier","\n")
             data=[]
             # Open the CSV file
             with open('Transformer/train_all_ext.csv', newline='', encoding='utf-8') as csvfile:
@@ -474,7 +474,7 @@ class transform :
         if fr_count>0:
             number_graphs=number_graphs +1
             #preparing Classifier
-            print("preparing Classifier","\n")
+            print("preparing French Classifier","\n")
             data=[]
             # Open the CSV file
             with open('Transformer/betsentiment-FR-tweets-sentiment-teams.csv', newline='', encoding='utf-8') as csvfile:
@@ -555,7 +555,7 @@ class transform :
             en_negatif=0
             en_neutre=0
             #preparing Classifier
-            print("preparing Classifier","\n")
+            print("preparing  English Classifier","\n")
             # Download the pre-trained sentiment analyzer
             nltk.download('vader_lexicon')
 
