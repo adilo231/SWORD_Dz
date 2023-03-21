@@ -7,7 +7,7 @@ client_mongo = "mongodb://localhost:27017/"
 db_name = "twitter_db"
 
 
-collection_names='gouvernement'
+collection_names='Attaf'
 
 
 transforms=transform(db_name)
@@ -23,11 +23,11 @@ transforms=transform(db_name)
 # transforms.cloud_of_words(collection_names,verbose=True)
 
 # # #show lang distribution of each collection
-transforms.tweets_lang_repartition(collection_names,verbose=True)
+# transforms.tweets_lang_repartition(collection_names,verbose=True)
 
 
-#transform dates from string to datetime
-transforms.string_to_datetime(collection_names,verbose=True)
+# #transform dates from string to datetime
+# transforms.string_to_datetime(collection_names,verbose=True)
 
 
 # #show date distribution of each collection
@@ -37,5 +37,5 @@ transforms.string_to_datetime(collection_names,verbose=True)
 
 # transforms.plot_tweets_per_day(collection_names,verbose=True)
 
-# transforms.stance_language_repartition(collection_names)
+transforms.stance_language_repartition(collection_names)
 plt.show()

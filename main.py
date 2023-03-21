@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
 
         elif num==1:
-            Extractor =TweetExtractor(1)
+            Extractor =TweetExtractor(0)
             if num2:
                 
                 Query={}
@@ -84,6 +84,10 @@ if __name__ == '__main__':
                 end_date = '2023-03-31'
                 keywords = ["الجزائر" , "Algérie" , "algerie" , "#Algérie" , "ALGERIA" , "Algeria", "#Algeria"]
                 keyword_query = ' OR '.join(keywords)
+                keyword_query='(fiat OR Fiat OR FIAT)'+' AND '+keyword_query
+
+                full_query = f"({keyword_query})  since:{start_date} until:{end_date}"
+
                 Query['query'] = f" since:{start_date} until:{end_date} ({keyword_query})"
 
 
@@ -92,7 +96,7 @@ if __name__ == '__main__':
 
                 Query['lang']='*'
                 mongo_db = "twitter_db"
-                mongo_tweet_collection = 'Algeria'
+                mongo_tweet_collection = 'FIAT2'
                 mongo_user = f"AlgeriaTwitterGraph"
                 Extractor.Topic_Tweet_Extraction( Query,mongo_db,mongo_tweet_collection,mongo_user)
             
