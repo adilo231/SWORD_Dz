@@ -42,18 +42,31 @@ class transform:
 
         self.db_name = db_name
 
-        
-
-       
-
         if os.path.exists('Transformer/Classifier/ArabicClassifier.pkl'):
-            print("Classifier exist")
+            print(" Arabic Classifier exist")
             with open('Transformer/Classifier/ArabicClassifier.pkl', 'rb') as f:
                     self.ArabicClassifier = pickle.load(f)
         else:
-            print("Classifier does not exist")
+            print("Arabic Classifier does not exist")
             self.ArabicClassifier=self.Train_arabic_classifier()
-        self.FrenchClassifier=None
+
+
+        if os.path.exists('Transformer/Classifier/FrenchClassifier.pkl'):
+            print("French Classifier exist")
+            with open('Transformer/Classifier/FrenchClassifier.pkl', 'rb') as f:
+                    self.FrenchClassifier = pickle.load(f)
+        else:
+            print(" French Classifier does not exist")
+            self.FrenchClassifier=self.Train_French_classifier()
+
+        if os.path.exists('Transformer/Classifier/EnglishClassifier.pkl'):
+            print("English Classifier exist")
+            with open('Transformer/Classifier/EnglishClassifier.pkl', 'rb') as f:
+                    self.EnglishClassifier = pickle.load(f)
+        else:
+            print("English Classifier does not exist")
+            self.EnglishClassifier=self.Train_English_classifier() 
+        
 
     def remove_and_update_null(self, collection_name, verbose=False):
 
@@ -127,7 +140,8 @@ class transform:
         words = []
         if(r > 0):
             for result in results:
-                words = words+result['tokens']
+                if 'tokens' in result.keys():
+                    words = words+result['tokens']
             if lang == 'ar':
                 arabic_pattern = r'^[\u0600-\u06FF]+$'
                 words_reshaped = []
@@ -296,8 +310,8 @@ class transform:
         plt.title("Distribution of number of tweets by language")
 
         # Add numbers to bars
-        for i, v in enumerate([fr_collection, ar_collection, ang_collection, other_collection]):
-            plt.text(i, v + 100, str(v), ha='center')
+        for j, v in enumerate([fr_collection, ar_collection, ang_collection, other_collection]):
+            plt.text(j, v + 10, str(v), ha='center')
 
         # Display the figure
         if verbose:
@@ -362,8 +376,8 @@ class transform:
         plt.title(collection_name)
         # Save the figure with a filename based on the collection name
         # fig.savefig(f"{collection_name}.png")
-        if verbose:
-            print(f"Figure {i+1} saved as {collection_name}.png")
+        # if verbose:
+        #     print(f"Figure {i+1} saved as {collection_name}.png")
         i += 1
 
     def extract_features(self, tokens, word_features, verbose=False):
@@ -417,11 +431,74 @@ class transform:
             # Train the classifier
             classifier = NaiveBayesClassifier.train(train_set)
                         # Evaluate the classifier
-            accuracy = nltk.classify.accuracy(self.ArabicClassifier, test_set)
+            accuracy = nltk.classify.accuracy(classifier, test_set)
             print("Accuracy:", accuracy)
             with open('Transformer/Classifier/ArabicClassifier.pkl', 'wb') as f:
                 pickle.dump(classifier, f)
             return classifier
+
+    def Train_French_classifier(self):
+      # preparing Classifier
+            print("preparing French Classifier", "\n")
+            data = []
+            # Open the CSV file
+            with open('Transformer/Classifier/betsentiment-FR-tweets-sentiment-teams.csv', newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                next(reader)  # Skip the header row if there is one
+
+                # Loop through each row in the CSV file
+                for row in reader:
+                    # Extract the text and stance from the row
+                    text = row[2]  # Assuming the text is in the first column
+                    # Assuming the stance is in the second column
+                    stance = row[4]
+
+                    # Append the (text, stance) pair to the data list
+                    data.append((text, stance))
+
+            stop_words = set(stopwords.words('french'))
+            stemmer = SnowballStemmer('french')
+            preprocessed_data = []
+            for text, stance in data:
+                tokens = word_tokenize(text)
+                filtered_tokens = [stemmer.stem(
+                    token) for token in tokens if token not in stop_words]
+                preprocessed_data.append((filtered_tokens, stance))
+
+            # Extract features
+            all_words = nltk.FreqDist(
+                [token for text, stance in preprocessed_data for token in text])
+            word_features = list(all_words)[:1000]
+
+            featuresets = [(self.extract_features(text, word_features), stance)
+                           for (text, stance) in preprocessed_data]
+
+            # Split the data into training and testing sets
+            train_set, test_set = train_test_split(
+                featuresets, test_size=0.2, random_state=42)
+
+            # Train the classifier
+            classifier = NaiveBayesClassifier.train(train_set)
+
+            # Evaluate the classifier
+            # accuracy = nltk.classify.accuracy(classifier, test_set)
+            # print("Accuracy:", accuracy)
+            with open('Transformer/Classifier/FrenchClassifier.pkl', 'wb') as f:
+                pickle.dump(classifier, f)
+            return classifier
+
+
+    def Train_English_classifier(self):
+          # preparing Classifier
+            print("preparing  English Classifier", "\n")
+            # Download the pre-trained sentiment analyzer
+            nltk.download('vader_lexicon')
+
+            # Initialize the sentiment analyzer
+            sid = SentimentIntensityAnalyzer()
+            with open('Transformer/Classifier/EnglishClassifier.pkl', 'wb') as f:
+                pickle.dump(sid, f)
+            return sid
 
     def stance_language_repartition(self, collection_name, verbose=False):
 
@@ -513,7 +590,6 @@ class transform:
         if fr_count > 0:
             number_graphs = number_graphs + 1
             # preparing Classifier
-            print("preparing French Classifier", "\n")
             data = []
             # Open the CSV file
             with open('Transformer/Classifier/betsentiment-FR-tweets-sentiment-teams.csv', newline='', encoding='utf-8') as csvfile:
@@ -544,20 +620,7 @@ class transform:
                 [token for text, stance in preprocessed_data for token in text])
             word_features = list(all_words)[:1000]
 
-            featuresets = [(self.extract_features(text, word_features), stance)
-                           for (text, stance) in preprocessed_data]
-
-            # Split the data into training and testing sets
-            train_set, test_set = train_test_split(
-                featuresets, test_size=0.2, random_state=42)
-
-            # Train the classifier
-            classifier = NaiveBayesClassifier.train(train_set)
-
-            # Evaluate the classifier
-            # accuracy = nltk.classify.accuracy(classifier, test_set)
-            # print("Accuracy:", accuracy)
-
+            
             # classification
 
             docs = collection.find({"lang": "fr"})
@@ -579,7 +642,8 @@ class transform:
                     filtered_tokens, word_features)
 
                 # Classer le texte en utilisant le classificateur entraîné
-                stance = classifier.classify(features)
+                stance = self.FrenchClassifier.classify(features)
+                
                 if stance == 'NEUTRAL':
                     fr_neutre = fr_neutre + 1
                 if stance == 'NEGATIVE':
@@ -597,13 +661,7 @@ class transform:
             en_positif = 0
             en_negatif = 0
             en_neutre = 0
-            # preparing Classifier
-            print("preparing  English Classifier", "\n")
-            # Download the pre-trained sentiment analyzer
-            nltk.download('vader_lexicon')
-
-            # Initialize the sentiment analyzer
-            sid = SentimentIntensityAnalyzer()
+            
 
             for doc in tqdm(docs):
                 # Example text to classify
@@ -613,7 +671,7 @@ class transform:
                     text = doc['full_text']
 
                 # Classify the text
-                scores = sid.polarity_scores(text)
+                scores = self.EnglishClassifier.polarity_scores(text)
 
                 # Determine the overall sentiment
                 if scores['compound'] > 0:
@@ -641,9 +699,13 @@ class transform:
             if number_graphs == 1:
                 plt.bar(['Positive', 'Negative', 'Neutral'], ar_data)
                 plt.title(str(collection_name)+' Arabic Stance')
+                for j, v in enumerate([ar_positif, ar_negatif, ar_neutre]):
+                    plt.text(j, v + 10, str(v), ha='center')
             else:
                 axs[i].bar(['Positive', 'Negative', 'Neutral'], ar_data)
                 axs[i].set_title(str(collection_name)+' Arabic Stance')
+                for j, v in enumerate([ar_positif, ar_negatif, ar_neutre]):
+                    axs[i].text(j, v + 10, str(v), ha='center')
                 i = i+1
 
         if fr_count > 0:
@@ -652,9 +714,15 @@ class transform:
             if number_graphs == 1:
                 plt.bar(['Positive', 'Negative', 'Neutral'], ar_data)
                 plt.title(str(collection_name)+' French Stance')
+                # Add numbers to bars
+                for j, v in enumerate([fr_positif, fr_negatif, fr_neutre]):
+                    plt.text(j, v + 10, str(v), ha='center')
             else:
                 axs[i].bar(['Positive', 'Negative', 'Neutral'], fr_data)
                 axs[i].set_title(str(collection_name)+' French Stance')
+                # Add numbers to bars
+                for j, v in enumerate([fr_positif, fr_negatif, fr_neutre]):
+                    axs[i].text(j, v + 10, str(v), ha='center')
                 i = i+1
 
         if en_count > 0:
@@ -663,7 +731,13 @@ class transform:
             if number_graphs == 1:
                 plt.bar(['Positive', 'Negative', 'Neutral'], ar_data)
                 plt.title(str(collection_name)+' English Stance')
+                for j, v in enumerate([en_positif, en_negatif, en_neutre]):
+                    plt.text(j, v + 10, str(v), ha='center')
             else:
                 axs[i].bar(['Positive', 'Negative', 'Neutral'], en_data)
                 axs[i].set_title(str(collection_name)+' English Stance')
+                for j, v in enumerate([en_positif, en_negatif, en_neutre]):
+                    axs[i].text(j, v + 10, str(v), ha='center')
+                    
+        plt.style.use('ggplot')
         plt.show()
