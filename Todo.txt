@@ -20,3 +20,7 @@
 14- multi processing
 15- prepa
 16- all Simulation results should be plot in simulation results 
+
+17- all variables names(k)
+18- applyRim function
+19- Display function for lot of methods
