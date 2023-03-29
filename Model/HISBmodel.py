@@ -43,9 +43,10 @@ class HSIBmodel():
         -------
         None.
         """
-        
+        self.K=0
         if method != 'none':
             self.method = method
+            self.K = k
             self.k = k
             self.Tdet=Tdet
             
@@ -233,7 +234,7 @@ class HSIBmodel():
             node_to_block = degree_centrality.index(max(degree_centrality))
             degree_centrality.pop(node_to_block)
 
-        if method == 'BCN' : #betweenness_centrality_Blocking_nodes
+        if method == 'BeCN' : #betweenness_centrality_Blocking_nodes
             node_to_block = betweenness_centrality.index(max(betweenness_centrality))
             betweenness_centrality.pop(node_to_block) 
         
@@ -402,11 +403,12 @@ class HSIBmodel():
                             else:
                                 pass
                                #print('le noeud',each,'is blocked')
-                self.k-=self.blocked_nodes
-                self.k-=self.used_nodes_in_TCS
-                if self.k>0 and self.method!= 'None':
-                    self.applyRIM()
-                self.check_blocking_period()
+                
+            if self.k>0 and time > self.Tdet and self.method!= 'None':
+                self.applyRIM()
+            self.k-=self.blocked_nodes
+            self.k-=self.used_nodes_in_TCS
+            self.check_blocking_period()
         # save each step to send it to viewing later
             
             new = pd.DataFrame(data={'Non_Infected': self.Nbr_nonInfected,
@@ -415,7 +417,10 @@ class HSIBmodel():
                                      'Opinion_Denying': self.OpinionDenying,
                                      'Opinion_Supporting': self.OpinionSupporting,
                                      'RumorPopularity': RumorPopularity,
-                                     'method':self.method                                     }, index=[time])
+                                    #  'method':f"{self.method} {round(self.K/self.Graph.number_of_nodes(),3)*100}%"}
+                                     'method':f"{self.method} {self.Tdet}"}
+
+                                     , index=[time])
             self.Statistical = pd.concat([self.Statistical, new])
             time += self.setptime
             self.time = time
@@ -438,7 +443,7 @@ class HSIBmodel():
                 Stat.append(Stat_Global)
                 
             elif typeOfSim == 1:
-                print(self.Statistical)
+                
                 Stat.append(self.Statistical) 
                   
             elif typeOfSim == 2:          

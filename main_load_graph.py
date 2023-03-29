@@ -8,7 +8,7 @@ from tqdm import  tqdm
 import DataStorage.loadData2DB as fp
 
 Generator=fp.FileUploader()
-#Generator.uploadFile(graphModel='FB')
+Generator.uploadFile(graphModel='FB')
 #Generator.uploadGraphToDB('ABS')
-Generator.uploadGraphToDB('ABM')
-Generator.uploadGraphToDB('ABL')
+# Generator.uploadGraphToDB('ABM')
+# Generator.uploadGraphToDB('ABL')
