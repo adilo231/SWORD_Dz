@@ -46,8 +46,7 @@ class HSIBmodel():
         self.K=0
         if method != 'none':
             self.method = method
-            self.K = k
-            self.k = k
+            self.budjet = k
             self.Tdet=Tdet
             
 
@@ -217,10 +216,10 @@ class HSIBmodel():
                 
         return neighb,MaxD,deg_cent,beta,betaD,betaDJ,judgement,betweenness_centrality   
      
-    def blocking_methods(self,k,nodes_degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method):
+    def blocking_methods(self,nb_nodes_toBlock,nodes_degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method):
        
         if method == 'RBN' : #Random_Blocking_nodes
-            node_to_block=random.randint(0,k)
+            node_to_block=random.randint(0,nb_nodes_toBlock)
                  
         if method == 'BBN' : #Beta_Blocking_nodes
             node_to_block = Beta.index(min(Beta))
@@ -251,23 +250,24 @@ class HSIBmodel():
             betaDJ.pop(node_to_block)
         return node_to_block
             
-    def Block_nodes(self,k,method):
+    def Block_nodes(self,method):
         neighbors,nodes_degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality=self.neighbor()
-        size=len(neighbors)
-        if k>size:
-          k=size-1
+        nb_neighbors=len(neighbors)
+        nb_nodes_toBlock=self.budjet-self.blocked_nodes
+        if nb_nodes_toBlock>nb_neighbors:
+            nb_nodes_toBlock=nb_neighbors-1
        
-        for i in range(k):   
-            node_to_block = self.blocking_methods(k-i,nodes_degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method)
+        for i in range(nb_nodes_toBlock):   
+            node_to_block = self.blocking_methods(nb_nodes_toBlock-i,nodes_degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method)
             self.Graph.nodes[neighbors[node_to_block]]['blocked']='True'
             self.Graph.nodes[neighbors[node_to_block]]['blocking_time']=self.time
             self.blocked_nodes+=1
             neighbors.pop(node_to_block)
     
 
-    def TCS_methods(self,k,degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method):
+    def TCS_methods(self,nb_nodes_toUse,degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method):
         if method == 'RTCS' :
-            node_to_use=random.randint(0, k)
+            node_to_use=random.randint(0, nb_nodes_toUse)
         if method == 'MDTCS' :
             node_to_use = degree.index(max(degree))
             degree.pop(node_to_use)
@@ -291,13 +291,15 @@ class HSIBmodel():
             betaDJ.pop(node_to_use)
         return node_to_use
     
-    def Truth_campaign_strategy(self,k,method):
+    def Truth_campaign_strategy(self,method):
         neighbors,degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality=self.neighbor()
-        size=len(neighbors)
-        if k > size :
-            k=size-1
-        for i in range(k):
-            node_to_use=self.TCS_methods(k-i,degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method)
+        nb_neighbors=len(neighbors)
+        nb_nodes_toUse=self.budjet-self.used_nodes_in_TCS
+        if nb_nodes_toUse>nb_neighbors:
+            nb_nodes_toUse=nb_neighbors-1
+
+        for i in range(nb_nodes_toUse):
+            node_to_use=self.TCS_methods(nb_nodes_toUse-i,degree,degree_centrality,Beta,betaD,betaDJ,judgement,betweenness_centrality,method)
             self.Graph.nodes[neighbors[node_to_use]]['jug']=1
             self.Graph.nodes[neighbors[node_to_use]]['state']='infected'
             self.used_nodes_in_TCS+=1
@@ -307,12 +309,12 @@ class HSIBmodel():
 
     def applyRIM(self):
         m = self.method.split("_")
-        if self.time>=self.Tdet :
-            if m[0]=='T':
-                self.Truth_campaign_strategy(self.k,m[1])    
-
-            if m[0]=='B':
-                self.Block_nodes(self.k,m[1])
+        if m[0]=='T':
+            if self.budjet-self.used_nodes_in_TCS >0 :
+                self.Truth_campaign_strategy(m[1])    
+        if m[0]=='B':
+            if self.budjet-self.blocked_nodes >0 :
+                self.Block_nodes(m[1])
 
     def check_blocking_period(self):
         if self.blockPeriod>0:
@@ -403,11 +405,9 @@ class HSIBmodel():
                             else:
                                 pass
                                #print('le noeud',each,'is blocked')
-                
-            if self.k>0 and time > self.Tdet and self.method!= 'None':
-                self.applyRIM()
-            self.k-=self.blocked_nodes
-            self.k-=self.used_nodes_in_TCS
+            if self.time>=self.Tdet :
+                if self.method!= 'None':
+                    self.applyRIM()
             self.check_blocking_period()
         # save each step to send it to viewing later
             
