@@ -24,4 +24,4 @@
 17- ///////// all variables names(k)
 18- ///////// Tdet verification
 18- //////// applyRim function out of the loop for
-19- Display function for lot of methods
+19- //////// Display function for lot of methods
