@@ -133,7 +133,6 @@ class CreateGraphFrmDB(Graph):
         extrat_query2 =",u2.degree,u2.degree_centrality,u2.closness_centrality,u2.between_centrality,u2.page_rank,u2.clustering"
         if query !="":
             query=query+extrat_query1+extrat_query2
-            print(query)
             dtf_data = pd.DataFrame([dict(_) for _ in self.session.run(query)])
             l=dtf_data.values.tolist()
         else:

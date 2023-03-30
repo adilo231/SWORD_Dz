@@ -10,7 +10,7 @@ import multiprocessing
 
 class RumorSimulator():
 
-    def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='none',blockPeriod=0,k=0,setptime=0.125):
+    def runSimulation(self,g, NbrSim=1 ,seedsSize=0.05, seedNode=None, seedOpinion=None, typeOfSim=1,simName=1,verbose=False,method='none',blockPeriod=0,Tdet=0.125,k=0,setptime=0.125):
         """
         Runs a simulation of the HSIB model on a given network.
 
@@ -55,7 +55,7 @@ class RumorSimulator():
             If typeOfSim is 0, returns a DataFrame with network measures statistics. Otherwise, returns None.
         """
         # Create an instance of the HSIBmodel class with the given parameters
-        sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose,method=method,blockPeriod=blockPeriod,k=k,setptime=setptime)
+        sim = m.HSIBmodel(g, Seed_Set=seedNode, opinion_set=seedOpinion,seedsSize=seedsSize,verbose=verbose,method=method,blockPeriod=blockPeriod,Tdet=Tdet,k=k,setptime=setptime)
         
         if verbose:
             print(f'simulations started for {method}, noberof k = {k}, DetT= {1},')
@@ -71,7 +71,7 @@ class RumorSimulator():
             num_lots=int(nub_group)
             num_process_rest= NbrSim - num_lots*num_cores
             for i in range(num_lots):
-                print(i)
+                
                 processes=[multiprocessing.Process(target=sim.runModel,args=(i,typeOfSim,Stat))for i in range(num_cores)] 
                 # Start all the processes
                 [process.start() for process in processes]
@@ -99,7 +99,7 @@ class RumorSimulator():
                 return df
                 
     def DisplyResults(self,results,resultType=1,save=False,imageName=""):
-        color=['black','red','green','blue','purple','pink','silver','yellow','orange','oliver','cyan','maroon','lime','magenta']
+        color=['black','red','green','blue','purple','pink','silver','yellow','orange','cyan','maroon','lime','magenta']
         if resultType==0:
            # création de la grille de sous-graphiques
             fig, axs = plt.subplots(nrows=4, ncols=5, figsize=(12, 12))
@@ -200,7 +200,7 @@ class RumorSimulator():
                 for j in  range(len(results) ):
                     
                     col=results[j].columns
-                    ax.plot(results[j].index, results[j][col[i]], color=str(color[j]), label=results[j]['method'][0]+' method ')
+                    ax.plot(results[j].index, results[j][col[i]],  label=results[j]['method'][0]+' method ')
                     ax.set_title(f'The evolution of {col[i]}')
                     ax.set_ylabel(f'Number of {col[i]}')
                     ax.set_xlabel(f'Time')
@@ -214,7 +214,7 @@ class RumorSimulator():
         elif resultType == 2:
         # Concatenate all results into a single dataframe
             all_results = pd.concat(results)
-            print(all_results)
+            
             
             # Create a figure with a subplot for each measure
             fig, axes = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
@@ -350,7 +350,7 @@ class RumorSimulator():
                                                 },index=[b])
                     Stat_Global =pd.concat([Stat_Global, new])
 
-           print(Stat_Global)   
+             
            return Stat_Global      
        
        elif(simName==2):
@@ -368,7 +368,7 @@ class RumorSimulator():
             l=results[i]
             l.append(simName)
             df.loc[df.shape[0]]=l
-        print(df)
+        
        
         return df 
    
@@ -396,7 +396,6 @@ class RumorSimulator():
             data_global.loc[i, 'page_rank'] = page_rank[i]
             data_global.loc[i, 'degree'] = Degree[i]
         
-        print(data_global)
         return data_global
 
     def saveResult(self,imageName,type): 
