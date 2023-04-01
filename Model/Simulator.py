@@ -204,8 +204,12 @@ class RumorSimulator():
                     ax.set_title(f'The evolution of {col[i]}')
                     ax.set_ylabel(f'Number of {col[i]}')
                     ax.set_xlabel(f'Time')
-                    ax.legend()
-            
+                
+            # Get the handles and labels from the last axes object
+            handles, labels = axe[-1][-1].get_legend_handles_labels()
+
+            # Create a single legend for all subplots using the handles and labels
+            fig.legend(handles, labels, loc='center left')
             plt.show()
         elif resultType == 2:
         # Concatenate all results into a single dataframe

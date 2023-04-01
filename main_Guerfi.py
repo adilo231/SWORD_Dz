@@ -18,7 +18,7 @@ if __name__ == '__main__':
     K = 100
     M = 20
     nbb = 0
-    NbrSim = 4
+    NbrSim = 1
 
     parameters = {'omega_min': np.pi/24,
                   'omega_max': np.pi*2,
@@ -33,7 +33,7 @@ if __name__ == '__main__':
    
 
     Generator=gg.CreateGraphFrmDB()
-    g = Generator.CreateGraph(parameters,graphModel='ABM')  
+    g = Generator.CreateGraph(parameters,graphModel='ABS')  
     
     Simulator = sim.RumorSimulator()
    
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     start_time = time.time()
      
     typeOfSim=1
-    k=int(0.05*g.number_of_nodes())
+    k=int(0.15*g.number_of_nodes())
     i=0
     blockPeriod=10
     aux1 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='B_RBN',k=k)
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     print('Parallel time: ', end_time-start_time)
    
     
-    Simulator.DisplyResults( l,resultType=typeOfSim,save=True,imageName="fiveMethABM2803")
+    Simulator.DisplyResults( l,resultType=typeOfSim,save=False,imageName="")
   
     
 
