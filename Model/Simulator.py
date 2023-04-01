@@ -200,7 +200,7 @@ class RumorSimulator():
                 for j in  range(len(results) ):
                     
                     col=results[j].columns
-                    ax.plot(results[j].index, results[j][col[i]],  label=results[j]['method'][0]+' method ')
+                    ax.plot(results[j].index, results[j][col[i]],  label=results[j]['method'][0])
                     ax.set_title(f'The evolution of {col[i]}')
                     ax.set_ylabel(f'Number of {col[i]}')
                     ax.set_xlabel(f'Time')

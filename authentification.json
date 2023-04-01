@@ -21,7 +21,7 @@
 "neo4j":{
     "uri" : "bolt://localhost:7687",
     "username" : "neo4j",
-    "password" : "Graid4154"
+    "password" : "admin"
 },
 "mongo":{
     "uri":"mongodb://localhost:27017/"
