@@ -68,19 +68,18 @@ if __name__ == '__main__':
     #     l.append(aux)
     # aux = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.005, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=False,method='None',k=int(0.1*g.number_of_nodes()),Tdet=0)
     # l.append(aux)
-    l=[]
-    for _ in range(0,10):
-        g = Generator.CreateGraph(parameters,graphModel='FB')
-        aux = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.005, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=False,method='None',k=int(0.1*g.number_of_nodes()),Tdet=1000000)
-        l.append(aux)
+
+    g = Generator.CreateGraph(parameters,graphModel='FB')
+    aux = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.005, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=False,method='None',k=int(0.1*g.number_of_nodes()),Tdet=1000000)
+
     end_time = time.time()
     print('Parallel time: ', end_time-start_time)
-    df= l[0]
-    for i in range(1,10):
-        df =pd.concat([df,l[i]])
+    # df= l[0]
+    # for i in range(1,10):
+    #     df =pd.concat([df,l[i]])
    
     print(aux.shape)
-    Simulator.DisplyResults( l[0],resultType=typeOfSim,save=False,imageName="")
+    Simulator.DisplyResults( aux,resultType=typeOfSim,save=False,imageName="")
   
     
 
