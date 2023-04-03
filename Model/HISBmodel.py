@@ -388,8 +388,7 @@ class HSIBmodel():
                         # Sending Rumor
                         for each in new_ones:
                             # Acceptance of the Rumor Probability
-                            ProbToAccRumor = self.Graph.degree(
-                                id) / (self.Graph.degree(id) + self.Graph.degree(each))*self.baisAccepte
+                            ProbToAccRumor = self.Graph.degree(id) / (self.Graph.degree(id) + self.Graph.degree(each))*self.baisAccepte
                             if (self.Graph.nodes[each]['blocked'] == 'false'):
                                 if(np.random.rand() <= ProbToAccRumor*0.6):
 
