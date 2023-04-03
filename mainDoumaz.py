@@ -7,13 +7,13 @@ client_mongo = "mongodb://localhost:27017/"
 db_name = "twitter_db"
 
 
-collection_names='Attaf'
+collection_names='Mahrez'
 
 
 transforms=transform(db_name)
 
     # pipline of transformers
-    transforms.pipeline('logement',remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=True)
+    transforms.pipeline(collection_names,remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=True)
 
 
     # #META dATA
