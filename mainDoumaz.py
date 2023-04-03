@@ -12,30 +12,16 @@ collection_names='Attaf'
 
 transforms=transform(db_name)
 
-# #remove null attributes
-# transforms.remove_and_update_null(collection_names,verbose=True)
+    # pipline of transformers
+    transforms.pipeline('logement',remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=True)
 
 
-# # # add tokens to docs
-# transforms.doc_update_tokens(collection_names,verbose=True)
+    # #META dATA
+    # #NUMBER OF DOCS PER COLLECTION
+    # transforms.nbr_doc_per_collection()
+    # #META LANG REPARTITION
+    # transforms.meta_tweets_lang_repartition(verbose=True)
 
-# #show clod of words of each collection
-# transforms.cloud_of_words(collection_names,verbose=True)
+    
 
-# # #show lang distribution of each collection
-# transforms.tweets_lang_repartition(collection_names,verbose=True)
-
-
-# #transform dates from string to datetime
-# transforms.string_to_datetime(collection_names,verbose=True)
-
-
-# #show date distribution of each collection
-# #-------------------------------------------------------------------------------------------------------------#
-# #----------------------IL FAUT PASSER PAR LE TRANSFORMER string_to_datetime()---------------------------------#
-# #-------------------------------------------------------------------------------------------------------------#
-
-# transforms.plot_tweets_per_day(collection_names,verbose=True)
-
-transforms.stance_language_repartition(collection_names)
-plt.show()
+    plt.show()
