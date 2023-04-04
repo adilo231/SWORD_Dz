@@ -951,7 +951,7 @@ class transform:
 
         collection = db[str(collection_name)]
         
-        count=collection.count_documents({})
+        count=collection.count_documents({})-1
         meta=collection.find_one({'_id': 'metadata'})
         if (meta['number_of_document']!= count or meta['doc_localisation_dist']==0):
             if verbose:
