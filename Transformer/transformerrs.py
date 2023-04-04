@@ -36,41 +36,21 @@ import os
 
 
 class transform:
-    """
-    A class to apply various transformations to tweets extracted from MongoDB.
-
-    Attributes:
-    - db_name (str): The name of the MongoDB database.
-
-    Methods:
-    - remove_and_update_null: Deletes tweets with null or empty attributes.
-    - construct_wordcloud: Constructs a wordcloud of the most frequent words in the tweets.
-    - get_stance_distribution: Calculates the distribution of tweet stances (Arabic, English, French).
-    - get_language_distribution: Calculates the distribution of tweet languages.
-    - get_tweet_count_over_time: Calculates the number of tweets published over time.
-    """
     def __init__(self, db_name):
-        """
-        Initializes the TweetTransformer class.
-
-        Parameters:
-        - db_name (str): The name of the MongoDB database.
-        """
         # connect to MongoDB
         self.DocGB_Driver = DocDBHandler()
+
         self.db_name = db_name
 
-
-        # Load or train Arabic classifier
         if os.path.exists('Transformer/Classifier/ArabicClassifier.pkl'):
-            print("Arabic Classifier exist")
+            print(" Arabic Classifier exist")
             with open('Transformer/Classifier/ArabicClassifier.pkl', 'rb') as f:
                     self.ArabicClassifier = pickle.load(f)
         else:
             print("Arabic Classifier does not exist")
             self.ArabicClassifier=self.Train_arabic_classifier()
 
-        # Load or train French classifier
+
         if os.path.exists('Transformer/Classifier/FrenchClassifier.pkl'):
             print("French Classifier exist")
             with open('Transformer/Classifier/FrenchClassifier.pkl', 'rb') as f:
@@ -78,8 +58,7 @@ class transform:
         else:
             print(" French Classifier does not exist")
             self.FrenchClassifier=self.Train_French_classifier()
-        
-        # Load or train English classifier
+
         if os.path.exists('Transformer/Classifier/EnglishClassifier.pkl'):
             print("English Classifier exist")
             with open('Transformer/Classifier/EnglishClassifier.pkl', 'rb') as f:
@@ -90,38 +69,30 @@ class transform:
         
 
     def remove_and_update_null(self, collection_name, verbose=False):
-        """
-        Remove null attributes from the tweets and update them in the MongoDB collection.
-        
-        Parameters:
-        collection_name (str): The name of the collection to remove and update null attributes from.
-        verbose (bool): If True, print the number of tweets containing null values.
 
-        Returns:
-        None
-        """
-        # Connect to MongoDB
+        if verbose:
+            print("remove and update null attributes")
+        # Select the database and collection
         db = self.DocGB_Driver.myclient[self.db_name]
+        
         collection = db[str(collection_name)]
         
-        # Count the number of tweets in the collection
+       
+        docs = collection.find({})
         count = collection.count_documents({})
-        
-        # Count the number of tweets with null attributes
-        updated = 1
-        for doc in collection.find({}):
-            if 'updated' in doc.keys():
-                updated += 1
-        null_arg_docs = count - updated
-        
-        # Print the number of tweets with null attributes
+        updated=1
+        for doc in docs:
+            if'updated' in doc.keys():
+                updated+=1
+        null_arg_docs= count - updated
         if verbose:
-            print('\t Number of tweets containing null values:', null_arg_docs)
-        
-        # If there are tweets with null attributes, remove the null attributes and update the collection
-        if null_arg_docs != 0:
-            for doc in collection.find({}):
-                if 'updated' not in doc.keys() and doc['_id'] != 'metadata':
+            print('\t Number of tweet containg null values ', null_arg_docs)
+        if(null_arg_docs != 0):
+            
+            docs = collection.find({})
+            for doc in docs:
+                if 'updated' not in doc.keys() and doc['_id']!='metadata':
+                    
                     update_dict = {}
                     for key, value in doc.items():
                         if value != None:
@@ -129,28 +100,18 @@ class transform:
                     update_dict['updated'] = True
                     collection.replace_one({"_id": doc["_id"]}, update_dict)
                     
-            # Update the metadata document with the number of tweets updated
-            metadata_doc = collection.find_one({'_id': 'metadata'})
-            collection.update_one({"_id": metadata_doc["_id"]}, {"$set": {"remove_null_update": count - 1 }})
-            
-        # If there are no tweets with null attributes, update the metadata document with the total number of tweets
+            doc=collection.find_one({'_id': 'metadata'})
+        
+            collection.update_one({"_id": doc["_id"]}, {
+                                        "$set": {"remove_null_update":count - 1 }})
         else:
-            metadata_doc = collection.find_one({'_id': 'metadata'})
-            collection.update_one({"_id": metadata_doc["_id"]}, {"$set": {"remove_null_update": count - 1 }})
 
+            doc=collection.find_one({'_id': 'metadata'})
+        
+            collection.update_one({"_id": doc["_id"]}, {
+                                        "$set": {"remove_null_update":count - 1 }})
 
     def text_to_tokens(self, text, verbose=False):
-        """
-        Preprocesses the given text by removing links, punctuation, stop words, and lemmatizing the words.
-
-        Args:
-            text: A string of text to preprocess.
-            verbose: A boolean value indicating whether to print progress updates.
-
-        Returns:
-            A list of preprocessed tokens.
-
-        """
         if verbose:
             print("\t Removing all links")
         # Replace any URLs in the tweet with the string 'URL'
@@ -164,7 +125,7 @@ class transform:
         tokens = [token for token in tokens if not any(
             c.isdigit() for c in token)]
         stop_words = set(nltk.corpus.stopwords.words() + list(string.punctuation)+[
-                        "'", "’", "”", "“", ",", "،", "¨", "‘", "؛", "’", "``", "''", '’', '“', '”']+list(string.digits))
+                         "'", "’", "”", "“", ",", "،", "¨", "‘", "؛", "’", "``", "''", '’', '“', '”']+list(string.digits))
         words = [word for sent in tokens for (word, pos) in nltk.pos_tag(word_tokenize(sent)) if (pos not in [
             'VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'RB', 'RBR', 'RBS', 'JJ', 'JJR', 'JJS']) and (word not in stop_words)]
         if verbose:
@@ -174,7 +135,7 @@ class transform:
         words = [lemmatizer.lemmatize(word) for word in words]
         return words
 
-    def doc_update_tokens(self, collection_name, verbose=False):
+    def doc_update_tokens(self, collection_name, verbose=True):
 
         # Select the database and collection
         db = self.DocGB_Driver.myclient[self.db_name]
@@ -266,7 +227,7 @@ class transform:
 
         return wordcloud, words,freq_dist
 
-    def string_to_datetime(self, collection_name, verbose=False):
+    def string_to_datetime(self, collection_name, verbose=True):
 
         if verbose:
             print("Converting all String datas to datetime format")
@@ -376,7 +337,7 @@ class transform:
         # Set the title of the entire figure
         fig.suptitle(f'Word Clouds for Collection {collection_name}')
 
-    def tweets_lang_repartition(self, collection_name, verbose=False):
+    def tweets_lang_repartition(self, collection_name, verbose):
         """
         Plot the language distribution of tweets for collection in MongoDB.
 
@@ -492,14 +453,14 @@ class transform:
         #     print(f"Figure {i+1} saved as {collection_name}.png")
         i += 1
 
-    def extract_features(self, tokens, word_features):
+    def extract_features(self, tokens, word_features, verbose=False):
         token_set = set(tokens)
         features = {}
         for word in word_features:
             features['contains({})'.format(word)] = (word in token_set)
         return features
     
-    def _Train_arabic_classifier(self):
+    def Train_arabic_classifier(self):
         # preparing Classifier
             print("\t preparing Arabic Classifier", "\n")
             data = []
@@ -549,7 +510,7 @@ class transform:
                 pickle.dump(classifier, f)
             return classifier
 
-    def _Train_French_classifier(self):
+    def Train_French_classifier(self):
       # preparing Classifier
             print("preparing French Classifier", "\n")
             data = []
@@ -986,14 +947,15 @@ class transform:
          # Select the database and collection
         db = self.DocGB_Driver.myclient[self.db_name]
 
-        if verbose:
-            print(f'Starting with collection {collection_name}')
+        
 
         collection = db[str(collection_name)]
         
         count=collection.count_documents({})
         meta=collection.find_one({'_id': 'metadata'})
-        if meta['number_of_document']!= count:
+        if (meta['number_of_document']!= count or meta['doc_localisation_dist']==0):
+            if verbose:
+                print(f'Starting localisation with collection {collection_name}')
 
             # Get the names of the "user_collections" collections
             user_collections = ["AlgeriaTwitterGraph", "International_users"]
@@ -1136,66 +1098,43 @@ class transform:
             # Mise à jour du document existant avec les champs manquants
             collection.update_one({'_id': 'metadata'}, {'$set': doc})
 
-    def pipeline(self, collection_name, remove_null=False, cloud_words=False, lang_dist=False, date_dist=False, stance_dist=False, localisation_dist=False, verbose=False):
-        """
-        Runs a series of functions on a specified collection to generate visualizations and statistics.
-
-        Args:
-            collection_name (str): The name of the collection to be analyzed.
-            remove_null (bool): If True, remove null arguments from documents. Default is False.
-            cloud_words (bool): If True, generate a wordcloud from the documents. Default is False.
-            lang_dist (bool): If True, generate a bar graph showing the distribution of languages in the collection. Default is False.
-            date_dist (bool): If True, generate a time-series plot showing the number of tweets per day in the collection. Default is False.
-            stance_dist (bool): If True, generate a pie chart showing the distribution of stances in the collection. Default is False.
-            localisation_dist (bool): If True, generate a bar graph showing the number of tweets per localisation in the collection. Default is False.
-            verbose (bool): If True, print details about each step. Default is False.
-
-        Returns:
-            None
-        """
-
+    def pipeline(self,collection_name,remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=False):
+        
         # create or update meta data document
-        self.create_metadoc(collection_name, verbose) 
+        self.create_metadoc(collection_name, verbose=True) 
 
-        # number of tweets per localisation
-        if localisation_dist:
-            if verbose:
-                print("Generating localisation distribution...")
-            self.localisation_distribution(collection_name, verbose)
+         #number of tweets per localisation
 
-        # remove null arguments from documents
-        if remove_null:
-            if verbose:
-                print("Removing null arguments...")
-            self.remove_and_update_null(collection_name, verbose)
+        if(localisation_dist==True):
+            self.localisation_distribution(collection_name,verbose=True)
 
-        # generate word cloud
-        if cloud_words:
-            if verbose:
-                print("Generating word cloud...")
-            # update documents with adding tokens
-            self.doc_update_tokens(collection_name, verbose)
-            # generate cloud of words
-            self.cloud_of_words(collection_name, verbose)
+        #remove null arguments from documents
+        if(remove_null==True):
+             self.remove_and_update_null(collection_name,verbose=True)
+        
+        #WordCloud generator
+        if cloud_words==True:
+            #update documents with adding tokens
+            self.doc_update_tokens(collection_name,verbose=True)
+            #generation cloud of words
+            self.cloud_of_words(collection_name,verbose=True)
 
-        # number of tweets per language
-        if lang_dist:
-            if verbose:
-                print("Generating language distribution...")
-            self.tweets_lang_repartition(collection_name, verbose)
+        #number of tweets per language
+        if(lang_dist==True):
+            self.tweets_lang_repartition(collection_name,verbose=True)
+        #number of tweets per date
 
-        # number of tweets per date
-        if date_dist:
-            if verbose:
-                print("Generating date distribution...")
-            self.string_to_datetime(collection_name, verbose)
-            self.plot_tweets_per_day(collection_name, verbose)
+        if(date_dist==True):
+            self.string_to_datetime(collection_name,verbose=True)
+            self.plot_tweets_per_day(collection_name,verbose=True)
 
-        # stance repartition
-        if stance_dist:
-            if verbose:
-                print("Generating stance distribution...")
-            self.stance_language_repartition(collection_name, verbose)
+       
+        #stance repartition
 
-        # show figures
+        if(stance_dist==True):
+            self.stance_language_repartition(collection_name,verbose=True)
+
+        
+
+        #show figures
         plt.show()
