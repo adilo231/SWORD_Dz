@@ -1,5 +1,5 @@
 /test.py
-/test.ipynb
+
 /__pycache__
 __pycache__/
 /Data
@@ -24,7 +24,7 @@ DataStorage/SimulationResults/SimType*
 /lib
 main.py
 .DS*
-neo4j.ipynb
+
 graph.json
 authentification.json
 main_Guerfi.py

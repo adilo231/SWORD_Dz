@@ -33,7 +33,7 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 
 from tqdm import tqdm
 import os
-
+plt.style.use('ggplot')
 
 class transform:
     """
@@ -621,11 +621,8 @@ class transform:
             print(f'Starting with collection {collection_name}')
 
         collection = db[str(collection_name)]
-
         meta=collection.find_one({'_id': 'metadata'})
-        
-       
-      
+
         ar_count = collection.count_documents({"lang": "ar"})
         fr_count = collection.count_documents({"lang": "fr"})
         en_count = collection.count_documents({"lang": "en"})
@@ -849,7 +846,10 @@ class transform:
                 en_negatif=meta['english_stance_negatif']
                 en_neutre=meta['english_stance_neutre']
         # print(number_graphs)
+        self._plot_stance_distribution(collection_name,number_graphs,ar_count,ar_positif, ar_negatif, ar_neutre,fr_count,fr_positif, fr_negatif, fr_neutre,en_count,en_positif, en_negatif, en_neutre)
+    def _plot_stance_distribution(self,collection_name,number_graphs,ar_count,ar_positif, ar_negatif, ar_neutre,fr_count,fr_positif, fr_negatif, fr_neutre,en_count,en_positif, en_negatif, en_neutre):
         # Plot
+        
         fig, axs = plt.subplots(1, number_graphs, figsize=(10, 5))
         i = 0
         # Arabic subplot
