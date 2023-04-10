@@ -16,7 +16,7 @@ class FileUploader():
     def create_user(self,id,listNode,graphModel):
         label=""
         if graphModel=="FB":
-            pass
+             label="_facebook"
         if graphModel=="ABS":
             label="_small_random"
         if graphModel=="ABM":
@@ -37,7 +37,8 @@ class FileUploader():
         label=""
         labelR=""
         if graphModel=="FB":
-            pass
+            label="_facebook"
+            labelR="_in_"+graphModel
         if graphModel=="ABS":
             label="_small_random"
             labelR="_in_"+graphModel
@@ -116,7 +117,7 @@ class FileUploader():
     def add_graph_metrics(self,graph,graphModel):
         label=""
         if graphModel=="FB":
-            pass
+            label="_facebook"
         if graphModel=="ABS":
             label="_small_random"
         if graphModel=="ABM":
@@ -130,11 +131,17 @@ class FileUploader():
         betw_cent=nx.betweenness_centrality(graph)
         page_rank=nx.pagerank(graph,alpha=0.8)
         clustering=nx.clustering(graph)
+        communities = nx.community.greedy_modularity_communities(graph)
+        groups = {}
+        for i, com in enumerate(communities):
+            for node in com:
+                groups[node] = i
         
         for i in range(len(graph.nodes())):
             query ="MATCH (u:user"+label+"{id_user:"+str(i)+"}) SET u.degree= "+str(degres[i]) +",u.degree_centrality= "+str(deg_cent[i]) 
-            query+=", u.closness_centrality= "+ str(clos_cent[i])+", u.between_centrality= "+str(betw_cent[i]) 
-            query+=", u.page_rank= "+ str(page_rank[i])+", u.clustering= "+str(clustering[i]) 
+            query+=", u.closness_centrality= "+ str(clos_cent[i])+", u.between_centrality= "+str(betw_cent[i]) +",u.page_rank= "+str(page_rank[i])
+            query+=", u.clustering= "+str(clustering[i])
+            query+=",u.group="+str(groups[i])
 
             try:
                 self.session.run(query)
