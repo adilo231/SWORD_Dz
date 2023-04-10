@@ -1098,41 +1098,39 @@ class transform:
             # Mise à jour du document existant avec les champs manquants
             collection.update_one({'_id': 'metadata'}, {'$set': doc})
 
-    def pipeline(self,collection_name,remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=False):
+    def pipeline(self,collection_name,remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=False,verbose=False):
         
         # create or update meta data document
-        self.create_metadoc(collection_name, verbose=True) 
+        self.create_metadoc(collection_name, verbose) 
 
-         #number of tweets per localisation
-
+        #number of tweets per localisation
         if(localisation_dist==True):
-            self.localisation_distribution(collection_name,verbose=True)
+            self.localisation_distribution(collection_name,verbose)
 
         #remove null arguments from documents
         if(remove_null==True):
-             self.remove_and_update_null(collection_name,verbose=True)
+             self.remove_and_update_null(collection_name,verbose)
         
         #WordCloud generator
         if cloud_words==True:
             #update documents with adding tokens
-            self.doc_update_tokens(collection_name,verbose=True)
+            self.doc_update_tokens(collection_name,verbose)
             #generation cloud of words
-            self.cloud_of_words(collection_name,verbose=True)
+            self.cloud_of_words(collection_name,verbose)
 
         #number of tweets per language
         if(lang_dist==True):
-            self.tweets_lang_repartition(collection_name,verbose=True)
+            self.tweets_lang_repartition(collection_name,verbose)
+        
         #number of tweets per date
-
         if(date_dist==True):
-            self.string_to_datetime(collection_name,verbose=True)
-            self.plot_tweets_per_day(collection_name,verbose=True)
+            self.string_to_datetime(collection_name,verbose)
+            self.plot_tweets_per_day(collection_name,verbose)
 
        
         #stance repartition
-
         if(stance_dist==True):
-            self.stance_language_repartition(collection_name,verbose=True)
+            self.stance_language_repartition(collection_name,verbose)
 
         
 
