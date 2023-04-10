@@ -17,6 +17,7 @@ class Graph():
         self.page_rank = []
         self.between_centrality = []
         self.closeness_centrality = []
+        self.group = []
 
     def GetRandomValues(self, n, min, max):
         return (np.random.rand(n)*(max - min)) + min
@@ -66,7 +67,7 @@ class Graph():
 
         # Add Nodes Metrics
         attribute = []
-        for attribute in ['clustring_coef', 'degree', 'degree_centrality', 'page_rank', 'between_centrality', 'closeness_centrality']:
+        for attribute in ['clustring_coef', 'degree', 'degree_centrality', 'page_rank', 'between_centrality', 'closeness_centrality','group']:
             nx.set_node_attributes(g, 0, attribute)
             for i in range(g.number_of_nodes()):
                 g.nodes[i][attribute] = getattr(self, attribute)[i]
@@ -111,8 +112,8 @@ class CreateGraphFrmDB(Graph):
         if graphModel == 'ABL':
             query = "MATCH (u1:user_large_random)-[r:friend_in_ABL]->(u2:user_large_random) return distinct u1.id_user,u2.id_user"
 
-        extrat_query1 = ",u1.degree,u1.degree_centrality,u1.closness_centrality,u1.between_centrality,u1.page_rank,u1.clustering"
-        extrat_query2 = ",u2.degree,u2.degree_centrality,u2.closness_centrality,u2.between_centrality,u2.page_rank,u2.clustering"
+        extrat_query1 = ",u1.degree,u1.degree_centrality,u1.closness_centrality,u1.between_centrality,u1.page_rank,u1.clustering,u1.group"
+        extrat_query2 = ",u2.degree,u2.degree_centrality,u2.closness_centrality,u2.between_centrality,u2.page_rank,u2.clustering,u2.group"
         if query != "":
             query = query+extrat_query1+extrat_query2
             dtf_data = pd.DataFrame([dict(_) for _ in self.session.run(query)])
@@ -128,9 +129,9 @@ class CreateGraphFrmDB(Graph):
             g.add_edge(u1, u2)
 
             node1 = [int(line[0]), int(line[2]), float(line[3]), float(
-                line[4]), float(line[5]), float(line[6]), float(line[7])]
-            node2 = [int(line[1]), int(line[8]), float(line[9]), float(
-                line[10]), float(line[11]), float(line[12]), float(line[13])]
+                line[4]), float(line[5]), float(line[6]), float(line[7]), float(line[8])]
+            node2 = [int(line[1]), int(line[9]), float(line[10]), float(
+                line[11]), float(line[12]), float(line[13]), float(line[14]), float(line[15])]
             nodes.append(node1)
             nodes.append(node2)
 
@@ -141,6 +142,7 @@ class CreateGraphFrmDB(Graph):
         self.between_centrality = np.zeros(nb_nodes)
         self.page_rank = np.zeros(nb_nodes)
         self.clustring_coef = np.zeros(nb_nodes)
+        self.group = np.zeros(nb_nodes)
 
         for node in nodes:
             i = node[0]
@@ -150,6 +152,7 @@ class CreateGraphFrmDB(Graph):
             self.between_centrality[i] = node[4]
             self.page_rank[i] = node[5]
             self.clustring_coef[i] = node[6]
+            self.group[i] = node[7]
         self.graph = g
 
         return g

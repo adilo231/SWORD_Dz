@@ -7,8 +7,21 @@ import time
 from tqdm import  tqdm
 import DataStorage.loadData2DB as fp
 
+print('started')
 Generator=fp.FileUploader()
-Generator.uploadFile(graphModel='FB')
-#Generator.uploadGraphToDB('ABS')
+
+################ barabasi_albert_graph de taille 100 ############################
+# Generator.uploadGraphToDB('ABS')
+# print("ABS is finiched")
+
+################ barabasi_albert_graph de taille 1000 ############################
 # Generator.uploadGraphToDB('ABM')
+# print("ABM is finiched")
+
+################ barabasi_albert_graph de taille 5000 ############################
 # Generator.uploadGraphToDB('ABL')
+# print("ABL is finiched")
+
+################ facebook_graph de taille 4039 ############################
+Generator.uploadFile(graphModel='FB')
+print("fb is finiched")
