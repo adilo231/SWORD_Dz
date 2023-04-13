@@ -41,7 +41,7 @@ if __name__ == '__main__':
     print("--------------------------------------------------------------------------------------------------------------------")
     start_time = time.time()
      
-    typeOfSim=1
+    typeOfSim=2
     k=int(0.15*g.number_of_nodes())
     i=0
     blockPeriod=10
