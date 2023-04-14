@@ -19,7 +19,7 @@ DataStorage/SimulationResults/SimType*
 /logs
 /plugins
 /all-rnr-annotated-threads
-/SimulationResults
+/SimulationResults/SimType*/imag*
 /font
 /lib
 main.py
