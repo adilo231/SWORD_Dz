@@ -33,7 +33,7 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 
 from tqdm import tqdm
 import os
-plt.style.use('ggplot')
+
 
 class transform:
     def __init__(self, db_name):
@@ -90,7 +90,7 @@ class transform:
         if(null_arg_docs != 0):
             
             docs = collection.find({})
-            for doc in docs:
+            for doc in tqdm(docs,desc="removing null attributes"):
                 if 'updated' not in doc.keys() and doc['_id']!='metadata':
                     
                     update_dict = {}
@@ -147,7 +147,7 @@ class transform:
         # count=collection.count_documents({})
         meta=collection.find_one({'_id': 'metadata'})
         if(meta['doc_tokens_update']!=meta['number_of_document'] ):
-            for doc in docs:
+            for doc in tqdm(docs,desc="tokenise docs"):
                 if doc['_id']!='metadata' :
                     if 'tokens' not in doc.keys():
                         if 'full_text' in doc.keys():
@@ -573,6 +573,219 @@ class transform:
                 pickle.dump(sid, f)
             return sid
 
+    def arabic_stance_classification(self,collection):
+        
+        # classification
+
+        docs = collection.find({"lang": "ar"})
+        ar_positif = 0
+        ar_negatif = 0
+        ar_neutre = 0
+        i = 0
+    
+        if os.path.exists('Transformer/Classifier/data_ar.pkl'):
+            with open('Transformer/Classifier/data_ar.pkl', 'rb') as f:
+                    preprocessed_data = pickle.load(f)
+                    print("exttract done")
+        else:
+            
+            with open('Transformer/Classifier/train_all_ext.csv', newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                next(reader)  # Skip the header row if there is one
+                data=[]
+                # Loop through each row in the CSV file
+                for row in reader:
+                    # Extract the text and stance from the row
+                    text = row[2]  # Assuming the text is in the first column
+                    # Assuming the stance is in the second column
+                    stance = row[1]
+
+                    # Append the (text, stance) pair to the data list
+                    data.append((text, stance))
+                    
+                stop_words = set(stopwords.words('arabic'))
+                stemmer = SnowballStemmer('arabic')
+                preprocessed_data = []
+                for text, stance in tqdm(data,desc="stemmatisation ar"):
+                    tokens = word_tokenize(text)
+                    filtered_tokens = [stemmer.stem(
+                        token) for token in tokens if token not in stop_words]
+                    preprocessed_data.append((filtered_tokens, stance))
+
+            with open('Transformer/Classifier/data_ar.pkl', 'wb') as f:
+                        # print("data ar pkl ")
+                        pickle.dump(preprocessed_data, f)
+                        print("data ar pkl  done ")
+
+
+
+        
+        all_words = nltk.FreqDist(
+            [token for text, stance in preprocessed_data for token in text])
+        word_features = list(all_words)[:1000]
+
+        for doc in tqdm(docs):
+
+            if'stance' in doc.keys():
+                stance=doc['stance']
+            else:
+                if'text' in doc.keys():
+                    tokens = word_tokenize(doc['text'])
+                if'full_text' in doc.keys():
+                    tokens = word_tokenize(doc['full_text'])
+                stop_words = set(stopwords.words('arabic'))
+                stemmer = SnowballStemmer('arabic')
+
+                filtered_tokens = [stemmer.stem(token) for token in tokens if token not in stop_words]
+
+                # Extraire les features du texte prétraité
+                features = self.extract_features(filtered_tokens, word_features)
+
+                # Classer le texte en utilisant le classificateur entraîné
+                stance = self.ArabicClassifier.classify(features)
+                collection.update_one({"_id": doc["_id"]}, {
+                                "$set": {"stance": stance}})
+
+            if stance == 'neutral':
+                ar_neutre = ar_neutre + 1
+            if stance == 'negative':
+                ar_negatif = ar_negatif + 1
+            if stance == 'positive':
+                ar_positif = ar_positif + 1
+            # Afficher le stance prédit
+            #print("Stance prédit [",i,"] : ", stance)
+            # i=i+1
+        #print("+ - +-",ar_positif, ar_negatif,  ar_neutre)
+        return ar_positif, ar_negatif, ar_neutre
+    
+    def french_stance_classification(self,collection):
+        # preparing Classifier
+        if os.path.exists('Transformer/Classifier/data_fr.pkl'):
+            with open('Transformer/Classifier/data_fr.pkl', 'rb') as f:
+                    preprocessed_data = pickle.load(f)
+                    print("exttract done")
+
+        else:
+            data = []
+            # Open the CSV file
+            with open('Transformer/Classifier/betsentiment-FR-tweets-sentiment-teams.csv', newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                next(reader)  # Skip the header row if there is one
+
+                # Loop through each row in the CSV file
+                for row in reader:
+                    # Extract the text and stance from the row
+                    text = row[2]  # Assuming the text is in the first column
+                    # Assuming the stance is in the second column
+                    stance = row[4]
+
+                    # Append the (text, stance) pair to the data list
+                    data.append((text, stance))
+                stop_words = set(stopwords.words('french'))
+                stemmer = SnowballStemmer('french')
+                preprocessed_data = []
+                for text, stance in tqdm(data,desc="stemmatisation fr"):
+                    tokens = word_tokenize(text)
+                    filtered_tokens = [stemmer.stem(
+                        token) for token in tokens if token not in stop_words]
+                    preprocessed_data.append((filtered_tokens, stance))
+            with open('Transformer/Classifier/data_fr.pkl', 'wb') as f:
+                        pickle.dump(preprocessed_data, f)
+
+        
+
+        # Extract features
+        all_words = nltk.FreqDist(
+            [token for text, stance in preprocessed_data for token in text])
+        word_features = list(all_words)[:1000]
+
+        
+        # classification
+
+        docs = collection.find({"lang": "fr"})
+        fr_positif = 0
+        fr_negatif = 0
+        fr_neutre = 0
+        i = 0
+        for doc in tqdm(docs):
+            if'stance' in doc.keys():
+                stance=doc['stance']
+            else:
+                if'text' in doc.keys():
+                    tokens = word_tokenize(doc['text'])
+                if'full_text' in doc.keys():
+                    tokens = word_tokenize(doc['full_text'])
+                stop_words = set(stopwords.words('french'))
+                stemmer = SnowballStemmer('french')
+
+                filtered_tokens = [stemmer.stem(
+                    token) for token in tokens if token not in stop_words]
+
+                # Extraire les features du texte prétraité
+                features = self.extract_features(
+                    filtered_tokens, word_features)
+
+                # Classer le texte en utilisant le classificateur entraîné
+                stance = self.FrenchClassifier.classify(features)
+                collection.update_one({"_id": doc["_id"]}, {
+                                    "$set": {"stance": stance}})
+            if stance == 'NEUTRAL':
+                fr_neutre = fr_neutre + 1
+            if stance == 'NEGATIVE':
+                fr_negatif = fr_negatif + 1
+            if stance == 'POSITIVE':
+                fr_positif = fr_positif + 1
+            # Afficher le stance prédit
+            #print("Stance prédit [",i,"] : ", stance)
+            # i=i+1
+        #print("+ - +-",fr_positif, fr_negatif,  fr_neutre)
+        return fr_positif, fr_negatif,  fr_neutre
+    
+    def english_stance_classification(self,collection):
+        docs = collection.find({"lang": "en"})
+        en_positif = 0
+        en_negatif = 0
+        en_neutre = 0
+        
+
+        for doc in tqdm(docs):
+            # Example text to classify
+            if'stance' in doc.keys():
+                sentiment=doc['stance']
+            else:
+                if 'text' in doc.keys():
+                    text = doc['text']
+                if 'full_text' in doc.keys():
+                    text = doc['full_text']
+
+                # Classify the text
+                scores = self.EnglishClassifier.polarity_scores(text)
+                    
+                # Determine the overall sentiment
+                if scores['compound'] > 0:
+                    sentiment = 'positive'
+                    # en_positif = en_positif + 1
+
+                elif scores['compound'] < 0:
+                    sentiment = 'negative'
+                    # en_negatif = en_negatif + 1
+
+                else:
+                    sentiment = 'neutral'
+                    # en_neutre = en_neutre + 1
+                collection.update_one({"_id": doc["_id"]}, {
+                                    "$set": {"stance": sentiment}})
+        
+            if sentiment == 'neutral':
+                en_neutre = en_neutre + 1
+            if sentiment == 'negative':
+                en_negatif = en_negatif + 1
+            if sentiment == 'positive':
+                en_positif = en_positif + 1
+        # Print the sentiment
+        #print("+ - +-",en_positif,en_negatif ,en_neutre)
+        return en_positif,en_negatif ,en_neutre
+    
     def stance_language_repartition(self, collection_name, verbose=False):
 
         # Select the database and collection
@@ -582,8 +795,11 @@ class transform:
             print(f'Starting with collection {collection_name}')
 
         collection = db[str(collection_name)]
-        meta=collection.find_one({'_id': 'metadata'})
 
+        meta=collection.find_one({'_id': 'metadata'})
+        
+       
+      
         ar_count = collection.count_documents({"lang": "ar"})
         fr_count = collection.count_documents({"lang": "fr"})
         en_count = collection.count_documents({"lang": "en"})
@@ -596,194 +812,17 @@ class transform:
         if(meta['arabic_stance']!=ar_count and meta['french_stance']!=fr_count and meta['english_stance']!=en_count ):
             if ar_count > 0:
                 number_graphs += 1
-                
-
-
-                # classification
-
-                docs = collection.find({"lang": "ar"})
-                ar_positif = 0
-                ar_negatif = 0
-                ar_neutre = 0
-                i = 0
-            
+                ar_positif, ar_negatif, ar_neutre=self.arabic_stance_classification(collection=collection)
 
                 
-                with open('Transformer/Classifier/train_all_ext.csv', newline='', encoding='utf-8') as csvfile:
-                    reader = csv.reader(csvfile)
-                    next(reader)  # Skip the header row if there is one
-                    data=[]
-                    # Loop through each row in the CSV file
-                    for row in reader:
-                        # Extract the text and stance from the row
-                        text = row[2]  # Assuming the text is in the first column
-                        # Assuming the stance is in the second column
-                        stance = row[1]
-
-                        # Append the (text, stance) pair to the data list
-                        data.append((text, stance))
-
-                stop_words = set(stopwords.words('arabic'))
-                stemmer = SnowballStemmer('arabic')
-
-                preprocessed_data = []
-                for text, stance in data:
-                    tokens = word_tokenize(text)
-                    filtered_tokens = [stemmer.stem(
-                        token) for token in tokens if token not in stop_words]
-                    preprocessed_data.append((filtered_tokens, stance))
-                all_words = nltk.FreqDist(
-                    [token for text, stance in preprocessed_data for token in text])
-                word_features = list(all_words)[:1000]
-
-                for doc in tqdm(docs):
-
-                    if'stance' in doc.keys():
-                        stance=doc['stance']
-                    else:
-                        if'text' in doc.keys():
-                            tokens = word_tokenize(doc['text'])
-                        if'full_text' in doc.keys():
-                            tokens = word_tokenize(doc['full_text'])
-
-                        filtered_tokens = [stemmer.stem(token) for token in tokens if token not in stop_words]
-
-                        # Extraire les features du texte prétraité
-                        features = self.extract_features(filtered_tokens, word_features)
-
-                        # Classer le texte en utilisant le classificateur entraîné
-                        stance = self.ArabicClassifier.classify(features)
-                        collection.update_one({"_id": doc["_id"]}, {
-                                        "$set": {"stance": stance}})
-
-                    if stance == 'neutral':
-                        ar_neutre = ar_neutre + 1
-                    if stance == 'negative':
-                        ar_negatif = ar_negatif + 1
-                    if stance == 'positive':
-                        ar_positif = ar_positif + 1
-                    # Afficher le stance prédit
-                    #print("Stance prédit [",i,"] : ", stance)
-                    # i=i+1
-                #print("+ - +-",ar_positif, ar_negatif,  ar_neutre)
-
             if fr_count > 0:
                 number_graphs = number_graphs + 1
-                # preparing Classifier
-                data = []
-                # Open the CSV file
-                with open('Transformer/Classifier/betsentiment-FR-tweets-sentiment-teams.csv', newline='', encoding='utf-8') as csvfile:
-                    reader = csv.reader(csvfile)
-                    next(reader)  # Skip the header row if there is one
-
-                    # Loop through each row in the CSV file
-                    for row in reader:
-                        # Extract the text and stance from the row
-                        text = row[2]  # Assuming the text is in the first column
-                        # Assuming the stance is in the second column
-                        stance = row[4]
-
-                        # Append the (text, stance) pair to the data list
-                        data.append((text, stance))
-
-                stop_words = set(stopwords.words('french'))
-                stemmer = SnowballStemmer('french')
-                preprocessed_data = []
-                for text, stance in data:
-                    tokens = word_tokenize(text)
-                    filtered_tokens = [stemmer.stem(
-                        token) for token in tokens if token not in stop_words]
-                    preprocessed_data.append((filtered_tokens, stance))
-
-                # Extract features
-                all_words = nltk.FreqDist(
-                    [token for text, stance in preprocessed_data for token in text])
-                word_features = list(all_words)[:1000]
-
                 
-                # classification
-
-                docs = collection.find({"lang": "fr"})
-                fr_positif = 0
-                fr_negatif = 0
-                fr_neutre = 0
-                i = 0
-                for doc in tqdm(docs):
-                    if'stance' in doc.keys():
-                        stance=doc['stance']
-                    else:
-                        if'text' in doc.keys():
-                            tokens = word_tokenize(doc['text'])
-                        if'full_text' in doc.keys():
-                            tokens = word_tokenize(doc['full_text'])
-
-                        filtered_tokens = [stemmer.stem(
-                            token) for token in tokens if token not in stop_words]
-
-                        # Extraire les features du texte prétraité
-                        features = self.extract_features(
-                            filtered_tokens, word_features)
-
-                        # Classer le texte en utilisant le classificateur entraîné
-                        stance = self.FrenchClassifier.classify(features)
-                        collection.update_one({"_id": doc["_id"]}, {
-                                            "$set": {"stance": stance}})
-                    if stance == 'NEUTRAL':
-                        fr_neutre = fr_neutre + 1
-                    if stance == 'NEGATIVE':
-                        fr_negatif = fr_negatif + 1
-                    if stance == 'POSITIVE':
-                        fr_positif = fr_positif + 1
-                    # Afficher le stance prédit
-                    #print("Stance prédit [",i,"] : ", stance)
-                    # i=i+1
-                #print("+ - +-",fr_positif, fr_negatif,  fr_neutre)
-
+                fr_positif, fr_negatif,  fr_neutre=self.french_stance_classification(collection=collection)
             if en_count > 0:
                 number_graphs = number_graphs + 1
-                docs = collection.find({"lang": "en"})
-                en_positif = 0
-                en_negatif = 0
-                en_neutre = 0
-                
-
-                for doc in tqdm(docs):
-                    # Example text to classify
-                    if'stance' in doc.keys():
-                        sentiment=doc['stance']
-                    else:
-                        if 'text' in doc.keys():
-                            text = doc['text']
-                        if 'full_text' in doc.keys():
-                            text = doc['full_text']
-
-                        # Classify the text
-                        scores = self.EnglishClassifier.polarity_scores(text)
-                            
-                        # Determine the overall sentiment
-                        if scores['compound'] > 0:
-                            sentiment = 'positive'
-                            # en_positif = en_positif + 1
-
-                        elif scores['compound'] < 0:
-                            sentiment = 'negative'
-                            # en_negatif = en_negatif + 1
-
-                        else:
-                            sentiment = 'neutral'
-                            # en_neutre = en_neutre + 1
-                        collection.update_one({"_id": doc["_id"]}, {
-                                            "$set": {"stance": sentiment}})
-                
-                    if sentiment == 'neutral':
-                        en_neutre = en_neutre + 1
-                    if sentiment == 'negative':
-                        en_negatif = en_negatif + 1
-                    if sentiment == 'positive':
-                        en_positif = en_positif + 1
-                # Print the sentiment
-                #print("+ - +-",en_positif,en_negatif ,en_neutre)
-
+                en_positif,en_negatif ,en_neutre =self.english_stance_classification(collection=collection)
+            
             collection.update_one({"_id": meta["_id"]}, {
                                         "$set": {"doc_stance_dist_update":ar_count+fr_count+en_count,
                                                  'arabic_stance':ar_count,'arabic_stance_positif':ar_positif,'arabic_stance_negatif':ar_negatif,'arabic_stance_neutre':ar_neutre,
@@ -807,10 +846,7 @@ class transform:
                 en_negatif=meta['english_stance_negatif']
                 en_neutre=meta['english_stance_neutre']
         # print(number_graphs)
-        self._plot_stance_distribution(collection_name,number_graphs,ar_count,ar_positif, ar_negatif, ar_neutre,fr_count,fr_positif, fr_negatif, fr_neutre,en_count,en_positif, en_negatif, en_neutre)
-    def _plot_stance_distribution(self,collection_name,number_graphs,ar_count,ar_positif, ar_negatif, ar_neutre,fr_count,fr_positif, fr_negatif, fr_neutre,en_count,en_positif, en_negatif, en_neutre):
         # Plot
-        
         fig, axs = plt.subplots(1, number_graphs, figsize=(10, 5))
         i = 0
         # Arabic subplot
@@ -861,6 +897,7 @@ class transform:
                     
         plt.style.use('ggplot')
         # plt.show()
+
 
     def nbr_doc_per_collection(self):
 
@@ -1089,7 +1126,8 @@ class transform:
             collection.insert_one(document)
         else:
             doc=collection.find_one({'_id': 'metadata'})
-            
+            if doc['number_of_document']!= collection.count_documents({}):
+                doc['number_of_document']= collection.count_documents({})-1
 
             for key, value in document.items():
                 if key not in doc:
@@ -1098,41 +1136,42 @@ class transform:
             # Mise à jour du document existant avec les champs manquants
             collection.update_one({'_id': 'metadata'}, {'$set': doc})
 
-    def pipeline(self,collection_name,remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=False):
+    def pipeline(self,collection_name,remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=False,verbose=False):
         
         # create or update meta data document
         self.create_metadoc(collection_name, verbose=True) 
-
-         #number of tweets per localisation
-
-        if(localisation_dist==True):
-            self.localisation_distribution(collection_name,verbose=True)
 
         #remove null arguments from documents
         if(remove_null==True):
              self.remove_and_update_null(collection_name,verbose=True)
         
+
+        #number of tweets per localisation
+
+        if(localisation_dist==True):
+            self.localisation_distribution(collection_name,verbose)
+
+        
         #WordCloud generator
         if cloud_words==True:
             #update documents with adding tokens
-            self.doc_update_tokens(collection_name,verbose=True)
+            self.doc_update_tokens(collection_name,verbose)
             #generation cloud of words
-            self.cloud_of_words(collection_name,verbose=True)
+            self.cloud_of_words(collection_name,verbose)
 
         #number of tweets per language
         if(lang_dist==True):
-            self.tweets_lang_repartition(collection_name,verbose=True)
+            self.tweets_lang_repartition(collection_name,verbose)
+        
         #number of tweets per date
-
         if(date_dist==True):
-            self.string_to_datetime(collection_name,verbose=True)
-            self.plot_tweets_per_day(collection_name,verbose=True)
+            self.string_to_datetime(collection_name,verbose)
+            self.plot_tweets_per_day(collection_name,verbose)
 
        
         #stance repartition
-
         if(stance_dist==True):
-            self.stance_language_repartition(collection_name,verbose=True)
+            self.stance_language_repartition(collection_name,verbose)
 
         
 
