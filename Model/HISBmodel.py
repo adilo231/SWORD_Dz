@@ -9,7 +9,7 @@ plt.style.use('ggplot')
 
 
 class HSIBmodel():
-    def __init__(self, Graph, Seed_Set=None, opinion_set=None, seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=0.125, k=0, method='none', blockPeriod=0, verbose=False):
+    def __init__(self, Graph, Seed_Set=None, opinion_set=None, seedsSize=0.05, baisAccepte=0.3, setptime=0.125, Probability=0.3, Tdet=0.125, k=0, method='none', blockPeriod=0, verbose=True):
         """This is a class for the HISBmodel, which is a rumor propagation model based on human and social behavior.
 
         Parameters:
@@ -446,7 +446,7 @@ class HSIBmodel():
                                              'jug': float(self.Graph.nodes[i]['jug']),
                                              }, index=[i])
                     Stat_Global = pd.concat([Stat_Global, new])
-                print("stat----------------------------: ", len(Stat_Global))
+                print("stat----------------------------: ", (Stat_Global.shape))
                 Stat.append(Stat_Global)
 
             elif typeOfSim == 1:

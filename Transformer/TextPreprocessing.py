@@ -86,7 +86,7 @@ def plot(all_words, title):
 
 class topicDetectionArabic():
     def __init__(self):
-        self.model = load("Transformer/Classifier/svm_model.joblib")
+        self.model = load("Data/Models/svm_model.joblib")
     def PredictTopics(self,texts):
          y_pred = self.model.predict(texts.astype('str'))
          return y_pred

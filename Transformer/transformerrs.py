@@ -28,7 +28,7 @@ from sklearn.model_selection import train_test_split
 from nltk.classify import NaiveBayesClassifier
 from nltk.sentiment import SentimentIntensityAnalyzer
 from Transformer.TextPreprocessing import *
-import pandas
+
 
 # nltk.download('wordnet')
 

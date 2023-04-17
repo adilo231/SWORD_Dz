@@ -95,7 +95,9 @@ class RumorSimulator():
             df = pd.DataFrame()
             # If the type of simulation is 0 (steady-state simulation), create a DataFrame of simulation results and
             # calculate network measures statistics, then return the results
+            
             if typeOfSim == 0:
+               
                 df = self.CreateSimulationsDF(Stat, df, typeOfSim, setptime)
                 result = self.showNetworkMeasuresStatistics(g, df)
                 return result

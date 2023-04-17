@@ -95,6 +95,9 @@ class CreateGraphFrmDB(Graph):
     def CreateGraph(self, parameters, graphModel):
         ''' load the facebook graph'''
         g = self.loadGraph(graphModel)
+        if (g.number_of_nodes()==0):
+            print('There is not facebook graph on Neo4j... \n looking for files')
+            
         self.InitParameters(g, parameters)
 
         return g
@@ -103,7 +106,7 @@ class CreateGraphFrmDB(Graph):
 
         query = ""
         if graphModel == 'FB':
-            query = """MATCH (u1:user)-[r:friend]->(u2:user) return distinct u1.id_user,u2.id_user"""
+            query = """MATCH (u1:user_facebook)-[r:friend_in_FB]->(u2:user_facebook) return distinct u1.id_user,u2.id_user"""
 
         if graphModel == 'ABS':
             query = "MATCH (u1:user_small_random)-[r:friend_in_ABS]->(u2:user_small_random) return distinct u1.id_user,u2.id_user"
