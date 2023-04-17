@@ -27,7 +27,8 @@ from nltk.stem import SnowballStemmer
 from sklearn.model_selection import train_test_split
 from nltk.classify import NaiveBayesClassifier
 from nltk.sentiment import SentimentIntensityAnalyzer
-
+from Transformer.TextPreprocessing import *
+import pandas
 
 # nltk.download('wordnet')
 
@@ -36,35 +37,41 @@ import os
 
 
 class transform:
-    def __init__(self, db_name):
+    def __init__(self, db_name,verbose=False):
         # connect to MongoDB
         self.DocGB_Driver = DocDBHandler()
 
         self.db_name = db_name
 
         if os.path.exists('Transformer/Classifier/ArabicClassifier.pkl'):
-            print(" Arabic Classifier exist")
+            if verbose:
+                print(" Arabic Classifier exist Loading...")
             with open('Transformer/Classifier/ArabicClassifier.pkl', 'rb') as f:
                     self.ArabicClassifier = pickle.load(f)
         else:
-            print("Arabic Classifier does not exist")
+            if verbose:
+                print("Arabic classifier does not exist, creating classifier ")
             self.ArabicClassifier=self.Train_arabic_classifier()
 
 
         if os.path.exists('Transformer/Classifier/FrenchClassifier.pkl'):
-            print("French Classifier exist")
+            if verbose:
+                print("French Classifier exist")
             with open('Transformer/Classifier/FrenchClassifier.pkl', 'rb') as f:
                     self.FrenchClassifier = pickle.load(f)
         else:
-            print(" French Classifier does not exist")
+            if verbose:
+                print(" French Classifier does not exist")
             self.FrenchClassifier=self.Train_French_classifier()
 
         if os.path.exists('Transformer/Classifier/EnglishClassifier.pkl'):
-            print("English Classifier exist")
+            if verbose:
+                print("English Classifier exist")
             with open('Transformer/Classifier/EnglishClassifier.pkl', 'rb') as f:
                     self.EnglishClassifier = pickle.load(f)
         else:
-            print("English Classifier does not exist")
+            if verbose:
+                print("English Classifier does not exist")
             self.EnglishClassifier=self.Train_English_classifier() 
         
 
@@ -981,6 +988,7 @@ class transform:
         # plt.show()
 
     def localisation_distribution(self, collection_name, verbose=False):
+
          # Select the database and collection
         db = self.DocGB_Driver.myclient[self.db_name]
 
@@ -1026,8 +1034,8 @@ class transform:
                     count += user_collection.count_documents({ "location": location, "id_str": { "$in": users_in_user_docs } })
                 counts[location] = count
 
-            # Remove the first item from the counts dictionary
-            del counts[''] 
+            # # Remove the first item from the counts dictionary
+            # del counts[''] 
             
 
             # Step 7: Trier les emplacements par nombre de documents correspondants
@@ -1135,6 +1143,50 @@ class transform:
 
             # Mise à jour du document existant avec les champs manquants
             collection.update_one({'_id': 'metadata'}, {'$set': doc})
+    def Topic_detection(self,collection_name,verbose=False):
+
+        db = self.DocGB_Driver.myclient[self.db_name]
+        tweets_col = db[str(collection_name)]
+        # Retrieve tweets from the MongoDB collection
+        tweets_cursor = tweets_col.find({"lang": 'ar'})
+        if verbose:
+            print(tweets_col.count_documents({"lang": 'ar'}))
+        # Create a list to store the tweet texts
+        tweet_data = []
+
+        # Iterate through the tweets and extract the text
+        for tweet in tweets_cursor:
+            if 'text' in tweet:
+                text = tweet['text']
+            elif 'full_text' in tweet:
+                text = tweet['full_text']
+            id_str = tweet['id_str']
+            tweet_data.append({'id_str': id_str, 'text': text})
+
+        # Create a pandas dataframe with the tweet data
+        df = pd.DataFrame(tweet_data, columns=['id_str', 'text'])
+        if verbose:
+            print('Text Preprocessing  loading...')
+        preprocessor = textPreprocessing()
+        if verbose:
+            print('Topic detection  loading...')
+        topicDetectore= topicDetectionArabic()
+        if verbose:
+            print('Text Preprocessing ... ')
+        clean_df=  preprocessor.preprocessing_arabic(df)
+
+        if verbose:
+            print('Topic predition  ... ')
+            
+        y_pred =  topicDetectore.PredictTopics(clean_df['text'])  
+        df['y_pred']=y_pred
+        
+        for _, row in df.iterrows():
+            
+            # update the document with the new attribute
+            tweets_col.update_one({'id_str': row['id_str']}, {'$set': {'topic': getTopic(row['y_pred'])}})
+        plot_hist(y_pred)
+        plt.show()
 
     def pipeline(self,collection_name,remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=False,verbose=False):
         
