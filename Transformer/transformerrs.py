@@ -1274,6 +1274,8 @@ class transform:
         en_negatif=0
         en_neutre=0
         doc_localisation_dist=0
+        arabic_tweets_count=0
+        topics=0
 
         document = { '_id': 'metadata', 'number_of_document': nbr_doc ,
                     'remove_null_update':remove_null_update,
@@ -1285,7 +1287,8 @@ class transform:
                                                 'arabic_stance':ar_count,'arabic_stance_positif':ar_positif,'arabic_stance_negatif':ar_negatif,'arabic_stance_neutre':ar_neutre,
                                                 'french_stance':fr_count,'french_stance_positif':fr_positif,'french_stance_negatif':fr_negatif,'french_stance_neutre':fr_neutre,
                                                 'english_stance':en_count,'english_stance_positif':en_positif,'english_stance_negatif':en_negatif,'english_stance_neutre':en_neutre,
-                    'doc_localisation_dist':doc_localisation_dist }
+                    'doc_localisation_dist':doc_localisation_dist ,
+                    'arabic_tweets_count':arabic_tweets_count,'arabic_topics':topics}
         if(doc_find == 0):
             # Insert the document into the collection
             collection.insert_one(document)
@@ -1308,42 +1311,53 @@ class transform:
         # Retrieve tweets from the MongoDB collection
         tweets_cursor = tweets_col.find({"lang": 'ar'})
         if verbose:
-            print(tweets_col.count_documents({"lang": 'ar'}))
-        # Create a list to store the tweet texts
-        tweet_data = []
+            print("number of arabic tweets : ",tweets_col.count_documents({"lang": 'ar'}))
 
-        # Iterate through the tweets and extract the text
-        for tweet in tweets_cursor:
-            if 'text' in tweet:
-                text = tweet['text']
-            elif 'full_text' in tweet:
-                text = tweet['full_text']
-            id_str = tweet['id_str']
-            tweet_data.append({'id_str': id_str, 'text': text})
+        meta=tweets_col.find_one({'_id': 'metadata'})
+        if (meta['arabic_tweets_count']!= tweets_col.count_documents({"lang": 'ar'}) or meta['topics']==0):
+                
+            # Create a list to store the tweet texts
+            tweet_data = []
 
-        # Create a pandas dataframe with the tweet data
-        df = pd.DataFrame(tweet_data, columns=['id_str', 'text'])
-        if verbose:
-            print('Text Preprocessing  loading...')
-        preprocessor = textPreprocessing()
-        if verbose:
-            print('Topic detection  loading...')
-        topicDetectore= topicDetectionArabic()
-        if verbose:
-            print('Text Preprocessing ... ')
-        clean_df=  preprocessor.preprocessing_arabic(df)
+            # Iterate through the tweets and extract the text
+            for tweet in tweets_cursor:
+                if 'text' in tweet:
+                    text = tweet['text']
+                elif 'full_text' in tweet:
+                    text = tweet['full_text']
+                id_str = tweet['id_str']
+                tweet_data.append({'id_str': id_str, 'text': text})
 
-        if verbose:
-            print('Topic predition  ... ')
+            # Create a pandas dataframe with the tweet data
+            df = pd.DataFrame(tweet_data, columns=['id_str', 'text'])
+            if verbose:
+                print('Text Preprocessing  loading...')
+            preprocessor = textPreprocessing()
+            if verbose:
+                print('Topic detection  loading...')
+            topicDetectore= topicDetectionArabic()
+            if verbose:
+                print('Text Preprocessing ... ')
+            clean_df=  preprocessor.preprocessing_arabic(df)
+
+            if verbose:
+                print('Topic predition  ... ')
+                
+            y_pred =  topicDetectore.PredictTopics(clean_df['text'])  
+            df['y_pred']=y_pred
+            # print(y_pred)
+            for _, row in df.iterrows():
+                
+                # update the document with the new attribute
+                tweets_col.update_one({'id_str': row['id_str']}, {'$set': {'topic': getTopic(row['y_pred'])}})
             
-        y_pred =  topicDetectore.PredictTopics(clean_df['text'])  
-        df['y_pred']=y_pred
-        
-        for _, row in df.iterrows():
-            
-            # update the document with the new attribute
-            tweets_col.update_one({'id_str': row['id_str']}, {'$set': {'topic': getTopic(row['y_pred'])}})
-        plot_hist(y_pred)
+            y_pred_list=count_classes(y_pred)
+            tweets_col.update_one({"_id": meta["_id"]}, {
+                                        "$set": {'arabic_tweets_count':tweets_col.count_documents({"lang": 'ar'}),'arabic_topics':y_pred_list}})
+            # print(y_pred_list)
+        else:
+            y_pred_list=meta['topics']
+        plot_hist(y_pred_list)
         # plt.show()
 
 
@@ -1499,3 +1513,101 @@ class transform:
 
 
 
+
+    def __localisation_distribution1(self, collection_name, verbose=False):
+        client = pymongo.MongoClient()
+        db = client[self.db_name]
+        collection = db[collection_name]
+
+
+
+
+
+
+
+        pipeline = [
+            
+    {
+        '$lookup': {
+            'from': 'AlgeriaTwitterGraph', 
+            'localField': 'user', 
+            'foreignField': 'id_str', 
+            'as': 'algeria_docs'
+        }
+    }, {
+        '$unwind': {
+            'path': '$algeria_docs', 
+            'preserveNullAndEmptyArrays': True
+        }
+    }, {
+        '$lookup': {
+            'from': 'International_users', 
+            'localField': 'user', 
+            'foreignField': 'id_str', 
+            'as': 'international_docs'
+        }
+    }, {
+        '$unwind': {
+            'path': '$international_docs', 
+            'preserveNullAndEmptyArrays': True
+        }
+    }, {
+        '$project': {
+            'user_location': '$location', 
+            'algeria_location': '$algeria_docs.location', 
+            'international_location': '$international_docs.location'
+        }
+    }, {
+        '$group': {
+            '_id': {'$ifNull': ['$user_location', {'$ifNull': ['$algeria_location', '$international_location']}]},
+            'count': {'$sum': 1}
+        }
+    }, {
+        '$sort': {'count': -1}
+    }, {
+        '$limit': 20
+    }
+]
+
+        cursor1 = collection.aggregate(pipeline)
+        cursor=cursor1
+        counts = {doc['_id']: doc['count'] for doc in cursor}
+
+        print(counts)
+        
+
+        # Step 7: Trier les emplacements par nombre de documents correspondants
+        sorted_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+
+        # Step 8: Conserver les 20 premiers emplacements les plus apparus
+        top_locations = dict(sorted_counts[:20])
+
+        cleaned_location_dict = {}
+
+        for key, value in top_locations.items():
+                if(key):
+                    print(key)
+                    new_key = emoji.demojize(key)
+                    cleaned_location_dict[new_key] = value
+
+        for k, v in top_locations.items():
+            if(k):
+                k = k.strip()  # remove leading/trailing white space
+                k = " ".join(k.split())  # replace multiple white space with single space
+                cleaned_location_dict[k] = v
+        
+        top_locations=cleaned_location_dict   
+        
+        plt.style.use('ggplot')
+        plt.barh(range(len(top_locations)), list(top_locations.values()), align='center')
+        plt.yticks(range(len(top_locations)), list(top_locations.keys()))
+
+        # Set the plot title and axis labels
+        plt.title('Nombre de documents par emplacement')
+        plt.xlabel('Nombre de documents')
+        plt.ylabel('Emplacement')
+        
+        # Show the plot
+        # plt.show()
+    
+        
