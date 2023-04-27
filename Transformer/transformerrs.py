@@ -30,6 +30,8 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 from Transformer.TextPreprocessing import *
 
 
+
+
 # nltk.download('wordnet')
 
 from tqdm import tqdm
@@ -1143,6 +1145,55 @@ class transform:
 
             # Mise à jour du document existant avec les champs manquants
             collection.update_one({'_id': 'metadata'}, {'$set': doc})
+
+    def pipeline(self,collection_name,remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=False,verbose=False):
+        
+
+        print('topic ..')
+        self.Topic_detection(collection_name,verbose=True)
+        # create or update meta data document
+        self.create_metadoc(collection_name, verbose=True) 
+        print('remove null arguments from documents ..')
+        #remove null arguments from documents
+        if(remove_null==True):
+             self.remove_and_update_null(collection_name,verbose=True)
+        
+
+        #number of tweets per localisation
+        print('number of tweets per localisation ..')
+        if(localisation_dist==True):
+            self.localisation_distribution(collection_name,verbose)
+
+        
+        #WordCloud generator
+        print('WordCloud generator ..')
+        if cloud_words==True:
+            #update documents with adding tokens
+            self.doc_update_tokens(collection_name,verbose)
+            #generation cloud of words
+            self.cloud_of_words(collection_name,verbose)
+
+        #number of tweets per language
+        print('number of tweets per language ..')
+        if(lang_dist==True):
+            self.tweets_lang_repartition(collection_name,verbose)
+        
+        #number of tweets per date
+        print('number of tweets per date')
+        if(date_dist==True):
+            self.string_to_datetime(collection_name,verbose)
+            self.plot_tweets_per_day(collection_name,verbose)
+
+       
+        #stance repartition
+        print('Stance')
+        if(stance_dist==True):
+            self.stance_language_repartition(collection_name,verbose)
+
+        
+
+        #show figures
+        plt.show()
     def Topic_detection(self,collection_name,verbose=False):
 
         db = self.DocGB_Driver.myclient[self.db_name]
@@ -1152,80 +1203,57 @@ class transform:
         if verbose:
             print(tweets_col.count_documents({"lang": 'ar'}))
         # Create a list to store the tweet texts
-        tweet_data = []
+        Topics_dist = []
+        tweet_data_not_processed = []
 
         # Iterate through the tweets and extract the text
+        # Iterate through the tweets and extract the text and topic
         for tweet in tweets_cursor:
             if 'text' in tweet:
                 text = tweet['text']
             elif 'full_text' in tweet:
                 text = tweet['full_text']
-            id_str = tweet['id_str']
-            tweet_data.append({'id_str': id_str, 'text': text})
+            id_str = tweet['_id']
+            if 'topic' in tweet:
+                topic = getTopicIndex(tweet['topic'])
+            else:
+                topic = None
+            if topic == None:
+                tweet_data_not_processed.append({'_id': id_str, 'text': text, 'topic': topic})
+            else:
+                Topics_dist.append(topic)
+        y_pred=[]
+        if len(tweet_data_not_processed)==0:
+             if verbose:
+                print(f'all {len(Topics_dist)} has been processed')
+        else:
+            if verbose:
+                print(f'there are {len(tweet_data_not_processed)} to be processed and already processed {len(Topics_dist)}')
 
-        # Create a pandas dataframe with the tweet data
-        df = pd.DataFrame(tweet_data, columns=['id_str', 'text'])
-        if verbose:
-            print('Text Preprocessing  loading...')
-        preprocessor = textPreprocessing()
-        if verbose:
-            print('Topic detection  loading...')
-        topicDetectore= topicDetectionArabic()
-        if verbose:
-            print('Text Preprocessing ... ')
-        clean_df=  preprocessor.preprocessing_arabic(df)
+            # Create a pandas dataframe with the tweet data
+            df = pd.DataFrame(tweet_data_not_processed, columns=['_id', 'text'])
+            if verbose:
+                print('Text Preprocessing  loading...')
+            preprocessor = textPreprocessing()
 
-        if verbose:
-            print('Topic predition  ... ')
+            if verbose:
+                print('Topic detection  loading...')
+            topicDetectore= topicDetectionArabic()
+
+            if verbose:
+                print('Text Preprocessing ... ')
+            clean_df=  preprocessor.preprocessing_arabic(df)
+
+            if verbose:
+                print('Topic predition  ... ')
+                
+            y_pred =  topicDetectore.PredictTopics(clean_df['text'])  
+            df['y_pred']=y_pred
             
-        y_pred =  topicDetectore.PredictTopics(clean_df['text'])  
-        df['y_pred']=y_pred
+            for _, row in df.iterrows():
+                
+                # update the document with the new attribute
+                tweets_col.update_one({'_id': row['_id']}, {'$set': {'topic': getTopic(row['y_pred'])}})
         
-        for _, row in df.iterrows():
-            
-            # update the document with the new attribute
-            tweets_col.update_one({'id_str': row['id_str']}, {'$set': {'topic': getTopic(row['y_pred'])}})
-        plot_hist(y_pred)
-        plt.show()
-
-    def pipeline(self,collection_name,remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=False,verbose=False):
+        plot_hist(list(y_pred)+Topics_dist)
         
-        # create or update meta data document
-        self.create_metadoc(collection_name, verbose=True) 
-
-        #remove null arguments from documents
-        if(remove_null==True):
-             self.remove_and_update_null(collection_name,verbose=True)
-        
-
-        #number of tweets per localisation
-
-        if(localisation_dist==True):
-            self.localisation_distribution(collection_name,verbose)
-
-        
-        #WordCloud generator
-        if cloud_words==True:
-            #update documents with adding tokens
-            self.doc_update_tokens(collection_name,verbose)
-            #generation cloud of words
-            self.cloud_of_words(collection_name,verbose)
-
-        #number of tweets per language
-        if(lang_dist==True):
-            self.tweets_lang_repartition(collection_name,verbose)
-        
-        #number of tweets per date
-        if(date_dist==True):
-            self.string_to_datetime(collection_name,verbose)
-            self.plot_tweets_per_day(collection_name,verbose)
-
-       
-        #stance repartition
-        if(stance_dist==True):
-            self.stance_language_repartition(collection_name,verbose)
-
-        
-
-        #show figures
-        plt.show()

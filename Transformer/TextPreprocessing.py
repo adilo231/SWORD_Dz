@@ -25,11 +25,13 @@ import re
 import string
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
-from joblib import dump, load
+from joblib import  load
 def getTopic(num):
     topics=['culture', 'diverse', 'economy', 'politic', 'sport']
-
     return topics[num]
+def getTopicIndex(topic):
+    topics=['culture', 'diverse', 'economy', 'politic', 'sport']
+    return topics.index(topic)
 
 plt.style.use('ggplot')
 
@@ -45,7 +47,7 @@ def plot_hist(y_pred):
     plt.title('Histogram of Class Predictions')
     plt.xlabel('Class')
     plt.ylabel('Count')
-    plt.show()
+    
 def countPropetries(df):
     all_words = [word for tokens in df["text"] for word in tokens]
     sentence_lengths = [len(tokens) for tokens in df["text"]]
@@ -101,11 +103,11 @@ class textPreprocessing():
     def preprocessing_arabic(self,df):
         clean_df = df.dropna()
         stemmer = ISRIStemmer()
-        clean_df["text"] = clean_df['text'].apply(lambda x: self.processDocument(x, stemmer))
+        clean_df["text"] = clean_df['text'].apply(lambda x: self._processDocument(x, stemmer))
         tokenizer = RegexpTokenizer(r'\w+')
         clean_df["text"] = clean_df["text"].apply(tokenizer.tokenize)
         stopwords_list = stopwords.words('arabic')
-        listToStr = ' '.join([str(elem) for elem in stopwords_list]) 
+        
         print
         clean_df["text"] = clean_df["text"].apply(lambda x: [item for item in x if item not in stopwords_list])
         return clean_df
@@ -113,15 +115,15 @@ class textPreprocessing():
 
 
 
-    def remove_hashtag(self,df, col = 'text'):
+    def _remove_hashtag(self,df, col = 'text'):
         for letter in r'#.][!XR':
             df[col] = df[col].astype(str).str.replace(letter,'', regex=True)
         
-    def remove_punctuations(self,text):
+    def _remove_punctuations(self,text):
         translator = str.maketrans('', '', self.punctuations_list)
         return text.translate(translator)  
 
-    def normalize_arabic(self,text):
+    def _normalize_arabic(self,text):
         text = re.sub("[إأآا]", "ا", text)
         text = re.sub("ى", "ي", text)
         text = re.sub("ة", "ه", text)
@@ -129,11 +131,11 @@ class textPreprocessing():
         return text     
 
 
-    def remove_repeating_char(self,text):
+    def _remove_repeating_char(self,text):
         return re.sub(r'(.)\1+', r'\1', text)
 
 
-    def processDocument(self,doc, stemmer): 
+    def _processDocument(self,doc, stemmer): 
 
         #Replace @username with empty string
         doc = re.sub(r'@[^\s]+', ' ', doc)
@@ -146,11 +148,11 @@ class textPreprocessing():
         #Replace #word with word
         doc = re.sub(r'#([^\s]+)', r'\1', doc)
         # remove punctuations
-        doc= self.remove_punctuations(doc)
+        doc= self._remove_punctuations(doc)
         # normalize the tweet
-        doc= self.normalize_arabic(doc)
+        doc= self._normalize_arabic(doc)
         # remove repeated letters
-        doc=self.remove_repeating_char(doc)
+        doc=self._remove_repeating_char(doc)
         #stemming
         doc = stemmer.stem(doc)
         

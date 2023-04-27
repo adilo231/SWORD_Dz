@@ -6,7 +6,7 @@ from Transformer.TextPreprocessing import *
 db_name = "twitter_db"
 
 
-collection_names='Prix'
+collection_names='Mahrez'
 
 
 transforms=transform(db_name)

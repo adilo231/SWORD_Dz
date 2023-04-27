@@ -6,8 +6,8 @@ import pickle
 import os
 from tqdm import tqdm
 import json
-def Algerian_location(location):
-    Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','dz','Tipaza','bladi','setif','Oran',
+
+Locations=[ 'Algérie','Algiers','Alger','Algeria','الجزائر','dz','Tipaza','bladi','setif','Oran',
                 'Adrar', 'أدرار', 'Chlef', 'الشلف', 'Laghouat', 'الأغواط', 'Oum El Bouaghi', 'أم البواقي', 
                 'Batna', 'باتنة', 'Béjaïa', 'بجاية', 'Biskra', 'بسكرة', 'Béchar', 'بشار', 'Blida', 'البليدة', 
                 'Bouira', 'البويرة', 'Tamanrasset', 'تمنراست', 'Tébessa', 'تبسة', 'Tlemcen', 'تلمسان', 'Tiaret',
@@ -19,16 +19,21 @@ def Algerian_location(location):
                 'الطارف', 'Tindouf', 'تندوف', 'Tissemsilt', 'تيسمسيلت', 'El Oued', 'الوادي', 'Khenchela', 'خنشلة', 
                 'Souk Ahras', 'سوق أهراس', 'Tipaza', 'تيبازة', 'Mila', 'ميلة', 'Aïn Defla', 'عين الدفلى', 'Naâma', 
                 'النعامة', 'Aïn Témouchent', 'عين تموشنت', 'Ghardaïa', 'غرداية', 'Relizane', 'غليزان']
-
-
-                
-
+def Algerian_location(location):
     if location in Locations:
         return True
     for loc in Locations:
         if loc in location: return True
     return False
 
+
+class MyStreamListener(tweepy.StreamListener):
+    def on_status(self, status):
+        print(status.text)
+
+    def on_error(self, status_code):
+        if status_code == 420:
+            return False
 
 class TweetExtractor():
     def __init__(self,Creadits=0):
@@ -91,7 +96,6 @@ class TweetExtractor():
                 
                     Tweet = tweet._json
                     user = Tweet['user']
-                    
                     try:
                          if verbose:
                             print(f"\tAdding tweet {Nbr_tweets} ",Tweet['text'][:20])
@@ -104,7 +108,7 @@ class TweetExtractor():
                     # check if the tweet already exists in MongoDB
                     if not tweet_collection.find_one({"id_str": Tweet['id_str']}):
                         # insert the tweet into MongoDB
-                        # tweet_collection.insert_one({"id_str": tweet.id_str, "user_id_str": tweet.user.id_str})
+                       
                         tweet_collection.insert_one(Tweet)
                         Nbr_tweets+=1
                         # check if the user already exists in MongoDB
@@ -384,6 +388,15 @@ class TweetExtractor():
                                             )
 
 
+    def Get_Tweets_in_streaming(self,mongo_db,collection):
+        db = self.DocGB_Driver.myclient[mongo_db]
+        collection = db[collection]
+        myStreamListener = MyStreamListener()
+        myStream = tweepy.Stream(auth = self.auth, listener=myStreamListener)
+        print('streaming')
+        # Start streaming
+        myStream.filter(track=['us', 'musk'])  # Filter tweets containing keywords
+        print('streaming2')
 
 
 
