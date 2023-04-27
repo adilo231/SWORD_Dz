@@ -16,11 +16,12 @@ from gensim.parsing.preprocessing import STOPWORDS
 import matplotlib.pyplot as plt
 from DataStorage.DBHandlers import DocDBHandler
 import pickle
+from pymongo import UpdateOne
 
 import arabic_reshaper
 from bidi.algorithm import get_display
 
-
+import numpy as np
 from tqdm import tqdm
 import csv
 from nltk.stem import SnowballStemmer
@@ -28,9 +29,6 @@ from sklearn.model_selection import train_test_split
 from nltk.classify import NaiveBayesClassifier
 from nltk.sentiment import SentimentIntensityAnalyzer
 from Transformer.TextPreprocessing import *
-
-
-
 
 # nltk.download('wordnet')
 
@@ -46,39 +44,53 @@ class transform:
         self.db_name = db_name
 
         if os.path.exists('Transformer/Classifier/ArabicClassifier.pkl'):
+            print(" Arabic Classifier exist")
             if verbose:
                 print(" Arabic Classifier exist Loading...")
             with open('Transformer/Classifier/ArabicClassifier.pkl', 'rb') as f:
                     self.ArabicClassifier = pickle.load(f)
         else:
+            print("Arabic Classifier does not exist")
             if verbose:
                 print("Arabic classifier does not exist, creating classifier ")
-            self.ArabicClassifier=self.Train_arabic_classifier()
+            self.ArabicClassifier=self.__Train_arabic_classifier()
 
 
         if os.path.exists('Transformer/Classifier/FrenchClassifier.pkl'):
+            print("French Classifier exist")
             if verbose:
                 print("French Classifier exist")
             with open('Transformer/Classifier/FrenchClassifier.pkl', 'rb') as f:
                     self.FrenchClassifier = pickle.load(f)
         else:
+            print(" French Classifier does not exist")
             if verbose:
                 print(" French Classifier does not exist")
-            self.FrenchClassifier=self.Train_French_classifier()
+            self.FrenchClassifier=self.__Train_French_classifier()
 
         if os.path.exists('Transformer/Classifier/EnglishClassifier.pkl'):
+            print("English Classifier exist")
             if verbose:
                 print("English Classifier exist")
             with open('Transformer/Classifier/EnglishClassifier.pkl', 'rb') as f:
                     self.EnglishClassifier = pickle.load(f)
         else:
+            print("English Classifier does not exist")
             if verbose:
                 print("English Classifier does not exist")
-            self.EnglishClassifier=self.Train_English_classifier() 
-        
+            self.EnglishClassifier=self.__Train_English_classifier() 
 
-    def remove_and_update_null(self, collection_name, verbose=False):
 
+    def __remove_and_update_null(self, collection_name, verbose=False):
+        """
+        The function updates the original document with the new dictionary using the replace_one method. 
+        It also updates the "remove_null_update" key in the metadata document to reflect the number of documents that have been modified.
+
+        If there are no documents containing null values,
+          the function simply updates the "remove_null_update" key in the metadata document 
+          with the total count of documents in the collection minus one.
+        The verbose flag can be used to print additional information to the console during execution.
+        """
         if verbose:
             print("remove and update null attributes")
         # Select the database and collection
@@ -120,7 +132,20 @@ class transform:
             collection.update_one({"_id": doc["_id"]}, {
                                         "$set": {"remove_null_update":count - 1 }})
 
-    def text_to_tokens(self, text, verbose=False):
+    def __text_to_tokens(self, text, verbose=False):
+        """
+        This is a method in a Python class that takes in a string of text and preprocesses it by removing URLs and emojis,
+            tokenizing the text into words, removing stop words and non-noun, non-adjective words, and lemmatizing the remaining words.
+        
+        
+        The resulting list of words is returned as the output of the method. The method takes an optional verbose argument that,
+            when set to True, prints out information about the preprocessing steps being taken. 
+        
+        The preprocessing steps include regular expression substitution, word tokenization, stop word removal, and lemmatization. 
+        
+        The method makes use of the nltk library for natural language processing and the WordNetLemmatizer class for word lemmatization.
+        """
+
         if verbose:
             print("\t Removing all links")
         # Replace any URLs in the tweet with the string 'URL'
@@ -144,8 +169,21 @@ class transform:
         words = [lemmatizer.lemmatize(word) for word in words]
         return words
 
-    def doc_update_tokens(self, collection_name, verbose=True):
+    def __doc_update_tokens(self, collection_name, verbose=True):
+        """
+        This is a method that updates the tokens for the documents in a MongoDB collection. 
+        
+        It first selects the collection and finds all the documents in it.
+         
+        Then it checks whether the tokens have already been updated for all the documents by comparing the metadata information.
 
+        If the tokens haven't been updated, it uses the __text_to_tokens method to preprocess and tokenize the text in each document.
+         
+        Finally, it updates the collection with the new tokens and updates the metadata information to reflect the update.
+        
+        The method uses tqdm to display a progress bar while updating the tokens.
+        
+        """
         # Select the database and collection
         db = self.DocGB_Driver.myclient[self.db_name]
         if verbose:
@@ -164,13 +202,36 @@ class transform:
                         else:
                             text = doc['text']
 
-                        words = self.text_to_tokens(text)
+                        words = self.__text_to_tokens(text)
                         collection.update_one({"_id": doc["_id"]}, {
                                             "$set": {"tokens": words}})
             collection.update_one({"_id": meta["_id"]}, {
                                         "$set": {"doc_tokens_update":meta['number_of_document'] }})
 
-    def Wordcloud_language_generator(self, lang, collection_name, verbose=False):
+    def __Wordcloud_language_generator(self, lang, collection_name, verbose=False):
+
+        """
+        This is a method that generates a word cloud image based on the text data in a specific language from a MongoDB database.
+
+        The method takes two arguments: a language code (e.g., "en" for English, "ar" for Arabic) and a MongoDB collection name.
+
+        The method queries the MongoDB database for all documents that have the specified language code.
+
+        If there are any documents in the database with the specified language code, the method collects all the text data 
+            from those documents and stores them in a list called "words."
+
+        The method then filters the words list based on whether the language is Arabic or not.
+             If it's Arabic, the method uses an Arabic reshaper to properly display the Arabic text in the word cloud.
+             If it's not Arabic, the method removes any Arabic words from the list.
+
+        The method creates a frequency distribution of the words using the NLTK library.
+
+        The method generates a word cloud image from the most frequent words using the WordCloud library. 
+            If the language is Arabic, the method uses a specific Arabic font to properly display the Arabic text.
+
+        The method returns the word cloud image, the list of words used to generate the word cloud, 
+            and the frequency distribution of the words.
+        """
         # Query the database for all tweets and their corresponding frensh language
         results = collection_name.find({"lang": lang})
         r = collection_name.count_documents({"lang": lang})
@@ -236,7 +297,22 @@ class transform:
 
         return wordcloud, words,freq_dist
 
-    def string_to_datetime(self, collection_name, verbose=True):
+    def __string_to_datetime(self, collection_name, verbose=True):
+        """
+        This is a private method in a Python class that converts all string dates in a specified collection of a MongoDB database
+             to the datetime format.
+
+        The method takes the name of the collection as an argument, and if verbose is True,
+             it prints out a message indicating that the conversion is taking place.
+
+        It then connects to the specified MongoDB database and collection, finds all documents in the collection,
+            and loops through each document.
+            For each document, it checks if the date field exists (indicating that the document has already been converted), 
+            and if not, it uses a specific date format string to parse the created_at field of the document and convert it to a datetime object.
+        
+        It then updates the document in the collection with the new date field.
+        
+        """
 
         if verbose:
             print("Converting all String datas to datetime format")
@@ -252,8 +328,23 @@ class transform:
                 collection.update_one({"_id": doc["_id"]}, {
                                       "$set": {"date": datee}})
 
-    def cloud_of_words(self, collection_name, verbose=False):
-
+    def __cloud_of_words(self, collection_name, verbose=False):
+        """
+        This is a method within a class that generates word clouds for a given collection in a MongoDB database.
+        
+        It first checks if the word cloud has already been generated and stored in the metadata collection of the database by comparing the count of tweets in different languages with the count stored in the metadata.
+        
+        If the count matches, it retrieves the stored word clouds from the metadata and displays them.
+        
+        Otherwise, it generates new word clouds for each language (French, English, and Arabic) by calling the __Wordcloud_language_generator method.
+        
+        After generating the word clouds, it updates the metadata with the new counts and word clouds.
+        
+        Finally, it displays the word clouds for each language in a subplot of a single figure.
+        
+        
+        """
+        
         # Select the database and collection
         db = self.DocGB_Driver.myclient[self.db_name]
 
@@ -285,14 +376,14 @@ class transform:
         else:    
             # Query the database for all tweets and their corresponding languages
             print("French CW")
-            wordcloud_fr, word_fr,freq_dist_fr = self.Wordcloud_language_generator(lang="fr", collection_name=collection,
+            wordcloud_fr, word_fr,freq_dist_fr = self.__Wordcloud_language_generator(lang="fr", collection_name=collection,
                                                                     verbose=verbose)
             print("English CW")
-            wordcloud_en, word_en ,freq_dist_en= self.Wordcloud_language_generator(lang="en", collection_name=collection,
+            wordcloud_en, word_en ,freq_dist_en= self.__Wordcloud_language_generator(lang="en", collection_name=collection,
                                                                     verbose=verbose)
 
             print("Arabic CW")
-            wordcloud_ar, word_ar,freq_dist_ar = self.Wordcloud_language_generator(lang="ar", collection_name=collection,
+            wordcloud_ar, word_ar,freq_dist_ar = self.__Wordcloud_language_generator(lang="ar", collection_name=collection,
                                                                     verbose=verbose)
             collection.update_one({"_id": meta["_id"]}, {
                                         "$set": {"cloud_words_update":somme,"arabic_cloud_words_update":freq_dist_ar,'word_arabic':word_ar,'frensh_cloud_words_update':freq_dist_fr,'word_frensh':word_fr,'english_cloud_words_update':freq_dist_en,'word_english':word_en }})
@@ -346,7 +437,7 @@ class transform:
         # Set the title of the entire figure
         fig.suptitle(f'Word Clouds for Collection {collection_name}')
 
-    def tweets_lang_repartition(self, collection_name, verbose):
+    def __tweets_lang_repartition(self, collection_name, verbose):
         """
         Plot the language distribution of tweets for collection in MongoDB.
 
@@ -393,7 +484,7 @@ class transform:
         if verbose:
             print("Displaying the language distributions of tweets")
 
-    def plot_tweets_per_day(self, collection_name, verbose=False):
+    def __plot_tweets_per_day(self, collection_name, verbose=False):
         """
         Plot the number of tweets per day for each collection in the database and save each plot as a PNG file.
                 Parameters:
@@ -462,15 +553,34 @@ class transform:
         #     print(f"Figure {i+1} saved as {collection_name}.png")
         i += 1
 
-    def extract_features(self, tokens, word_features, verbose=False):
+    def __extract_features(self, tokens, word_features, verbose=False):
         token_set = set(tokens)
         features = {}
         for word in word_features:
             features['contains({})'.format(word)] = (word in token_set)
         return features
     
-    def Train_arabic_classifier(self):
-        # preparing Classifier
+    def __Train_arabic_classifier(self):
+            """
+            This code block is defining a method to train a Naive Bayes classifier for Arabic text classification.
+
+            The method starts by reading in a CSV file containing text and their corresponding class labels (stance) and preprocessing 
+                the text by removing stop words and stemming using the SnowballStemmer from the NLTK library.
+
+            Next, it extracts features from the preprocessed text using a feature extraction method called __extract_features.
+                This method takes in a list of tokens (words) and a list of word features and returns a dictionary of features for 
+                the given text, where each feature is a boolean indicating whether the text contains the corresponding word feature.
+
+            The code then creates a list of feature sets for the preprocessed data, where each feature set is a tuple containing 
+                the extracted features and the corresponding class label. The data is split into a training and testing set using 
+                the train_test_split function from the sklearn library.
+
+            The Naive Bayes classifier is trained on the training set using the train method from the NLTK library.
+             The accuracy of the classifier is then evaluated using the test set and printed out.
+              
+                Finally, the trained classifier is saved to a pickle file for later use and returned by the method.
+            """
+            # preparing Classifier
             print("\t preparing Arabic Classifier", "\n")
             data = []
             # Open the CSV file
@@ -503,7 +613,7 @@ class transform:
                 [token for text, stance in preprocessed_data for token in text])
             word_features = list(all_words)[:1000]
 
-            featuresets = [(self.extract_features(text, word_features), stance)
+            featuresets = [(self.__extract_features(text, word_features), stance)
                            for (text, stance) in preprocessed_data]
 
             # Split the data into training and testing sets
@@ -519,7 +629,15 @@ class transform:
                 pickle.dump(classifier, f)
             return classifier
 
-    def Train_French_classifier(self):
+    def __Train_French_classifier(self):
+            """
+            This is a Python function that trains a French sentiment classifier using the Naive Bayes algorithm.
+              The function reads a CSV file containing labeled French tweets,
+                 preprocesses the data by removing stop words and stemming the remaining words,
+                 extracts the 1000 most common words as features, splits the data into training and testing sets,
+                 trains the classifier using the training set,
+                 and saves the trained classifier to a file.
+            """
       # preparing Classifier
             print("preparing French Classifier", "\n")
             data = []
@@ -552,7 +670,7 @@ class transform:
                 [token for text, stance in preprocessed_data for token in text])
             word_features = list(all_words)[:1000]
 
-            featuresets = [(self.extract_features(text, word_features), stance)
+            featuresets = [(self.__extract_features(text, word_features), stance)
                            for (text, stance) in preprocessed_data]
 
             # Split the data into training and testing sets
@@ -570,7 +688,15 @@ class transform:
             return classifier
 
 
-    def Train_English_classifier(self):
+    def __Train_English_classifier(self):
+            """
+            This is a Python function that trains an English sentiment classifier using the VADER (Valence Aware Dictionary and sEntiment Reasoner) algorithm.
+              The function downloads the pre-trained VADER sentiment analyzer from the NLTK library,
+                initializes it, and saves the trained analyzer to a file.
+
+            The function saves the trained analyzer to a file called 'EnglishClassifier.pkl' using the pickle.dump method.
+            The function returns the trained analyzer.
+            """
           # preparing Classifier
             print("preparing  English Classifier", "\n")
             # Download the pre-trained sentiment analyzer
@@ -582,8 +708,23 @@ class transform:
                 pickle.dump(sid, f)
             return sid
 
-    def arabic_stance_classification(self,collection):
-        
+    def __arabic_stance_classification(self,collection):
+        """
+         The method performs Arabic stance classification on the text data in the collection object.
+
+        The method first checks if there is a preprocessed data file available,
+            if yes, it loads the preprocessed data.
+            If not, it reads data from a CSV file, preprocesses the data using stemming and tokenization,
+              and saves the preprocessed data to a pickle file.
+
+        The method then iterates through all the documents in the collection,
+          extracts the text from each document,
+            preprocesses it using stemming and tokenization,
+              and extracts the features of the preprocessed text.
+        It then classifies the text using a trained classifier and updates the "stance" field in the document with the predicted stance.
+
+        Finally, the method counts the number of positive, negative, and neutral stances predicted and returns these counts.
+        """
         # classification
 
         docs = collection.find({"lang": "ar"})
@@ -648,7 +789,7 @@ class transform:
                 filtered_tokens = [stemmer.stem(token) for token in tokens if token not in stop_words]
 
                 # Extraire les features du texte prétraité
-                features = self.extract_features(filtered_tokens, word_features)
+                features = self.__extract_features(filtered_tokens, word_features)
 
                 # Classer le texte en utilisant le classificateur entraîné
                 stance = self.ArabicClassifier.classify(features)
@@ -667,7 +808,25 @@ class transform:
         #print("+ - +-",ar_positif, ar_negatif,  ar_neutre)
         return ar_positif, ar_negatif, ar_neutre
     
-    def french_stance_classification(self,collection):
+    def __french_stance_classification(self,collection):
+        """
+        This function takes a MongoDB collection as input and performs French stance classification on the text documents stored 
+        in the collection.
+
+        first it loads preprocessed data from a CSV file or preprocesses it if the preprocessed data is not available and stores
+             it in a pickle file.
+        Then, it extracts features from the preprocessed data using NLTK's FreqDist and word_features to get the 1000 most frequent words.
+
+        Next, the function retrieves all French language documents from the MongoDB collection and performs 
+        French stance classification on them.
+            If the document already has a stance field, the function uses it,
+            otherwise, it tokenizes the text, removes stop words and stems the remaining words before extracting features 
+                        and classifying the stance using a trained classifier.
+
+        Finally, the function updates the MongoDB collection by adding the stance field and returns the count of French documents
+          that were classified as positive, negative, and neutral.
+        
+        """
         # preparing Classifier
         if os.path.exists('Transformer/Classifier/data_fr.pkl'):
             with open('Transformer/Classifier/data_fr.pkl', 'rb') as f:
@@ -731,7 +890,7 @@ class transform:
                     token) for token in tokens if token not in stop_words]
 
                 # Extraire les features du texte prétraité
-                features = self.extract_features(
+                features = self.__extract_features(
                     filtered_tokens, word_features)
 
                 # Classer le texte en utilisant le classificateur entraîné
@@ -750,7 +909,16 @@ class transform:
         #print("+ - +-",fr_positif, fr_negatif,  fr_neutre)
         return fr_positif, fr_negatif,  fr_neutre
     
-    def english_stance_classification(self,collection):
+    def __english_stance_classification(self,collection):
+        """
+        The  method is responsible for classifying the stances of English tweets using the VADER sentiment analysis tool.
+        It retrieves all English tweets from the MongoDB collection,
+        then for each tweet, it checks if the stance field exists.
+            If it does, it uses the existing stance value,
+            otherwise, it classifies the tweet's sentiment using VADER and updates the stance field with the predicted stance value.
+             
+        Finally, it returns the count of positive, negative, and neutral stances.
+        """
         docs = collection.find({"lang": "en"})
         en_positif = 0
         en_negatif = 0
@@ -795,8 +963,25 @@ class transform:
         #print("+ - +-",en_positif,en_negatif ,en_neutre)
         return en_positif,en_negatif ,en_neutre
     
-    def stance_language_repartition(self, collection_name, verbose=False):
+    def __stance_language_repartition(self, collection_name, verbose=False):
+        """
+        This is a method in Python that handles the language repartition of documents within a collection.
+         
+        The function takes the name of a collection and a verbose flag as input parameters.
+        It selects the database and collection to work with, then finds the metadata of the collection using a specific query.
+        It also counts the number of documents in the collection with Arabic, French, and English languages.
 
+        If the Arabic, French, and English document counts are different from their corresponding counts in the metadata,
+            the method uses the __arabic_stance_classification(), __french_stance_classification(), and __english_stance_classification()
+                functions to classify the documents' stance.
+            It then updates the metadata with the new document counts and the corresponding stance classification counts.
+
+        Finally, the method plots a bar chart for each language,
+          indicating the positive, negative, and neutral stances in the corresponding language.
+            If any of the languages have zero documents, no plot is produced for that language.
+        
+        
+        """
         # Select the database and collection
         db = self.DocGB_Driver.myclient[self.db_name]
 
@@ -821,16 +1006,16 @@ class transform:
         if(meta['arabic_stance']!=ar_count and meta['french_stance']!=fr_count and meta['english_stance']!=en_count ):
             if ar_count > 0:
                 number_graphs += 1
-                ar_positif, ar_negatif, ar_neutre=self.arabic_stance_classification(collection=collection)
+                ar_positif, ar_negatif, ar_neutre=self.__arabic_stance_classification(collection=collection)
 
                 
             if fr_count > 0:
                 number_graphs = number_graphs + 1
                 
-                fr_positif, fr_negatif,  fr_neutre=self.french_stance_classification(collection=collection)
+                fr_positif, fr_negatif,  fr_neutre=self.__french_stance_classification(collection=collection)
             if en_count > 0:
                 number_graphs = number_graphs + 1
-                en_positif,en_negatif ,en_neutre =self.english_stance_classification(collection=collection)
+                en_positif,en_negatif ,en_neutre =self.__english_stance_classification(collection=collection)
             
             collection.update_one({"_id": meta["_id"]}, {
                                         "$set": {"doc_stance_dist_update":ar_count+fr_count+en_count,
@@ -908,90 +1093,26 @@ class transform:
         # plt.show()
 
 
-    def nbr_doc_per_collection(self):
+    
+    
+    def __localisation_distribution(self, collection_name, verbose=False):
+        """
+        The method takes a collection name as input and generates a bar chart showing the distribution of documents based on
+        their location.
+        
+        It uses MongoDB's aggregation pipeline to extract the location data from documents and group them by location.
+        
+        It then sorts the results by the number of documents per location and displays the top 20 locations in the bar chart.
+        
+        The method also updates the metadata document in the collection with the distribution data to avoid running the pipeline 
+        multiple times.
+         
+        The verbose argument is used to control the output messages during the method execution, and the method returns nothing.
+        
+        """
+
 
         # Select the database and collection
-        db = self.DocGB_Driver.myclient[self.db_name]
-        # Get the names of all collections in the database
-        collection_names = db.list_collection_names()
-
-        # Initialize lists to store collection names and document counts
-        names = []
-        counts = []
-
-        # Loop through each collection and count the number of documents
-        for collection_name in collection_names:
-            collection = db[collection_name]
-            num_docs = collection.count_documents({})
-            names.append(collection_name)
-            counts.append(num_docs)
-
-        # Create a horizontal bar chart of the document counts for each collection
-        plt.barh(names, counts)
-        plt.title("Number of documents per collection")
-        plt.xlabel("Number of documents")
-        plt.ylabel("Collection name")
-        plt.style.use('ggplot')
-        for j, v in enumerate(counts):
-            plt.text(v + 10000, j, str(v), ha='center')
-        # plt.show()
-    def meta_tweets_lang_repartition(self, verbose=False):
-        """
-        Plot the language distribution of tweets for all collections in MongoDB.
-
-        Args:
-        - self: instance of the class.
-        - verbose (bool): If True, display progress of the execution. 
-
-        Returns:
-        - None.
-        """
-        if verbose:
-            print("Getting tweets language distributions")
-
-        # Select the database
-        db = self.DocGB_Driver.myclient[self.db_name]
-
-        # Get the names of all collections in the database
-        collection_names = db.list_collection_names()
-
-        # Initialize counters for French, English, and Arabic documents
-        fr_count = 0
-        en_count = 0
-        ar_count = 0
-        other_count=0
-        
-        # Loop through each collection and count the number of documents for each language
-        for collection_name in collection_names:
-            collection = db[collection_name]
-            fr_count += collection.count_documents({"lang": "fr"})
-            en_count += collection.count_documents({"lang": "en"})
-            ar_count += collection.count_documents({"lang": "ar"})
-            other= collection.count_documents({})- collection.count_documents({"lang": "fr"}) - collection.count_documents({"lang": "ar"}) -collection.count_documents({"lang": "en"})
-            other_count += other
-        # # Calculate the count for Other language documents
-        # other_count = db.tweets.count_documents(
-        #     {"$and": [{"lang": {"$ne": "fr"}}, {"lang": {"$ne": "en"}}, {"lang": {"$ne": "ar"}}]})
-
-        # Create a bar chart of the document counts for each language
-        plt.figure(figsize=(10, 10))
-        plt.style.use('ggplot')
-        plt.bar(['French', 'Arabic', 'English', 'Other'], [
-                fr_count, ar_count, en_count, other_count])
-        plt.title("Distribution of number of tweets by language of all collections")
-
-        # Add numbers to bars
-        for j, v in enumerate([fr_count, ar_count, en_count, other_count]):
-            plt.text(j, v + 10, str(v), ha='center')
-
-        # Display the figure
-        if verbose:
-            print("Displaying the language distributions of tweets")
-        # plt.show()
-
-    def localisation_distribution(self, collection_name, verbose=False):
-
-         # Select the database and collection
         db = self.DocGB_Driver.myclient[self.db_name]
 
         
@@ -1004,40 +1125,55 @@ class transform:
             if verbose:
                 print(f'Starting localisation with collection {collection_name}')
 
-            # Get the names of the "user_collections" collections
-            user_collections = ["AlgeriaTwitterGraph", "International_users"]
+            pipeline = [
+                
+        {
+            '$lookup': {
+                'from': 'AlgeriaTwitterGraph', 
+                'localField': 'user', 
+                'foreignField': 'id_str', 
+                'as': 'algeria_docs'
+            }
+        }, {
+            '$unwind': {
+                'path': '$algeria_docs', 
+                'preserveNullAndEmptyArrays': True
+            }
+        }, {
+            '$lookup': {
+                'from': 'International_users', 
+                'localField': 'user', 
+                'foreignField': 'id_str', 
+                'as': 'international_docs'
+            }
+        }, {
+            '$unwind': {
+                'path': '$international_docs', 
+                'preserveNullAndEmptyArrays': True
+            }
+        }, {
+            '$project': {
+                'user_location': '$location', 
+                'algeria_location': '$algeria_docs.location', 
+                'international_location': '$international_docs.location'
+            }
+        }, {
+            '$group': {
+                '_id': {'$ifNull': ['$user_location', {'$ifNull': ['$algeria_location', '$international_location']}]},
+                'count': {'$sum': 1}
+            }
+        }, {
+            '$sort': {'count': -1}
+        }, {
+            '$limit': 20
+        }
+    ]
 
-            # Step 1: Récupérer les utilisateurs uniques de la collection "test"
-            users = collection.distinct("user")
+            cursor1 = collection.aggregate(pipeline)
+            cursor=cursor1
+            counts = {doc['_id']: doc['count'] for doc in tqdm(cursor,desc="getting top 20 localisations")}
 
-            # Step 2: Récupérer tous les documents de chaque collection de "user_collections" qui correspondent aux utilisateurs de "test",
-            # et stocker les résultats dans une liste
-            user_docs = []
-            for user_collection_name in user_collections:
-                user_collection = db[user_collection_name]
-                docs = user_collection.find({ "id_str": { "$in": users } })
-                user_docs += list(docs)
-
-            # Step 3: Extraire les utilisateurs uniques des documents récupérés dans l'étape 2
-            users_in_user_docs = list(set([doc["id_str"] for doc in user_docs]))
-
-            # Step 4: Récupérer tous les documents de la collection "test" qui correspondent aux utilisateurs récupérés dans l'étape 3
-            test_docs = collection.find({ "user": { "$in": users_in_user_docs } })
-
-            # Step 5: Extraire les emplacements uniques des documents récupérés dans l'étape 2
-            locations = list(set([doc["location"] for doc in user_docs]))
-
-            # Step 6: Pour chaque emplacement, calculer le nombre de documents correspondant dans les collections "AlgeriaTwitterGraph" et "International_users"
-            counts = {}
-            for location in locations:
-                count = 0
-                for user_collection_name in user_collections:
-                    user_collection = db[user_collection_name]
-                    count += user_collection.count_documents({ "location": location, "id_str": { "$in": users_in_user_docs } })
-                counts[location] = count
-
-            # # Remove the first item from the counts dictionary
-            # del counts[''] 
+            print(counts)
             
 
             # Step 7: Trier les emplacements par nombre de documents correspondants
@@ -1049,15 +1185,19 @@ class transform:
             cleaned_location_dict = {}
 
             for key, value in top_locations.items():
-                    new_key = emoji.demojize(key)
-                    cleaned_location_dict[new_key] = value
+                    if(key):
+                        print(key)
+                        new_key = emoji.demojize(key)
+                        cleaned_location_dict[new_key] = value
 
             for k, v in top_locations.items():
-                k = k.strip()  # remove leading/trailing white space
-                k = " ".join(k.split())  # replace multiple white space with single space
-                cleaned_location_dict[k] = v
+                if(k):
+                    k = k.strip()  # remove leading/trailing white space
+                    k = " ".join(k.split())  # replace multiple white space with single space
+                    cleaned_location_dict[k] = v
             
             top_locations=cleaned_location_dict   
+            
             collection.update_one({"_id": meta["_id"]}, {
                                         "$set": {"doc_localisation_dist":top_locations}})
             
@@ -1078,7 +1218,22 @@ class transform:
         # Show the plot
         # plt.show()
     
-    def create_metadoc(self, collection_name, verbose=False):
+    
+    def __create_metadoc(self, collection_name, verbose=False):
+        """
+        This code creates a metadata document for a MongoDB collection.
+
+        It first selects the database and collection, then counts the number of documents in the collection and the number of documents
+        with the "_id" field set to "metadata". It then initializes a dictionary called "document" with several fields and values,
+        including the total number of documents in the collection, language and stance distributions, and date and location information.
+
+        If the metadata document with "_id" set to "metadata" does not exist in the collection, the document is inserted.
+        
+            If the metadata document already exists in the collection, the fields in the existing document are updated with any 
+            new values in the "document" dictionary using the update_one() method.
+
+            If a new document has been added or deleted, the total number of documents field is also updated.
+        """
         # Select the database and collection
         db = self.DocGB_Driver.myclient[self.db_name]
 
@@ -1119,6 +1274,8 @@ class transform:
         en_negatif=0
         en_neutre=0
         doc_localisation_dist=0
+        arabic_tweets_count=0
+        topics=0
 
         document = { '_id': 'metadata', 'number_of_document': nbr_doc ,
                     'remove_null_update':remove_null_update,
@@ -1130,7 +1287,8 @@ class transform:
                                                 'arabic_stance':ar_count,'arabic_stance_positif':ar_positif,'arabic_stance_negatif':ar_negatif,'arabic_stance_neutre':ar_neutre,
                                                 'french_stance':fr_count,'french_stance_positif':fr_positif,'french_stance_negatif':fr_negatif,'french_stance_neutre':fr_neutre,
                                                 'english_stance':en_count,'english_stance_positif':en_positif,'english_stance_negatif':en_negatif,'english_stance_neutre':en_neutre,
-                    'doc_localisation_dist':doc_localisation_dist }
+                    'doc_localisation_dist':doc_localisation_dist ,
+                    'arabic_tweets_count':arabic_tweets_count,'arabic_topics':topics}
         if(doc_find == 0):
             # Insert the document into the collection
             collection.insert_one(document)
@@ -1146,51 +1304,131 @@ class transform:
             # Mise à jour du document existant avec les champs manquants
             collection.update_one({'_id': 'metadata'}, {'$set': doc})
 
-    def pipeline(self,collection_name,remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=False,verbose=False):
+    def __Topic_detection(self,collection_name,verbose=False):
+
+        db = self.DocGB_Driver.myclient[self.db_name]
+        tweets_col = db[str(collection_name)]
+        # Retrieve tweets from the MongoDB collection
+        tweets_cursor = tweets_col.find({"lang": 'ar'})
+        if verbose:
+            print("number of arabic tweets : ",tweets_col.count_documents({"lang": 'ar'}))
+
+        meta=tweets_col.find_one({'_id': 'metadata'})
+        if (meta['arabic_tweets_count']!= tweets_col.count_documents({"lang": 'ar'}) or meta['topics']==0):
+                
+            # Create a list to store the tweet texts
+            tweet_data = []
+
+            # Iterate through the tweets and extract the text
+            for tweet in tweets_cursor:
+                if 'text' in tweet:
+                    text = tweet['text']
+                elif 'full_text' in tweet:
+                    text = tweet['full_text']
+                id_str = tweet['id_str']
+                tweet_data.append({'id_str': id_str, 'text': text})
+
+            # Create a pandas dataframe with the tweet data
+            df = pd.DataFrame(tweet_data, columns=['id_str', 'text'])
+            if verbose:
+                print('Text Preprocessing  loading...')
+            preprocessor = textPreprocessing()
+            if verbose:
+                print('Topic detection  loading...')
+            topicDetectore= topicDetectionArabic()
+            if verbose:
+                print('Text Preprocessing ... ')
+            clean_df=  preprocessor.preprocessing_arabic(df)
+
+            if verbose:
+                print('Topic predition  ... ')
+                
+            y_pred =  topicDetectore.PredictTopics(clean_df['text'])  
+            df['y_pred']=y_pred
+            # print(y_pred)
+            for _, row in df.iterrows():
+                
+                # update the document with the new attribute
+                tweets_col.update_one({'id_str': row['id_str']}, {'$set': {'topic': getTopic(row['y_pred'])}})
+            
+            y_pred_list=count_classes(y_pred)
+            tweets_col.update_one({"_id": meta["_id"]}, {
+                                        "$set": {'arabic_tweets_count':tweets_col.count_documents({"lang": 'ar'}),'arabic_topics':y_pred_list}})
+            # print(y_pred_list)
+        else:
+            y_pred_list=meta['topics']
+        plot_hist(y_pred_list)
+        # plt.show()
+
+
+    def pipeline(self,collection_name,remove_null=False,cloud_words=False,lang_dist=False,date_dist=False,stance_dist=False,localisation_dist=False,Topic_detection=False):
+        """
+        This is a pipeline function that executes different data processing steps on a MongoDB collection.
+        
+        The function takes a collection name and several boolean arguments as inputs, each representing a specific step in the pipeline.
+
+        The steps include:
+
+            1- Creating or updating a metadata document in the collection.
+            2- Removing null values from the documents in the collection if the remove_null argument is True.
+            3- Generating a word cloud if the cloud_words argument is True.
+            4- Generating a distribution of tweets per language if the lang_dist argument is True.
+            5- Generating a distribution of tweets per date if the date_dist argument is True.
+            6- Generating a distribution of stance (positive, negative, neutral) per language if the stance_dist argument is True.
+            7- Generating a distribution of tweets per location if the localisation_dist argument is True.
+            8- Generating a topic detection  if the Topic_detection argument is True.
+            
+        At the end of the pipeline, the function displays any generated figures.
+        
+        """
         
 
         print('topic ..')
         self.Topic_detection(collection_name,verbose=True)
         # create or update meta data document
-        self.create_metadoc(collection_name, verbose=True) 
-        print('remove null arguments from documents ..')
+        self.__create_metadoc(collection_name, verbose=True) 
+
         #remove null arguments from documents
         if(remove_null==True):
-             self.remove_and_update_null(collection_name,verbose=True)
+             self.__remove_and_update_null(collection_name,verbose=True)
         
 
         #number of tweets per localisation
         print('number of tweets per localisation ..')
         if(localisation_dist==True):
-            self.localisation_distribution(collection_name,verbose)
+            self.__localisation_distribution(collection_name,verbose=True)
 
         
         #WordCloud generator
         print('WordCloud generator ..')
         if cloud_words==True:
             #update documents with adding tokens
-            self.doc_update_tokens(collection_name,verbose)
+            self.__doc_update_tokens(collection_name,verbose=True)
             #generation cloud of words
-            self.cloud_of_words(collection_name,verbose)
+            self.__cloud_of_words(collection_name,verbose=True)
 
         #number of tweets per language
         print('number of tweets per language ..')
         if(lang_dist==True):
-            self.tweets_lang_repartition(collection_name,verbose)
-        
+            self.__tweets_lang_repartition(collection_name,verbose=True)
         #number of tweets per date
-        print('number of tweets per date')
+
         if(date_dist==True):
-            self.string_to_datetime(collection_name,verbose)
-            self.plot_tweets_per_day(collection_name,verbose)
+            self.__string_to_datetime(collection_name,verbose=True)
+            self.__plot_tweets_per_day(collection_name,verbose=True)
 
        
         #stance repartition
+
         print('Stance')
         if(stance_dist==True):
-            self.stance_language_repartition(collection_name,verbose)
+            self.__stance_language_repartition(collection_name,verbose=True)
 
         
+        #topic_detection
+
+        if(Topic_detection==True):
+            self.__Topic_detection(collection_name,verbose=True)
 
         #show figures
         plt.show()
@@ -1256,4 +1494,374 @@ class transform:
                 tweets_col.update_one({'_id': row['_id']}, {'$set': {'topic': getTopic(row['y_pred'])}})
         
         plot_hist(list(y_pred)+Topics_dist)
+        
+
+    def nbr_doc_per_collection(self):
+
+        # Select the database and collection
+        db = self.DocGB_Driver.myclient[self.db_name]
+        # Get the names of all collections in the database
+        collection_names = db.list_collection_names()
+
+        # Initialize lists to store collection names and document counts
+        names = []
+        counts = []
+
+        # Loop through each collection and count the number of documents
+        for collection_name in collection_names:
+            collection = db[collection_name]
+            num_docs = collection.count_documents({})
+            names.append(collection_name)
+            counts.append(num_docs)
+
+        # Create a horizontal bar chart of the document counts for each collection
+        plt.barh(names, counts)
+        plt.title("Number of documents per collection")
+        plt.xlabel("Number of documents")
+        plt.ylabel("Collection name")
+        plt.style.use('ggplot')
+        for j, v in enumerate(counts):
+            plt.text(v + 10000, j, str(v), ha='center')
+        # plt.show()
+    
+
+
+    def meta___tweets_lang_repartition(self, verbose=False):
+        """
+        Plot the language distribution of tweets for all collections in MongoDB.
+
+        Args:
+        - self: instance of the class.
+        - verbose (bool): If True, display progress of the execution. 
+
+        Returns:
+        - None.
+        """
+        if verbose:
+            print("Getting tweets language distributions")
+
+        # Select the database
+        db = self.DocGB_Driver.myclient[self.db_name]
+
+        # Get the names of all collections in the database
+        collection_names = db.list_collection_names()
+
+        # Initialize counters for French, English, and Arabic documents
+        fr_count = 0
+        en_count = 0
+        ar_count = 0
+        other_count=0
+        
+        # Loop through each collection and count the number of documents for each language
+        for collection_name in collection_names:
+            collection = db[collection_name]
+            fr_count += collection.count_documents({"lang": "fr"})
+            en_count += collection.count_documents({"lang": "en"})
+            ar_count += collection.count_documents({"lang": "ar"})
+            other= collection.count_documents({})- collection.count_documents({"lang": "fr"}) - collection.count_documents({"lang": "ar"}) -collection.count_documents({"lang": "en"})
+            other_count += other
+        # # Calculate the count for Other language documents
+        # other_count = db.tweets.count_documents(
+        #     {"$and": [{"lang": {"$ne": "fr"}}, {"lang": {"$ne": "en"}}, {"lang": {"$ne": "ar"}}]})
+
+        # Create a bar chart of the document counts for each language
+        plt.figure(figsize=(10, 10))
+        plt.style.use('ggplot')
+        plt.bar(['French', 'Arabic', 'English', 'Other'], [
+                fr_count, ar_count, en_count, other_count])
+        plt.title("Distribution of number of tweets by language of all collections")
+
+        # Add numbers to bars
+        for j, v in enumerate([fr_count, ar_count, en_count, other_count]):
+            plt.text(j, v + 10, str(v), ha='center')
+
+        # Display the figure
+        if verbose:
+            print("Displaying the language distributions of tweets")
+        # plt.show()
+
+
+
+
+    def __localisation_distribution1(self, collection_name, verbose=False):
+        client = pymongo.MongoClient()
+        db = client[self.db_name]
+        collection = db[collection_name]
+
+
+
+
+
+
+
+        pipeline = [
+            
+    {
+        '$lookup': {
+            'from': 'AlgeriaTwitterGraph', 
+            'localField': 'user', 
+            'foreignField': 'id_str', 
+            'as': 'algeria_docs'
+        }
+    }, {
+        '$unwind': {
+            'path': '$algeria_docs', 
+            'preserveNullAndEmptyArrays': True
+        }
+    }, {
+        '$lookup': {
+            'from': 'International_users', 
+            'localField': 'user', 
+            'foreignField': 'id_str', 
+            'as': 'international_docs'
+        }
+    }, {
+        '$unwind': {
+            'path': '$international_docs', 
+            'preserveNullAndEmptyArrays': True
+        }
+    }, {
+        '$project': {
+            'user_location': '$location', 
+            'algeria_location': '$algeria_docs.location', 
+            'international_location': '$international_docs.location'
+        }
+    }, {
+        '$group': {
+            '_id': {'$ifNull': ['$user_location', {'$ifNull': ['$algeria_location', '$international_location']}]},
+            'count': {'$sum': 1}
+        }
+    }, {
+        '$sort': {'count': -1}
+    }, {
+        '$limit': 20
+    }
+]
+
+        cursor1 = collection.aggregate(pipeline)
+        cursor=cursor1
+        counts = {doc['_id']: doc['count'] for doc in cursor}
+
+        print(counts)
+        
+
+        # Step 7: Trier les emplacements par nombre de documents correspondants
+        sorted_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+
+        # Step 8: Conserver les 20 premiers emplacements les plus apparus
+        top_locations = dict(sorted_counts[:20])
+
+        cleaned_location_dict = {}
+
+        for key, value in top_locations.items():
+                if(key):
+                    print(key)
+                    new_key = emoji.demojize(key)
+                    cleaned_location_dict[new_key] = value
+
+        for k, v in top_locations.items():
+            if(k):
+                k = k.strip()  # remove leading/trailing white space
+                k = " ".join(k.split())  # replace multiple white space with single space
+                cleaned_location_dict[k] = v
+        
+        top_locations=cleaned_location_dict   
+        
+        plt.style.use('ggplot')
+        plt.barh(range(len(top_locations)), list(top_locations.values()), align='center')
+        plt.yticks(range(len(top_locations)), list(top_locations.keys()))
+
+        # Set the plot title and axis labels
+        plt.title('Nombre de documents par emplacement')
+        plt.xlabel('Nombre de documents')
+        plt.ylabel('Emplacement')
+        
+        # Show the plot
+        # plt.show()
+    
+        
+
+    def nbr_doc_per_collection(self):
+
+        # Select the database and collection
+        db = self.DocGB_Driver.myclient[self.db_name]
+        # Get the names of all collections in the database
+        collection_names = db.list_collection_names()
+
+        # Initialize lists to store collection names and document counts
+        names = []
+        counts = []
+
+        # Loop through each collection and count the number of documents
+        for collection_name in collection_names:
+            collection = db[collection_name]
+            num_docs = collection.count_documents({})
+            names.append(collection_name)
+            counts.append(num_docs)
+
+        # Create a horizontal bar chart of the document counts for each collection
+        plt.barh(names, counts)
+        plt.title("Number of documents per collection")
+        plt.xlabel("Number of documents")
+        plt.ylabel("Collection name")
+        plt.style.use('ggplot')
+        for j, v in enumerate(counts):
+            plt.text(v + 10000, j, str(v), ha='center')
+        # plt.show()
+    
+
+
+    def meta___tweets_lang_repartition(self, verbose=False):
+        """
+        Plot the language distribution of tweets for all collections in MongoDB.
+
+        Args:
+        - self: instance of the class.
+        - verbose (bool): If True, display progress of the execution. 
+
+        Returns:
+        - None.
+        """
+        if verbose:
+            print("Getting tweets language distributions")
+
+        # Select the database
+        db = self.DocGB_Driver.myclient[self.db_name]
+
+        # Get the names of all collections in the database
+        collection_names = db.list_collection_names()
+
+        # Initialize counters for French, English, and Arabic documents
+        fr_count = 0
+        en_count = 0
+        ar_count = 0
+        other_count=0
+        
+        # Loop through each collection and count the number of documents for each language
+        for collection_name in collection_names:
+            collection = db[collection_name]
+            fr_count += collection.count_documents({"lang": "fr"})
+            en_count += collection.count_documents({"lang": "en"})
+            ar_count += collection.count_documents({"lang": "ar"})
+            other= collection.count_documents({})- collection.count_documents({"lang": "fr"}) - collection.count_documents({"lang": "ar"}) -collection.count_documents({"lang": "en"})
+            other_count += other
+        # # Calculate the count for Other language documents
+        # other_count = db.tweets.count_documents(
+        #     {"$and": [{"lang": {"$ne": "fr"}}, {"lang": {"$ne": "en"}}, {"lang": {"$ne": "ar"}}]})
+
+        # Create a bar chart of the document counts for each language
+        plt.figure(figsize=(10, 10))
+        plt.style.use('ggplot')
+        plt.bar(['French', 'Arabic', 'English', 'Other'], [
+                fr_count, ar_count, en_count, other_count])
+        plt.title("Distribution of number of tweets by language of all collections")
+
+        # Add numbers to bars
+        for j, v in enumerate([fr_count, ar_count, en_count, other_count]):
+            plt.text(j, v + 10, str(v), ha='center')
+
+        # Display the figure
+        if verbose:
+            print("Displaying the language distributions of tweets")
+        # plt.show()
+
+
+
+
+    def __localisation_distribution1(self, collection_name, verbose=False):
+        client = pymongo.MongoClient()
+        db = client[self.db_name]
+        collection = db[collection_name]
+
+
+
+
+
+
+
+        pipeline = [
+            
+    {
+        '$lookup': {
+            'from': 'AlgeriaTwitterGraph', 
+            'localField': 'user', 
+            'foreignField': 'id_str', 
+            'as': 'algeria_docs'
+        }
+    }, {
+        '$unwind': {
+            'path': '$algeria_docs', 
+            'preserveNullAndEmptyArrays': True
+        }
+    }, {
+        '$lookup': {
+            'from': 'International_users', 
+            'localField': 'user', 
+            'foreignField': 'id_str', 
+            'as': 'international_docs'
+        }
+    }, {
+        '$unwind': {
+            'path': '$international_docs', 
+            'preserveNullAndEmptyArrays': True
+        }
+    }, {
+        '$project': {
+            'user_location': '$location', 
+            'algeria_location': '$algeria_docs.location', 
+            'international_location': '$international_docs.location'
+        }
+    }, {
+        '$group': {
+            '_id': {'$ifNull': ['$user_location', {'$ifNull': ['$algeria_location', '$international_location']}]},
+            'count': {'$sum': 1}
+        }
+    }, {
+        '$sort': {'count': -1}
+    }, {
+        '$limit': 20
+    }
+]
+
+        cursor1 = collection.aggregate(pipeline)
+        cursor=cursor1
+        counts = {doc['_id']: doc['count'] for doc in cursor}
+
+        print(counts)
+        
+
+        # Step 7: Trier les emplacements par nombre de documents correspondants
+        sorted_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+
+        # Step 8: Conserver les 20 premiers emplacements les plus apparus
+        top_locations = dict(sorted_counts[:20])
+
+        cleaned_location_dict = {}
+
+        for key, value in top_locations.items():
+                if(key):
+                    print(key)
+                    new_key = emoji.demojize(key)
+                    cleaned_location_dict[new_key] = value
+
+        for k, v in top_locations.items():
+            if(k):
+                k = k.strip()  # remove leading/trailing white space
+                k = " ".join(k.split())  # replace multiple white space with single space
+                cleaned_location_dict[k] = v
+        
+        top_locations=cleaned_location_dict   
+        
+        plt.style.use('ggplot')
+        plt.barh(range(len(top_locations)), list(top_locations.values()), align='center')
+        plt.yticks(range(len(top_locations)), list(top_locations.keys()))
+
+        # Set the plot title and axis labels
+        plt.title('Nombre de documents par emplacement')
+        plt.xlabel('Nombre de documents')
+        plt.ylabel('Emplacement')
+        
+        # Show the plot
+        # plt.show()
+    
         

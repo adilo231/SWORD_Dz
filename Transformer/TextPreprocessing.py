@@ -35,14 +35,28 @@ def getTopicIndex(topic):
 
 plt.style.use('ggplot')
 
+def count_classes(y_pred):
+    # Define the class labels
+    class_labels = ['culture', 'diverse', 'economy', 'politic', 'sport']
+    
+    # Initialize the count for each class to zero
+    class_counts = {label: 0 for label in class_labels}
+    
+    # Count the number of predictions for each class
+    for pred in y_pred:
+        class_counts[class_labels[pred]] += 1
+    
+    return class_counts
 
-
-def plot_hist(y_pred):
+def plot_hist(y_pred_counts):
     # Define the class labels
     class_labels = ['culture', 'diverse', 'economy', 'politic', 'sport']
 
+    # Extract the count for each class
+    counts = [y_pred_counts[label] for label in class_labels]
+
     # Plot the histogram
-    plt.hist(y_pred, bins=range(len(class_labels)+1), align='left', rwidth=0.9)
+    plt.bar(range(len(class_labels)), counts)
     plt.xticks(range(len(class_labels)), class_labels)
     plt.title('Histogram of Class Predictions')
     plt.xlabel('Class')
