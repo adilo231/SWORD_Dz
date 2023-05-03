@@ -5,8 +5,62 @@ Our project aims to combat the spread of fake news and rumors on online social n
 
 1. Clone or download the code from GitHub:
 ```
-$ git clone https://github.com/myusername/myframework.git
+$ git clone https://github.com/myusername/SWORD_Dz.git
+
+
+
+2. Install virtualenv using pip:
 ```
+$ pip install virtualenv
+```
+
+
+
+
+3. Create a new virtual environment:
+```
+$ virtualenv env
+```
+
+
+
+4. Activate the virtual environment:
+```
+$ source env/bin/activate
+```
+
+
+
+5. Install the required Python packages:
+```
+$ pip install -r requirements.txt
+```
+
+
+
+6. Run Docker Compose to mount images of MongoDB and Neo4j:
+```
+$ docker-compose up
+```
+
+
+
+## Usage
+
+1. Upload the Facebook graph and synthetic graphs to Neo4j using main_load_graph.py:
+```
+$ python main_load_graph.py
+```
+
+
+
+2. Run simulations by running main_boulma.py:
+```
+$ python main_boulma.py
+```
+
+
+
 
 # Our Modules 
 
