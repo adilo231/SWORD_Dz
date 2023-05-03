@@ -4,7 +4,9 @@ Our project aims to combat the spread of fake news and rumors on online social n
 ## Installation
 
 1. Clone or download the code from GitHub:
+```
 $ git clone https://github.com/myusername/myframework.git
+```
 
 # Our Modules 
 
@@ -42,4 +44,9 @@ The simulation module allows the framework to simulate rumor propagation based o
 
 #Conclusion:
 Our project aims to provide a framework to combat the spread of fake news and rumors on online social networks. Our project is currently in development and is divided into five modules, each serving a specific purpose. We plan to continue working on this project and hope to achieve our goal of making online social networks a safer place for everyone.
+
+## Credits
+
+This framework was developed by [adilo231](https://github.com/adilo231).
+
 
