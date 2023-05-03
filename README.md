@@ -1,6 +1,11 @@
 # Introduction:
 Our project aims to combat the spread of fake news and rumors on online social networks. The framework is designed to extract data from social media platforms, specifically Twitter, and store it in databases for further analysis. Our project is currently divided into five modules, each serving a unique purpose.
 
+## Installation
+
+1. Clone or download the code from GitHub:
+$ git clone https://github.com/myusername/myframework.git
+
 # Our Modules 
 
 ## Data Extraction Module: ![](https://us-central1-progress-markdown.cloudfunctions.net/progress/80)
