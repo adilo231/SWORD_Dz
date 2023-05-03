@@ -6,7 +6,7 @@ Our project aims to combat the spread of fake news and rumors on online social n
 1. Clone or download the code from GitHub:
 ```
 $ git clone https://github.com/myusername/SWORD_Dz.git
-
+```
 
 
 2. Install virtualenv using pip:
