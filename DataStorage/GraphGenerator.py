@@ -52,8 +52,7 @@ class Graph():
             nx.set_node_attributes(g, values, attribute)
 
         # Set statistics attributes
-        attributes = ['Infetime', 'AccpR',
-                      'SendR', 'Accp_NegR', 'Nb_Accpted_Rm']
+        attributes = ['Infetime', 'AccpR','SendR', 'Accp_NegR', 'Nb_Accpted_Rm']
         zeros = dict(enumerate(np.zeros(n)))
         for atrrib in attributes:
             nx.set_node_attributes(g, zeros, atrrib)
@@ -87,13 +86,14 @@ class CreateSytheticGraph(Graph):
 
 
 class CreateGraphFrmDB(Graph):
-
+   
     def __init__(self):
         Handler = GraphDBHandler()
         self.session = Handler.getConnection()
 
     def CreateGraph(self, parameters, graphModel):
         ''' load the facebook graph'''
+        print("loading graph...")
         g = self.loadGraph(graphModel)
         self.InitParameters(g, parameters)
 
@@ -103,7 +103,8 @@ class CreateGraphFrmDB(Graph):
 
         query = ""
         if graphModel == 'FB':
-            query = """MATCH (u1:user)-[r:friend]->(u2:user) return distinct u1.id_user,u2.id_user"""
+            print("loading FB graph...")
+            query = """MATCH (u1:user_facebook)-[r:friend_in_FB]->(u2:user_facebook) return distinct u1.id_user,u2.id_user"""
 
         if graphModel == 'ABS':
             query = "MATCH (u1:user_small_random)-[r:friend_in_ABS]->(u2:user_small_random) return distinct u1.id_user,u2.id_user"
@@ -169,6 +170,6 @@ if __name__ == '__main__':
                   "beta_max": 0.6,
                   "beta_min": 0.1}
 
-    gg = CreateSytheticGraph()
-    g = gg.CreateGraph(parameters, 'AB')
+    gg = CreateGraphFrmDB()
+    g = gg.CreateGraph(parameters, 'ABS')
     print("nb nodes: ", g.number_of_nodes())

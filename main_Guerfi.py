@@ -33,7 +33,7 @@ if __name__ == '__main__':
    
 
     Generator=gg.CreateGraphFrmDB()
-    g = Generator.CreateGraph(parameters,graphModel='ABS')  
+    g = Generator.CreateGraph(parameters,graphModel='FB')  
     
     Simulator = sim.RumorSimulator()
    
@@ -41,23 +41,23 @@ if __name__ == '__main__':
     print("--------------------------------------------------------------------------------------------------------------------")
     start_time = time.time()
      
-    typeOfSim=2
+    typeOfSim=0
     k=int(0.15*g.number_of_nodes())
     i=0
     blockPeriod=10
-    aux1 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='B_RBN',k=k)
+    # aux1 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='B_RBN',k=k)
     
-    aux2 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='B_DMBN',blockPeriod=blockPeriod,k=k)
+    # aux2 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='B_DMBN',blockPeriod=blockPeriod,k=k)
     
-    aux3 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='T_MDTCS',k=k)
+    # aux3 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.05, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='T_MDTCS',k=k)
     
-    aux4 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.03, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='T_MRIBHBTCS',k=k)
+    # aux4 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.03, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='T_MRIBHBTCS',k=k)
     
     aux_0 = Simulator.runSimulation(g, NbrSim=NbrSim ,seedsSize=0.02, typeOfSim=typeOfSim,simName=f'sim{i}',verbose=True,method='None',k=k)
       
 
-    l=[aux_0,aux1,aux2,aux3,aux4]
-    #l=aux4
+    l=[aux_0]#,aux1,aux2,aux3,aux4]
+    l=aux_0
 
     end_time = time.time()
     print('Parallel time: ', end_time-start_time)

@@ -348,7 +348,7 @@ class HSIBmodel():
         if self.verbose:
             print(f'Simulation number {i} is on run')
         time = self.time
-
+       
         while self.ListInfectedNodes:
             # Initialize counters for tracking the rumor spreading process
             RumorPopularity = 0
@@ -367,11 +367,12 @@ class HSIBmodel():
                         np.sin((RelativeTime * self.Graph.nodes[id]['omega']) + self.Graph.nodes[id]['delta']))
                     RumorPopularity += ActualAttraction * self.Graph.degree(id)
                     # Update the node's opinion based on the model parameters
+                    
                     self.UpdateOpinion(id,
                                        self.Graph.nodes[id]['jug'],
                                        self.Graph.nodes[id]['Accp_NegR'],
                                        self.Graph.nodes[id]['AccpR'])
-
+                   
                     # Check if the node will spread the rumor to its neighbors
                     c = np.random.rand()
                     if (c <= ActualAttraction*0.5):
