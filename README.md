@@ -1,4 +1,5 @@
 # Introduction:
+
 The S.W.O.R.D. framework is designed to combat the spread of false information and rumors in online social networks through a multi-faceted approach. The framework consists of five modules that work together to achieve this objective:
 
     Social Media Harvester (SMH): This module is responsible for data harvesting and collection from various social media platforms. The SMH module uses web scraping techniques to gather data related to the spread of false information and rumors.
