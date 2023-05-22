@@ -3,15 +3,15 @@
 
 The S.W.O.R.D. framework is designed to combat the spread of false information and rumors in online social networks through a multi-faceted approach. The framework consists of five modules that work together to achieve this objective:
 
-    - Social Media Harvester (SMH): This module is responsible for data harvesting and collection from various social media platforms. The SMH module uses web scraping techniques to gather data related to the spread of false information and rumors.
+ - Social Media Harvester (SMH): This module is responsible for data harvesting and collection from various social media platforms. The SMH module uses web scraping techniques to gather data related to the spread of false information and rumors.
 
-    - Web Data Analyzer (WDA): This module is responsible for data study and analysis. The WDA module processes the collected data to extract insights, patterns, and trends related to the spread of false information and rumors.
+- Web Data Analyzer (WDA): This module is responsible for data study and analysis. The WDA module processes the collected data to extract insights, patterns, and trends related to the spread of false information and rumors.
 
-    - Online Rumor fighter  (ORF): This module is responsible for rumor influence minimization. The OIM module uses a range of strategies to minimize the impact of false information and rumors, including targeted interventions, online reputation management, and social engineering techniques.
+- Online Rumor fighter  (ORF): This module is responsible for rumor influence minimization. The OIM module uses a range of strategies to minimize the impact of false information and rumors, including targeted interventions, online reputation management, and social engineering techniques.
 
-    - Rumor Detector (RD): This module is responsible for rumor detection and fact checking. The RD module uses natural language processing (NLP) and machine learning (ML) techniques to identify false information and rumors in the collected data, and then verifies their accuracy through fact checking.
+- Rumor Detector (RD): This module is responsible for rumor detection and fact checking. The RD module uses natural language processing (NLP) and machine learning (ML) techniques to identify false information and rumors in the collected data, and then verifies their accuracy through fact checking.
 
-    - Data Defender (DD): This module is responsible for data storage and management. The DD module ensures the secure and reliable storage of collected data, as well as the effective management of this data to facilitate its analysis and use in combating false information and rumors.
+- Data Defender (DD): This module is responsible for data storage and management. The DD module ensures the secure and reliable storage of collected data, as well as the effective management of this data to facilitate its analysis and use in combating false information and rumors.
 
 In summary, the S.W.O.R.D. framework offers a comprehensive approach to combatting false information and rumors in online social networks. By using a range of modules that work together to collect, analyze, and manage data, detect false information and rumors, and minimize their influence, the framework can help to protect online communities from the harmful effects of misinformation.
 
