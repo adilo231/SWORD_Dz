@@ -11,8 +11,6 @@ from __future__ import unicode_literals
 from pyarabic.araby import strip_tatweel
 from textblob import TextBlob
 from spacy.lang.en.stop_words import STOP_WORDS as english_stopwords
-import spacy
-import nltk
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.stem.isri import ISRIStemmer
