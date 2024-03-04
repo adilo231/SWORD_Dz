@@ -8,7 +8,7 @@ tokenizer = AutoTokenizer.from_pretrained("nourmorsy/PermoBERT-Arabic-Sentiment-
 model = AutoModelForSequenceClassification.from_pretrained("nourmorsy/PermoBERT-Arabic-Sentiment-Analysis-Farasa-BPE-44000Token")
 
 # Define the directory where you want to save the model
-save_directory = "./Models/Arabic"
+save_directory = r"./Models/Arabic"
 
 # Save the tokenizer and model
 tokenizer.save_pretrained(save_directory)
