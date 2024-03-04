@@ -1,4 +1,4 @@
-
+from TextPreProcessing import FrenchTextProcessor,EnglishTextProcessor,ArabicTextProcessor
 # Create an instance of EnglishTextProcessor
 english_processor = EnglishTextProcessor()
 
