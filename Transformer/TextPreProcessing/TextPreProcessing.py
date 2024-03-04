@@ -1,10 +1,3 @@
-# Install packages
-#pip install spacy textblob pandas nltk aiogoogletrans unidecode emoji pyarabic snowballstemmer
-
-# Download language models
-#python -m spacy download fr_core_news_sm
-#python -m spacy download en_core_web_sm
-
 from abc import ABC, abstractmethod
 from __future__ import unicode_literals
 import emoji
@@ -14,38 +7,15 @@ nltk.download('stopwords')
 from nltk.stem import SnowballStemmer
 import re
 import spacy
-nlp = spacy.load("fr_core_news_sm")
-french_stopwords = set(nltk.corpus.stopwords.words('french'))
 from __future__ import unicode_literals
 from pyarabic.araby import strip_tatweel
 from textblob import TextBlob
 from spacy.lang.en.stop_words import STOP_WORDS as english_stopwords
 import spacy
 import nltk
-nltk.download('stopwords')
 from nltk.corpus import stopwords
-arabic_stopwords = stopwords.words('arabic')
-nlp = spacy.load("en_core_web_sm")
 from nltk.stem import PorterStemmer
 from nltk.stem.isri import ISRIStemmer
-english_stemmer = PorterStemmer()
-arabic_stemmer = ISRIStemmer()
-french_stemmer = SnowballStemmer('french')
-
-with open('Selected_Fr_emojis.csv','r',encoding='utf-8') as f:
-    lines = f.readlines()
-    emojis_fr = {}
-    for line in lines:
-        line = line.strip('\n').split(';')
-        emojis_fr.update({line[0].strip():line[1].strip()})
-
-with open('emojis.csv','r',encoding='utf-8') as f:
-    lines = f.readlines()
-    emojis_ar = {}
-    for line in lines:
-        line = line.strip('\n').split(';')
-        emojis_ar.update({line[0].strip():line[1].strip()})
-
 
 
 
@@ -117,6 +87,10 @@ class TextPreProcessing(ABC):
 
 
 class EnglishTextProcessor(TextPreProcessing):
+    def __init__(self):
+        self.english_stemmer = PorterStemmer()
+        self.nlp = spacy.load("en_core_web_sm")
+
     def get_hashtags(self, text):
         def split_hashtag_to_words(tag):
             tag = tag.replace('#', '')
@@ -196,11 +170,11 @@ class EnglishTextProcessor(TextPreProcessing):
         return ' '.join(text.split())
 
     def tokenize(self, text):
-        doc = nlp(text)
+        doc = self.nlp(text)
         return doc
 
     def stem_and_lemmatize(self, tokens):
-        return [english_stemmer.stem(token.lemma_) if token.lemma_ != "-PRON-" and token.lemma_ != "be" else token.text for token in tokens]   
+        return [self.english_stemmer.stem(token.lemma_) if token.lemma_ != "-PRON-" and token.lemma_ != "be" else token.text for token in tokens]   
 
     def correct_text(self,text):
         return str(TextBlob(text).correct())
@@ -221,6 +195,19 @@ class EnglishTextProcessor(TextPreProcessing):
 
 
 class FrenchTextProcessor(TextPreProcessing):
+    def __init__(self):
+        with open('Selected_Fr_emojis.csv','r',encoding='utf-8') as f:
+            lines = f.readlines()
+            self.emojis_fr = {}
+            for line in lines:
+                line = line.strip('\n').split(';')
+                self.emojis_fr.update({line[0].strip():line[1].strip()})
+        self.french_stemmer = SnowballStemmer('french')
+        self.french_stopwords = set(nltk.corpus.stopwords.words('french'))
+        self.nlp = spacy.load("fr_core_news_sm")
+
+
+
     def get_hashtags(self, text):
         def split_hashtag_to_words(tag):
             tag = tag.replace('#', '')
@@ -337,7 +324,7 @@ class FrenchTextProcessor(TextPreProcessing):
 
 
         def is_emoji(word):
-            if word in emojis_fr:
+            if word in self.emojis_fr:
                 return True
             else:
                 return False
@@ -351,7 +338,7 @@ class FrenchTextProcessor(TextPreProcessing):
             word_list = list()
             words_to_translate = list()
             for word in words :
-                t = emojis_fr.get(word.get('emoji'),None)
+                t = self.emojis_fr.get(word.get('emoji'),None)
                 if t is None:
                     word.update({'translation':'normale','translated':True})
                     #words_to_translate.append('normal')
@@ -390,7 +377,7 @@ class FrenchTextProcessor(TextPreProcessing):
         return re.sub('[%s]' % re.escape("""!"#$%&'()*+,،-./:;<=>؟?@[\]^_`{|}~"""), ' ', text)
 
     def remove_stopwords(self, text):
-        return " ".join([t for t in text.split() if t.lower() not in french_stopwords])
+        return " ".join([t for t in text.split() if t.lower() not in self.french_stopwords])
 
     def remove_non_usable_chars(self, text):
         french_pattern = re.compile(r'[^\s\dA-Za-zàâäéèêëîïôöùûüçÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ]+')
@@ -406,7 +393,7 @@ class FrenchTextProcessor(TextPreProcessing):
         return ' '.join(text.split())
 
     def tokenize(self, text):
-        doc = nlp(text)
+        doc = self.nlp(text)
         return doc
 
     def stem_and_lemmatize(self, tokens):
@@ -429,6 +416,20 @@ class FrenchTextProcessor(TextPreProcessing):
 
 
 class ArabicTextProcessor(TextPreProcessing):
+
+    def __init__(self):
+        with open('emojis.csv','r',encoding='utf-8') as f:
+            lines = f.readlines()
+            self.emojis_ar = {}
+            for line in lines:
+                line = line.strip('\n').split(';')
+                self.emojis_ar.update({line[0].strip():line[1].strip()})
+
+
+        self.arabic_stemmer = ISRIStemmer()
+        self.arabic_stopwords = stopwords.words('arabic')
+        self.nlp = spacy.load("fr_core_news_sm")
+
     def get_urls(self, text):
         urls = re.findall(r'(http|https|ftp|ssh)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?',text)
         return urls
@@ -521,14 +522,14 @@ class ArabicTextProcessor(TextPreProcessing):
         return text
 
     def tokenize(self, text):
-        doc = nlp(text)
+        doc = self.nlp(text)
         return [token.text for token in doc]
 
     def stem_and_lemmatize(self, word):
-        return arabic_stemmer.stem(word)
+        return self.arabic_stemmer.stem(word)
 
     def remove_stopwords(self, tokens):
-        return [token for token in tokens if token not in arabic_stopwords]
+        return [token for token in tokens if token not in self.arabic_stopwords]
 
     def replace_emojis(self, text):
         def remove_emoji(text):
@@ -663,3 +664,4 @@ class ArabicTextProcessor(TextPreProcessing):
             normalized_word = self.normalizeArabic(final_word)
             cleaned_tokens[i] = normalized_word
         return cleaned_tokens
+
