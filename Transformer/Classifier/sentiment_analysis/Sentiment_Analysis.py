@@ -17,22 +17,22 @@ class Sentiment_Analysis:
               4: 'positive',
           }
       
-       self.ar_tokenizer = AutoTokenizer.from_pretrained("./Models/Arabic")
-       self.ar_model = AutoModelForSequenceClassification.from_pretrained("./Models/Arabic")
+       self.ar_tokenizer = AutoTokenizer.from_pretrained(r"./Models/Arabic")
+       self.ar_model = AutoModelForSequenceClassification.from_pretrained(r"./Models/Arabic")
       
-       self.fr_en_tokenizer = AutoTokenizer.from_pretrained("./Models/french-english")
-       self.fr_en_model = AutoModelForSequenceClassification.from_pretrained("./Models/french-english")
+       self.fr_en_tokenizer = AutoTokenizer.from_pretrained(r"./Models/french-english")
+       self.fr_en_model = AutoModelForSequenceClassification.from_pretrained(r"./Models/french-english")
         
     def detect_sentiment(self, text, language):
         if language == 'en' or language == 'fr':
             encoded_input = self.fr_en_tokenizer(text, return_tensors='pt')
             output = self.fr_en_model(**encoded_input)
             predicted_label = output.logits.argmax().item()
-            return fr_en_sentiment_mapping[predicted_label]
+            return self.fr_en_sentiment_mapping[predicted_label]
         elif language == 'ar':
             encoded_input = self.ar_tokenizer(text, return_tensors='pt')
             output = self.ar_model(**encoded_input)
             predicted_label = output.logits.argmax().item()
-            return ar_sentiment_mapping[predicted_label]
+            return self.ar_sentiment_mapping[predicted_label]
         else:
             return "none"
