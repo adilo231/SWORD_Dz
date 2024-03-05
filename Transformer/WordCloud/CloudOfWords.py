@@ -23,7 +23,7 @@ class CloudOfWords:
         self.tokens = [re.sub(r'[^\w\s]', '', token) for token in self.tokens]
         if path_arabic_font != None :
            self.path_arabic_font=path_arabic_font
-        if language == 'arabic':
+        if language == 'ar':
             list_of_tokens_reshaped = [get_display(arabic_reshaper.reshape(token)) for token in self.tokens]
         else:
             list_of_tokens_reshaped = self.tokens
@@ -31,7 +31,7 @@ class CloudOfWords:
 
         word_freq = Counter(list_of_tokens_reshaped)
 
-        if language == 'arabic':
+        if language == 'ar':
             self.wordcloud = WordCloud(width=800, height=400, background_color='white',
                                   font_path=self.path_arabic_font).generate_from_frequencies(word_freq)
         else:
