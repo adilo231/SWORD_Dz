@@ -1,35 +1,29 @@
-{ "API_credentials":
-    [{
-        "consumer_key" : "**",
-        "consumer_secret" : ""**",
-        "access_key" : ""**",
-        "access_secret" : ""**","},
-    {
-            "consumer_key" : ""**",
-            "consumer_secret" : ""**",
-            "access_key" : ""**",
-            "access_secret" : ""**","},
-    {
-                "consumer_key" : ""**",
-                "consumer_secret" : "**",
-                "access_key" : "**",
-                "access_secret" :  "**"}
-                
-    ]
-,
-
-"neo4j":{
-    "uri" : "bolt://localhost:7687",
-    "username" : "neo4j",
-    "password" : "admin"
-},
-"mongo":{
-    "uri":"mongodb://localhost:27017/"
-
-}
-
-
-
-        
-        
+{
+    "API_credentials": [{
+            "consumer_key": "**",
+            "consumer_secret": "**",
+            "access_key": "**",
+            "access_secret": "**"
+        },
+        {
+            "consumer_key": "**",
+            "consumer_secret": "**",
+            "access_key": "**",
+            "access_secret": "**"
+        },
+        {
+            "consumer_key": "**",
+            "consumer_secret": "**",
+            "access_key": "**",
+            "access_secret": "**"
+        }
+    ],
+    "neo4j": {
+        "uri": "bolt://localhost:7687",
+        "username": "neo4j",
+        "password": "admin"
+    },
+    "mongo": {
+        "uri": "mongodb://localhost:27017/"
+    }
 }
