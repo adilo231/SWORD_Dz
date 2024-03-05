@@ -4,7 +4,7 @@ import arabic_reshaper
 from bidi.algorithm import get_display
 import matplotlib.pyplot as plt
 import re
-
+from DataStorage.DocDBHandler import DocDBHandler 
 class CloudOfWords:
     def __init__(self,database,collection):
         self.docdbh= DocDBHandler(database,collection)
