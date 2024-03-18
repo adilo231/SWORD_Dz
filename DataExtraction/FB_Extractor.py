@@ -31,7 +31,7 @@ class FacebookExtractor():
     
 
 
-    def __init__(self,driver,Facebook_username=None,Facebook_password=None):
+    def __init__(self,Facebook_username=None,Facebook_password=None):
         chrome_options = webdriver.ChromeOptions()
         #make browser hidden through the options
         self.username=Facebook_username
