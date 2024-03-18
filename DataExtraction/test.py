@@ -6,4 +6,4 @@ type_target="search"#type_target="profil"
 type_data="posts"  #type_data="posts"      #comments=posts+comments
 fb=FacebookExtractor()
 fb.search(query,type_target,type_data)
-fb.posts
+print(fb.view_posts())
