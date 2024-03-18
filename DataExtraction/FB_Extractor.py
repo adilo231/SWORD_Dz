@@ -110,19 +110,20 @@ class FacebookExtractor():
 
 
 
-    def search(self,query,type_target,type_data,max_numbers_posts=1,max_numbers_comments=1000000):
+    def search(self,query,type_target,type_data,max_numbers_posts=1,max_numbers_comments=0):
         #query can be a : profile name or page,keyword,post_id
         #max_numbers : is the maximum number of posts or comments
         #type_target : to see if it's a profile ,or a keyword,or an id comment (we use it to adjust the link)
         #type_data : if posts or comments+posts
-        
+        if type_data != "posts" :
+          max_numbers_comments=10000000
         if type_target=="search": #search using a keyword
             pageFB = f"https://www.facebook.com/search/top?q={query}"
         
         elif type_target=="post_id" : #get comments of a given post id    (akhdmha b lien)
             self.posts = self.get_post(query,max_numbers_comments)
             return
-        else :  
+        else :  #profile
             pageFB = f"https://www.facebook.com/{query}"
             
         self.driver.get(pageFB)
