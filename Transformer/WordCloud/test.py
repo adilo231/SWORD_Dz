@@ -1,7 +1,5 @@
-list_of_tokens = ['word1','word1','word2']
-language = 'english'
+language = 'ar'
 
-cloud_generator = CloudOfWords()
-word_cloud = cloud_generator.generateCW(list_of_tokens, language)
-
+cloud_generator = CloudOfWords("Twitter_Collections","Algeria")
+cloud_generator.generateCW(language,r'./NotoSansArabic_SemiCondensed-ExtraBold.ttf',100)
 cloud_generator.showCW()
