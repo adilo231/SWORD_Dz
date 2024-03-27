@@ -17,7 +17,7 @@ class CloudOfWords:
         else : 
             self.max_words=max_words
         self.tokens = []
-        for tweet in tweets :
+        for tweet in self.tweets :
             try:
                 if tweet['lang']==language :
                     self.tokens.extend(tweet['tokens'])
